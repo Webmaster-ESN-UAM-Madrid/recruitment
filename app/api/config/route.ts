@@ -2,10 +2,17 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Config from "@/lib/models/config";
 import User from "@/lib/models/user";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkAdminAccess } from "@/lib/utils/authUtils";
 
 const defaultImage = "https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3383.jpg?semt=ais_items_boosted&w=500";
 
 export async function GET() {
+    const session = await getServerSession(authOptions);
+    if (!session || !checkAdminAccess(session.user?.email)) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
     await dbConnect();
     try {
         const globalConfig = await Config.findById("globalConfig");

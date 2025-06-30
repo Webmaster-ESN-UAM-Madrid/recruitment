@@ -10,6 +10,5 @@ export const config = {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
     },
     sessionSecret: process.env.SESSION_SECRET || "default_key",
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "https://recruitment.esn.tablerus.es"
 };
-

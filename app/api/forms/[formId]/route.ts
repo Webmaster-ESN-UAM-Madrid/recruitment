@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Form from "@/lib/models/form";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkAdminAccess } from "@/lib/utils/authUtils";
 
 export async function DELETE(request: Request, context: any) {
+    const session = await getServerSession(authOptions);
+    if (!session || !checkAdminAccess(session.user?.email)) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
     await dbConnect();
     try {
         const { formId } = context.params;

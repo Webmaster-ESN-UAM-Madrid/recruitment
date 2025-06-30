@@ -3,8 +3,15 @@ import dbConnect from "@/lib/mongodb";
 import FormConnection from "@/lib/models/formConnection";
 import Form from "@/lib/models/form";
 import Config from "@/lib/models/config";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkAdminAccess } from "@/lib/utils/authUtils";
 
 export async function POST(request: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session || !checkAdminAccess(session.user?.email)) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
     await dbConnect();
 
     try {
