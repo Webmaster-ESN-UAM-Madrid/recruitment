@@ -178,9 +178,8 @@ const GoogleFormsConnect = () => {
       }
       const data = await response.json();
       setConnectedForms(data);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      setError(`Failed to fetch connected forms: ${e.message}`);
+    } catch (e) {
+      setError(`Failed to fetch connected forms: ${(e as Error).message}`);
     }
   };
 
@@ -248,8 +247,8 @@ const GoogleFormsConnect = () => {
       } else {
         setError(data.message);
       }
-    } catch (e: any) {
-      setError(`Failed to delete form: ${e.message}`);
+    } catch (e) {
+      setError(`Failed to delete form: ${(e as Error).message}`);
     }
   };
 
@@ -274,13 +273,13 @@ const GoogleFormsConnect = () => {
           ) : (
             <ul style={{ listStyle: 'none', padding: 0 }}>
               {connectedForms.map((form) => (
-                <li key={form._id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
-                  <p><strong>ID:</strong> {form._id}</p>
+                <li key={form._id as string} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
+                  <p><strong>ID:</strong> {form._id as string}</p>
                   <p><strong>Identifier:</strong> {form.formIdentifier || 'N/A'}</p>
                   <p><strong>Provider:</strong> {form.provider}</p>
                   <p><strong>Can Create Users:</strong> {form.canCreateUsers ? 'Yes' : 'No'}</p>
-                  <button onClick={() => handleDeleteForm(form._id)}>Delete</button>
-                  <button onClick={() => handleReplaceForm(form)} style={{ marginLeft: '10px' }}>Replace</button>
+                  <button onClick={() => handleDeleteForm(form._id as string)}>Delete</button>
+                  <button onClick={() => handleReplaceForm(form as ConnectedForm)} style={{ marginLeft: '10px' }}>Replace</button>
                 </li>
               ))}
             </ul>

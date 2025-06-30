@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getRecruiterEmailsFromDB } from '../../lib/utils/authUtils';
+import { getRecruiterEmailsFromDB } from '@/lib/utils/authUtils';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../app/api/auth/[...nextauth]/route"; // Adjust path as needed
+import { authOptions } from "@/lib/auth";
 
 // Define admin emails (hardcoded, same as in middleware)
 const adminEmails = ["vicepresident@esnuam.org", "hector.tablero@esnuam.org", "mario.viton@esnuam.org"];

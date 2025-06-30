@@ -26,8 +26,8 @@ const GlobalConfigManager = () => {
       setCurrentRecruitment(data.currentRecruitment);
       setRecruitmentPhase(data.recruitmentPhase);
       setRecruiters(data.recruiters);
-    } catch (e: any) {
-      setError(`Failed to fetch config: ${e.message}`);
+    } catch (e) {
+      setError(`Failed to fetch config: ${(e as Error).message}`);
     }
   };
 
@@ -51,8 +51,8 @@ const GlobalConfigManager = () => {
       } else {
         setError(data.message);
       }
-    } catch (e: any) {
-      setError(`Failed to update config: ${e.message}`);
+    } catch (e) {
+      setError(`Failed to update config: ${(e as Error).message}`);
     }
   };
 
@@ -73,8 +73,8 @@ const GlobalConfigManager = () => {
       } else {
         setError(data.message);
       }
-    } catch (e: any) {
-      setError(`Failed to add recruiter: ${e.message}`);
+    } catch (e) {
+      setError(`Failed to add recruiter: ${(e as Error).message}`);
     }
   };
 
@@ -94,8 +94,8 @@ const GlobalConfigManager = () => {
       } else {
         setError(data.message);
       }
-    } catch (e: any) {
-      setError(`Failed to remove recruiter: ${e.message}`);
+    } catch (e) {
+      setError(`Failed to remove recruiter: ${(e as Error).message}`);
     }
   };
 
