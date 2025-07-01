@@ -132,7 +132,7 @@ const IncidentsPage: React.FC = () => {
             <ItemCard key={inc._id}>
               <p><strong>Details:</strong> {inc.details}</p>
               <p><strong>Created At:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <ProcessButton onClick={() => handleResolveIncident(inc._id)}>Resolve</ProcessButton>
+              <ProcessButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolve</ProcessButton>
               <ProcessButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Discard</ProcessButton>
             </ItemCard>
           ))
@@ -148,7 +148,7 @@ const IncidentsPage: React.FC = () => {
             <ItemCard key={inc._id}>
               <p><strong>Details:</strong> {inc.details}</p>
               <p><strong>Created At:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <ProcessButton onClick={() => handleResolveIncident(inc._id)}>Resolve</ProcessButton>
+              <ProcessButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolve</ProcessButton>
               <ProcessButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Discard</ProcessButton>
             </ItemCard>
           ))

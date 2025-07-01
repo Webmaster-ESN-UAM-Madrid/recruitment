@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect } from 'react';
-import FormPreview, { FormSection } from './FormPreview';
+import FormPreview from '../FormPreview';
 import { config } from '@/lib/config';
 import { IForm } from '@/lib/models/form';
 
@@ -15,13 +15,16 @@ interface ConnectedForm {
   recruitmentProcessId?: string;
 }
 
+// This represents a section: [sectionTitle: string, fields: FormField[]]
+type FormSection = [string, any[]]; // Using any[] for fields for now to avoid circular dependency issues
+
 const GoogleFormsConnect = () => {
   const [step, setStep] = useState(0); // Step 0 for form list, 1-4 for connection process
   const [key, setKey] = useState<string | null>(null);
   const [code, setCode] = useState(Array(6).fill(''));
   const [message, setMessage] = useState<string>('');
   const [formId, setFormId] = useState<string | null>(null);
-  const [formStructure, setFormStructure] = useState<FormSection[] | null>(null);
+  const [formStructure, setFormStructure] = useState<FormSection[] | null>(null); // Updated type
   const [connectedForms, setConnectedForms] = useState<IForm[]>([]);
   const [formIdentifier, setFormIdentifier] = useState<string>('');
   const [canCreateUsers, setCanCreateUsers] = useState<boolean>(false);
@@ -225,7 +228,7 @@ const GoogleFormsConnect = () => {
       const structure = await fetch(`/api/forms/${data.formId}`)
         .then(res => res.json())
         .then(data => data.structure);
-      setFormStructure(JSON.parse(structure) as FormSection[]);
+      setFormStructure(structure);
       setStep(4);
       fetchConnectedForms(); // Refresh list after successful connection
     } else {
@@ -358,7 +361,7 @@ const GoogleFormsConnect = () => {
       )}
 
       {step === 4 && formStructure && formId && (
-        <FormPreview formStructure={formStructure} formId={formId} />
+        <FormPreview formStructure={formStructure as any} responses={new Map()} />
       )}
     </div>
   );

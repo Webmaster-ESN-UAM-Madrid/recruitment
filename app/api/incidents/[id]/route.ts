@@ -9,8 +9,8 @@ export async function GET(req: NextRequest, context: any) {
   if (!session || !(await checkRecruiterAccess(session.user?.email))) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const { params } = context as { params: { id: string } };
-  const res = await getIncidentById(params.id);
+  const { id } = context.params;
+  const res = await getIncidentById(id);
   return NextResponse.json(res);
 }
 
@@ -19,9 +19,9 @@ export async function PUT(req: NextRequest, context: any) {
   if (!session || !(await checkRecruiterAccess(session.user?.email))) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const { params } = context as { params: { id: string } };
+  const { id } = context.params;
   const body = await req.json();
-  const res = await updateIncident(params.id, body);
+  const res = await updateIncident(id, body);
   return NextResponse.json(res);
 }
 
@@ -30,8 +30,8 @@ export async function DELETE(req: NextRequest, context: any) {
   if (!session || !(await checkRecruiterAccess(session.user?.email))) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const { params } = context as { params: { id: string } };
-  const res = await deleteIncident(params.id);
+  const { id } = context.params;
+  const res = await deleteIncident(id);
   return NextResponse.json(res);
 }
 
@@ -40,8 +40,8 @@ export async function PATCH(req: NextRequest, context: any) {
   if (!session || !(await checkRecruiterAccess(session.user?.email))) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const { params } = context as { params: { id: string } };
+  const { id } = context.params;
   const body = await req.json();
-  const res = await resolveIncident(params.id);
+  const res = await resolveIncident(id);
   return NextResponse.json(res);
 }

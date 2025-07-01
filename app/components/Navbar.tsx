@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
       if (status === 'authenticated') {
         const res = await fetch('/api/access/admin');
         const data = await res.json();
-        setIsAdmin(data.hasAccess);
+        setIsAdmin(data.isAdmin);
       }
     };
     checkAdmin();

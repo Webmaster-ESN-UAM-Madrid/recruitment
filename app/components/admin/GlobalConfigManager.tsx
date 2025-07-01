@@ -1,6 +1,8 @@
 'use client';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { HexColorPicker } from 'react-colorful';
+import styled from 'styled-components';
 
 interface Recruiter {
   _id: string;
@@ -9,11 +11,62 @@ interface Recruiter {
   image: string;
 }
 
-const GlobalConfigManager = () => {
+interface Committee {
+  name: string;
+  color: string;
+}
+
+const CommitteeList = styled.ul`
+  list-style: none;
+  padding: 0;
+`;
+
+const CommitteeItem = styled.li`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ColorBox = styled.div<{ color: string }>`
+  width: 20px;
+  height: 20px;
+  background-color: ${(props) => props.color};
+  border: 1px solid #ccc;
+  margin-right: 10px;
+`;
+
+const Button = styled.button`
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+
+  & + & {
+    margin-left: 10px;
+  }
+`;
+
+const GlobalConfigManager = () => { // Added comment to force re-render
   const [currentRecruitment, setCurrentRecruitment] = useState('');
   const [recruitmentPhase, setRecruitmentPhase] = useState('');
   const [recruiters, setRecruiters] = useState<Recruiter[]>([]);
+  const [committees, setCommittees] = useState<Committee[]>([]);
   const [newRecruiterEmail, setNewRecruiterEmail] = useState('');
+  const [newCommitteeName, setNewCommitteeName] = useState('');
+  const [newCommitteeColor, setNewCommitteeColor] = useState('#aabbcc');
+  const [editingCommittee, setEditingCommittee] = useState<Committee | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +80,7 @@ const GlobalConfigManager = () => {
       setCurrentRecruitment(data.currentRecruitment);
       setRecruitmentPhase(data.recruitmentPhase);
       setRecruiters(data.recruiters);
+      setCommittees(data.committees || []);
     } catch (e) {
       setError(`Failed to fetch config: ${(e as Error).message}`);
     }
@@ -100,6 +154,85 @@ const GlobalConfigManager = () => {
     }
   };
 
+  const handleCommitteeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+    setError(null);
+    if (editingCommittee) {
+      // Update existing committee
+      try {
+        const response = await fetch('/api/config/committees/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ originalName: editingCommittee.name, name: newCommitteeName, color: newCommitteeColor }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setMessage(data.message);
+          fetchConfig();
+          setEditingCommittee(null);
+          setNewCommitteeName('');
+          setNewCommitteeColor('#aabbcc');
+        } else {
+          setError(data.message);
+        }
+      } catch (e) {
+        setError(`Failed to update committee: ${(e as Error).message}`);
+      }
+    } else {
+      // Add new committee
+      if (committees.some(c => c.name === newCommitteeName)) {
+        setError('Committee with this name already exists.');
+        return;
+      }
+      try {
+        const response = await fetch('/api/config/committees/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newCommitteeName, color: newCommitteeColor }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setMessage(data.message);
+          fetchConfig();
+          setNewCommitteeName('');
+          setNewCommitteeColor('#aabbcc');
+        } else {
+          setError(data.message);
+        }
+      } catch (e) {
+        setError(`Failed to add committee: ${(e as Error).message}`);
+      }
+    }
+  };
+
+  const handleEditCommittee = (committee: Committee) => {
+    setEditingCommittee(committee);
+    setNewCommitteeName(committee.name);
+    setNewCommitteeColor(committee.color);
+  };
+
+  const handleDeleteCommittee = async (name: string) => {
+    setMessage(null);
+    setError(null);
+    try {
+      const response = await fetch('/api/config/committees/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage(data.message);
+        fetchConfig();
+      } else {
+        setError(data.message);
+      }
+    } catch (e) {
+      setError(`Failed to delete committee: ${(e as Error).message}`);
+    }
+  };
+
   const recruitmentPhaseSuggestions = ['registro', 'entrevistas', 'welcome days'];
 
   return (
@@ -162,6 +295,46 @@ const GlobalConfigManager = () => {
           </div>
         ))}
       </div>
+
+      <h3>Committees</h3>
+      <form onSubmit={handleCommitteeSubmit}>
+        <input
+          type="text"
+          placeholder="Committee Name"
+          value={newCommitteeName}
+          onChange={(e) => setNewCommitteeName(e.target.value)}
+          required
+        />
+        <HexColorPicker color={newCommitteeColor} onChange={setNewCommitteeColor} />
+        <input
+          type="text"
+          placeholder="Hex Color"
+          value={newCommitteeColor}
+          onChange={(e) => setNewCommitteeColor(e.target.value)}
+          required
+        />
+        <Button type="submit">{editingCommittee ? 'Update Committee' : 'Add Committee'}</Button>
+        {editingCommittee && <Button type="button" onClick={() => {
+          setEditingCommittee(null);
+          setNewCommitteeName('');
+          setNewCommitteeColor('#aabbcc');
+        }}>Cancel Edit</Button>}
+      </form>
+
+      <CommitteeList>
+        {committees.map((committee) => (
+          <CommitteeItem key={committee.name}>
+            <div>
+              <ColorBox color={committee.color} />
+              {committee.name} ({committee.color})
+            </div>
+            <div>
+              <Button onClick={() => handleEditCommittee(committee)}>Edit</Button>
+              <Button onClick={() => handleDeleteCommittee(committee.name)}>Delete</Button>
+            </div>
+          </CommitteeItem>
+        ))}
+      </CommitteeList>
     </div>
   );
 };

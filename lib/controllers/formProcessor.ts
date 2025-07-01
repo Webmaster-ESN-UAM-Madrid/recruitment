@@ -3,6 +3,7 @@ import FormResponse, { IFormResponse } from "@/lib/models/formResponse";
 import Incident, { IIncident } from "@/lib/models/incident";
 import Candidate from "@/lib/models/candidate";
 import { validateCandidateCreation, validateAssociatedUser } from "@/lib/validation/formRules";
+import { createIncident } from "@/lib/controllers/incidentController";
 
 function getMappingFromResponse(response: IFormResponse, form: IForm, field: string): string | undefined {
     const key = Array.from(form.fieldMappings.entries()).find(([, value]) => value === field)?.[0];
@@ -15,11 +16,24 @@ function getMappingFromResponse(response: IFormResponse, form: IForm, field: str
 }
 
 export async function processFormResponse(formResponseId: string) {
-    const response = await FormResponse.findById(formResponseId);
-    if (!response) throw new Error("FormResponse not found");
+    try {
+        const response = await FormResponse.findById(formResponseId);
+        if (!response) {
+            await createIncident({
+                type: "ERROR",
+                details: `FormResponse with ID ${formResponseId} not found.`,
+            });
+            throw new Error("FormResponse not found");
+        }
 
-    const form = await Form.findById(response.formId);
-    if (!form) throw new Error("Form not found");
+        const form = await Form.findById(response.formId);
+        if (!form) {
+            await createIncident({
+                type: "ERROR",
+                details: `Form with ID ${response.formId} not found for FormResponse ${formResponseId}.`,
+            });
+            throw new Error("Form not found");
+        }
 
     let incidents: Partial<IIncident>[] = [];
 
@@ -82,4 +96,12 @@ export async function processFormResponse(formResponseId: string) {
     await response.save();
 
     return { status: "success", incidents };
+    } catch (error: unknown) {
+        console.error(`Error processing form response ${formResponseId}:`, error);
+        await createIncident({
+            type: "ERROR",
+            details: `Failed to process form response ${formResponseId}: ` + (error instanceof Error ? error.message : String(error)),
+        });
+        return { status: "failed", incidents: [] };
+    }
 }

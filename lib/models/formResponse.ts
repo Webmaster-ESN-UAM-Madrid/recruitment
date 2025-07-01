@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Mixed } from "mongoose";
+import '@/lib/models/form'; // Ensure Form model is loaded
 
 export interface IFormResponse extends Document {
     formId: mongoose.Types.ObjectId; // Reference to the Form model

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest, context: any) {
   if (!session || !(await checkRecruiterAccess(session.user?.email))) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const { params } = context as { params: { id: string } };
+  const { params } = context;
   const formResponses = await getFormResponsesByCandidateId(params.id);
   if (!formResponses) {
     return NextResponse.json({ message: "Form responses not found" }, { status: 404 });

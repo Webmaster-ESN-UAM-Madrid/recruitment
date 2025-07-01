@@ -37,7 +37,8 @@ export async function GET() {
         return NextResponse.json({
             currentRecruitment: globalConfig.currentRecruitment,
             recruitmentPhase: globalConfig.recruitmentPhase,
-            recruiters: recruitersWithDetails
+            recruiters: recruitersWithDetails,
+            committees: globalConfig.committees || []
         });
     } catch (error) {
         console.error("Error fetching global config:", error);
