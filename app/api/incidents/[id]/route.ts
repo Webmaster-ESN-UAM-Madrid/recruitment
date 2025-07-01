@@ -21,7 +21,7 @@ export async function PUT(req: NextRequest, context: any) {
   }
   const { params } = context as { params: { id: string } };
   const body = await req.json();
-  const res = await updateIncident({ ...body, id: params.id });
+  const res = await updateIncident(params.id, body);
   return NextResponse.json(res);
 }
 
@@ -42,6 +42,6 @@ export async function PATCH(req: NextRequest, context: any) {
   }
   const { params } = context as { params: { id: string } };
   const body = await req.json();
-  const res = await resolveIncident({ ...body, id: params.id });
+  const res = await resolveIncident(params.id);
   return NextResponse.json(res);
 }

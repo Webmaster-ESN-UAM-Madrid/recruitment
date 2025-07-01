@@ -1,35 +1,68 @@
-interface Incident {
-    id: string;
-    description: string;
-    // Add other properties as needed
-}
+import Incident, { IIncident } from "@/lib/models/incident";
+import dbConnect from "@/lib/mongodb";
 
-export const getIncidentById = async (id: string) => {
-    console.log(`getIncidentById called with id: ${id}`);
-    return { id, description: "Placeholder Incident" };
+export const getIncidentById = async (id: string): Promise<IIncident | null> => {
+    await dbConnect();
+    try {
+        const incident = await Incident.findById(id);
+        return incident;
+    } catch (error) {
+        console.error(`Error fetching incident by ID ${id}:`, error);
+        return null;
+    }
 };
 
-export const updateIncident = async (incident: Incident) => {
-    console.log("updateIncident called with:", incident);
-    return { success: true, updatedId: incident.id };
+export const updateIncident = async (id: string, updates: Partial<IIncident>): Promise<IIncident | null> => {
+    await dbConnect();
+    try {
+        const incident = await Incident.findByIdAndUpdate(id, updates, { new: true });
+        return incident;
+    } catch (error) {
+        console.error(`Error updating incident ${id}:`, error);
+        return null;
+    }
 };
 
-export const deleteIncident = async (id: string) => {
-    console.log(`deleteIncident called with id: ${id}`);
-    return { success: true, deletedId: id };
+export const deleteIncident = async (id: string): Promise<boolean> => {
+    await dbConnect();
+    try {
+        const result = await Incident.deleteOne({ _id: id });
+        return result.deletedCount === 1;
+    } catch (error) {
+        console.error(`Error deleting incident ${id}:`, error);
+        return false;
+    }
 };
 
-export const resolveIncident = async (id: string) => {
-    console.log(`resolveIncident called with id: ${id}`);
-    return { success: true, resolvedId: id };
+export const resolveIncident = async (id: string): Promise<IIncident | null> => {
+    await dbConnect();
+    try {
+        const incident = await Incident.findByIdAndUpdate(id, { status: "RESOLVED", resolvedAt: new Date() }, { new: true });
+        return incident;
+    } catch (error) {
+        console.error(`Error resolving incident ${id}:`, error);
+        return null;
+    }
 };
 
-export const createIncident = async (incident: Incident) => {
-    console.log("createIncident called with:", incident);
-    return { success: true, createdId: "new-incident-id" };
+export const createIncident = async (incidentData: Partial<IIncident>): Promise<IIncident | null> => {
+    await dbConnect();
+    try {
+        const incident = await Incident.create(incidentData);
+        return incident;
+    } catch (error) {
+        console.error("Error creating incident:", error);
+        return null;
+    }
 };
 
-export const getIncidents = async () => {
-    console.log("getIncidents called");
-    return [{ id: "1", description: "Incident 1" }, { id: "2", description: "Incident 2" }];
+export const getIncidents = async (): Promise<IIncident[]> => {
+    await dbConnect();
+    try {
+        const incidents = await Incident.find({});
+        return incidents;
+    } catch (error) {
+        console.error("Error fetching incidents:", error);
+        return [];
+    }
 };

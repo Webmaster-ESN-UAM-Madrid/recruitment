@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
+import { getCandidates } from "@/lib/controllers/candidateController";
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -10,6 +11,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
-    // Original logic for GET request
-    return NextResponse.json({ message: 'Welcome! You have access to candidate data.' });
+    const candidates = await getCandidates();
+    return NextResponse.json(candidates);
 }

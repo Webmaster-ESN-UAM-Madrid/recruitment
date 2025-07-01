@@ -3,17 +3,23 @@ import mongoose, { Schema, Document, Mixed } from "mongoose";
 export interface IFormResponse extends Document {
     formId: mongoose.Types.ObjectId; // Reference to the Form model
     respondentEmail?: string;
-    responses: Array<{ id: number; value: Mixed }>;
+    responses: Map<string, Mixed>;
     processed: boolean;
     submittedAt: Date;
+    candidateId?: mongoose.Types.ObjectId; // Reference to the Candidate model
 }
 
 const FormResponseSchema: Schema = new Schema({
     formId: { type: Schema.Types.ObjectId, ref: "Form", required: true },
     respondentEmail: { type: String },
-    responses: { type: Array, required: true },
+    responses: {
+        type: Map,
+        of: Schema.Types.Mixed,
+        required: true
+    },
     processed: { type: Boolean, default: false },
-    submittedAt: { type: Date, default: Date.now }
+    submittedAt: { type: Date, default: Date.now },
+    candidateId: { type: Schema.Types.ObjectId, ref: "Candidate" } // Reference to the Candidate model
 });
 
 export default mongoose.models.FormResponse || mongoose.model<IFormResponse>("FormResponse", FormResponseSchema);

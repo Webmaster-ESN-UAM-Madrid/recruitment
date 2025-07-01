@@ -100,7 +100,7 @@ const GlobalConfigManager = () => {
     }
   };
 
-  const recruitmentPhaseSuggestions = ['placeholder1', 'placeholder2'];
+  const recruitmentPhaseSuggestions = ['registro', 'entrevistas', 'welcome days'];
 
   return (
     <div>

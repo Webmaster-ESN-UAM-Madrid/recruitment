@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Form from "@/lib/models/form";
 import FormResponse from "@/lib/models/formResponse";
+import { processFormResponse } from "@/lib/controllers/formProcessor";
 
 export async function POST(request: Request) {
     await dbConnect();
@@ -19,12 +20,31 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Form not found" }, { status: 404 });
         }
 
-        await FormResponse.create({
+        // Convert the incoming array of responses to a Map
+        const responsesMap = new Map<string, any>();
+        if (Array.isArray(responses)) {
+            for (const response of responses) {
+                if (response.id !== undefined && response.value !== undefined) {
+                    responsesMap.set(response.id.toString(), response.value);
+                }
+            }
+        }
+
+        const newFormResponse = await FormResponse.create({
             formId: form._id,
             respondentEmail,
-            responses,
+            responses: responsesMap,
             processed: false // Default to false as per requirement
         });
+
+        // Attempt to process the form response instantly
+        try {
+            await processFormResponse(newFormResponse._id);
+            console.log(`Attempted instant processing for form response ${newFormResponse._id}`);
+        } catch (processingError) {
+            console.error(`Error during instant processing of form response ${newFormResponse._id}:`, processingError);
+            // The main request should still succeed even if instant processing fails
+        }
 
         return NextResponse.json({ message: "Form response received successfully" });
     } catch (error) {

@@ -1,3 +1,6 @@
+import FormResponse, { IFormResponse } from "@/lib/models/formResponse";
+import Candidate from "@/lib/models/candidate";
+import dbConnect from "@/lib/mongodb";
 import User from "@/lib/models/user";
 import Incident from "@/lib/models/incident";
 import { solveIncident } from "@/lib/incidentSolver";
@@ -12,6 +15,23 @@ interface FormType {
 interface ResponseData {
     responses: Array<{ id: number; value: string }>;
 }
+
+export const getFormResponsesByCandidateId = async (candidateId: string): Promise<IFormResponse[]> => {
+    await dbConnect();
+    try {
+        const candidate = await Candidate.findById(candidateId);
+        if (!candidate) {
+            console.error(`Candidate with ID ${candidateId} not found.`);
+            return [];
+        }
+        // Assuming form responses are linked by respondent email
+        const formResponses = await FormResponse.find({ candidateId: candidateId });
+        return formResponses;
+    } catch (error) {
+        console.error(`Error fetching form responses for candidate ${candidateId}:`, error);
+        return [];
+    }
+};
 
 export const processGoogleFormsResponse = async (form: FormType, responseData: ResponseData) => {
     const emailField = Object.keys(form.fieldMappings).find((key) => form.fieldMappings[key] === "user.email");

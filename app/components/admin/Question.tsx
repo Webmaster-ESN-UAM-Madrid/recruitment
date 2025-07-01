@@ -18,6 +18,8 @@ const Question = ({ question, onMappingChange }: QuestionProps) => {
       case 'TEXT':
       case 'PARAGRAPH_TEXT':
         return <input type="text" disabled />;
+      case 'DATE':
+        return <input type="date" disabled />;
       case 'MULTIPLE_CHOICE':
         return (
           <div>
