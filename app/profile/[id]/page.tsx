@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ProfilePage from '../../../src/components/pages/ProfilePage';
+import LoadingSpinner from '../../components/loaders/LoadingSpinner';
 
 export default function Profile() {
   const { data: session, status } = useSession();
@@ -32,7 +33,7 @@ export default function Profile() {
   }, [session, status, router]);
 
   if (status === 'loading' || !hasAccess) {
-    return <div>Loading...</div>; // Or a loading spinner
+    return <LoadingSpinner />;
   }
 
   return <ProfilePage />;

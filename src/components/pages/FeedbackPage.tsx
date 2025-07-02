@@ -1,23 +1,23 @@
-'use client';
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
+import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
+import { ButtonProvider } from '../../../app/components/buttons/IconButton';
+import { DeleteButton } from '../../../app/components/buttons/DeleteButton';
+import { EditButton } from '../../../app/components/buttons/EditButton';
+import { AddButton } from '../../../app/components/buttons/AddButton';
+import { CancelButton } from '../../../app/components/buttons/CancelButton';
+import { SaveButton } from '../../../app/components/buttons/SaveButton';
 
 const PageContainer = styled.div`
   padding: 20px;
-`;
-
-const SectionTitle = styled.h2`
-  border-bottom: 2px solid #eee;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
 `;
 
 const CandidateTable = styled.div`
   display: flex;
   flex-direction: column;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   overflow: hidden;
 `;
 
@@ -68,31 +68,42 @@ const ActionsCell = styled.div`
   justify-content: flex-end;
 `;
 
-const Button = styled.button`
-  padding: 5px 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  cursor: pointer;
-`;
-
-const AccordionContent = styled.div`
-  padding: 15px;
+const AccordionContent = styled.div<{ expanded: boolean }>`
   background-color: #f9f9f9;
+  max-height: ${({ expanded }) => (expanded ? '9999px' : '0')};
+  padding-left: 35px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
 `;
 
 const FeedbackItem = styled.div`
-  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
   border-bottom: 1px solid #eee;
   &:last-child {
     border-bottom: none;
   }
 `;
 
-const EditedIndicator = styled.span`
-  font-size: 0.8em;
-  color: #888;
-  margin-left: 10px;
+const FeedbackContent = styled.div`
+  flex-grow: 1;
+  margin-right: 10px;
 `;
+
+const FeedbackActions = styled.div`
+  display: flex;
+  gap: 5px;
+`;
+
+const FeedbackDates = styled.small`
+  font-size: 0.75em;
+  color: #666;
+  white-space: nowrap;
+`;
+
+
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -109,7 +120,7 @@ const ModalOverlay = styled.div`
 const ModalContent = styled.div`
   background-color: white;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   width: 500px;
 `;
 
@@ -122,7 +133,7 @@ const Textarea = styled.textarea`
   min-height: 100px;
   padding: 10px;
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
 `;
 
 const ModalActions = styled.div`
@@ -152,36 +163,48 @@ const FeedbackPage: React.FC = () => {
   const { data: session } = useSession();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [editingFeedback, setEditingFeedback] = useState<Feedback | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
+  const [loading, setLoading] = useState(true); // Add loading state
   const defaultAvatar = '/default-avatar.jpg';
 
   useEffect(() => {
-    const fetchCandidates = async () => {
-      const res = await fetch('/api/candidates');
-      if (res.ok) {
-        const data = await res.json();
-        setCandidates(data);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [candidatesRes, feedbackRes] = await Promise.all([
+          fetch('/api/candidates'),
+          fetch('/api/feedback'),
+        ]);
+
+        if (candidatesRes.ok) {
+          const data = await candidatesRes.json();
+          setCandidates(data);
+        }
+
+        if (feedbackRes.ok) {
+          const data = await feedbackRes.json();
+          setFeedback(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    const fetchFeedback = async () => {
-      const res = await fetch('/api/feedback');
-      if (res.ok) {
-        const data = await res.json();
-        setFeedback(data);
-      }
-    };
-
-    fetchCandidates();
-    fetchFeedback();
+    fetchData();
   }, []);
 
   const handleRowClick = (candidateId: string) => {
-    setExpandedRow(expandedRow === candidateId ? null : candidateId);
+    setExpandedRows(prev =>
+      prev.includes(candidateId)
+        ? prev.filter(id => id !== candidateId)
+        : [...prev, candidateId]
+    );
   };
 
   const openModal = (candidate: Candidate, feedbackToEdit?: Feedback) => {
@@ -247,75 +270,89 @@ const FeedbackPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <SectionTitle>Feedback</SectionTitle>
+      <h1>Feedback</h1> {/* Do not translate this line */}
       <CandidateTable>
         <TableHeader>
-          <DataCell>Photo</DataCell>
-          <DataCell>Name</DataCell>
-          <DataCell>Feedback Entries</DataCell>
-          <DataCell>Actions</DataCell>
+          <DataCell>Foto</DataCell>
+          <DataCell>Nombre</DataCell>
+          <DataCell>Comentarios Añadidos</DataCell>
+          <DataCell>Acciones</DataCell>
         </TableHeader>
-        {candidates.map(candidate => {
-          const candidateFeedback = feedback.filter(f => f.candidateId === candidate._id && f.givenBy === session?.user?.id);
-          return (
-            <div key={candidate._id}>
-              <TableRow onClick={() => handleRowClick(candidate._id)}>
-                <DataCell>
-                  <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
-                </DataCell>
-                <DataCell>
-                  <CandidateName>{candidate.name}</CandidateName>
-                </DataCell>
-                <DataCell>{candidateFeedback.length}</DataCell>
-                <ActionsCell>
-                  <Button onClick={() => openModal(candidate)}>Add Feedback</Button>
-                </ActionsCell>
-              </TableRow>
-              {expandedRow === candidate._id && (
-                <AccordionContent>
+        {loading ? (
+          <LoadingSpinner />
+        ) : candidates.length > 0 ? (
+          candidates.map(candidate => {
+            const candidateFeedback = feedback.filter(f => f.candidateId === candidate._id && f.givenBy === session?.user?.id);
+            return (
+              <div key={candidate._id}>
+                <TableRow onClick={() => handleRowClick(candidate._id)}>
+                  <DataCell>
+                    <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
+                  </DataCell>
+                  <DataCell>
+                    <CandidateName>{candidate.name}</CandidateName>
+                  </DataCell>
+                  <DataCell>{candidateFeedback.length}</DataCell>
+                  <ActionsCell>
+                    <AddButton
+                      onClick={() => openModal(candidate)}
+                      ariaLabel="Añadir Comentario"
+                      showSpinner={false}
+                    />
+                  </ActionsCell>
+                </TableRow>
+                <AccordionContent expanded={expandedRows.includes(candidate._id)}>
                   {candidateFeedback.length > 0 ? (
                     candidateFeedback.map(f => (
                       <FeedbackItem key={f._id}>
-                        <p>{f.content}</p>
-                        <small>
-                          {new Date(f.createdAt).toLocaleDateString()}
-                          {f.isEdited && (
-                            <EditedIndicator>
-                              Edited on {new Date(f.updatedAt).toLocaleDateString()}
-                            </EditedIndicator>
-                          )}
-                        </small>
+                        <FeedbackContent>
+                          <p>{f.content}</p>
+                          <FeedbackDates>
+                            Publicado el {new Date(f.createdAt).toLocaleDateString()}
+                            {f.isEdited && (
+                              <> · Editado el {new Date(f.updatedAt).toLocaleDateString()}</>
+                            )}
+                          </FeedbackDates>
+                        </FeedbackContent>
                         {f.givenBy === session?.user?.id && (
-                          <div>
-                            <Button onClick={() => openModal(candidate, f)}>Edit</Button>
-                            <Button onClick={() => handleDeleteFeedback(f._id)}>Delete</Button>
-                          </div>
+                          <ButtonProvider>
+                            <FeedbackActions>
+                              <EditButton onClick={() => openModal(candidate, f)} iconSize={20} />
+                              <DeleteButton onClick={() => handleDeleteFeedback(f._id)} iconSize={20} />
+                            </FeedbackActions>
+                          </ButtonProvider>
                         )}
                       </FeedbackItem>
                     ))
                   ) : (
-                    <p>No feedback yet.</p>
+                    <p>No hay comentarios todavía.</p>
                   )}
                 </AccordionContent>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            );
+          })
+        ) : (
+          <p>No hay candidatos para mostrar.</p>
+        )}
       </CandidateTable>
 
       {isModalOpen && selectedCandidate && (
         <ModalOverlay>
           <ModalContent>
             <ModalTitle>
-              {editingFeedback ? 'Edit' : 'Add'} Feedback for {selectedCandidate.name}
+              {editingFeedback ? 'Editar' : 'Añadir'} Comentario para {selectedCandidate.name}
             </ModalTitle>
             <Textarea
               value={feedbackText}
               onChange={(e) => setFeedbackText(e.target.value)}
             />
             <ModalActions>
-              <Button onClick={closeModal}>Cancel</Button>
-              <Button onClick={handleFeedbackSubmit}>Submit</Button>
+              <CancelButton
+                onClick={closeModal}
+              />
+              <SaveButton
+                onClick={handleFeedbackSubmit}
+              />
             </ModalActions>
           </ModalContent>
         </ModalOverlay>

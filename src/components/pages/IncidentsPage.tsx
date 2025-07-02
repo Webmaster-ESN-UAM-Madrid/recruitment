@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
 
 // --- Type Definitions ---
 interface Incident {
@@ -36,21 +37,29 @@ const SectionTitle = styled.h2`
 const ItemCard = styled.div`
   background-color: #fff;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   padding: 15px;
   margin-bottom: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
-const ProcessButton = styled.button`
-  background-color: #007bff;
+const StyledButton = styled.button`
+  background-color: var(--main-color);
   color: white;
   border: none;
   padding: 8px 15px;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   &:hover {
     background-color: #0056b3;
+  }
+`;
+
+const CancelButton = styled(StyledButton)`
+  background-color: #6c757d; /* Secondary button color */
+
+  &:hover {
+    background-color: #5a6268;
   }
 `;
 
@@ -58,17 +67,33 @@ const ProcessButton = styled.button`
 const IncidentsPage: React.FC = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [unprocessed, setUnprocessed] = useState<UnprocessedResponse[]>([]);
+  const [loadingIncidents, setLoadingIncidents] = useState(true);
+  const [loadingUnprocessed, setLoadingUnprocessed] = useState(true);
 
   const fetchIncidents = async () => {
-    const res = await fetch('/api/incidents');
-    const data = await res.json();
-    setIncidents(data);
+    setLoadingIncidents(true);
+    try {
+      const res = await fetch('/api/incidents');
+      const data = await res.json();
+      setIncidents(data);
+    } catch (error) {
+      console.error("Failed to fetch incidents:", error);
+    } finally {
+      setLoadingIncidents(false);
+    }
   };
 
   const fetchUnprocessed = async () => {
-    const res = await fetch('/api/forms/unprocessed');
-    const data = await res.json();
-    setUnprocessed(data);
+    setLoadingUnprocessed(true);
+    try {
+      const res = await fetch('/api/forms/unprocessed');
+      const data = await res.json();
+      setUnprocessed(data);
+    } catch (error) {
+      console.error("Failed to fetch unprocessed forms:", error);
+    } finally {
+      setLoadingUnprocessed(false);
+    }
   };
 
   useEffect(() => {
@@ -123,69 +148,77 @@ const IncidentsPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <h1>Incidents & Processing</h1>
+      <h1>Incidencias y Procesamiento</h1>
       
       <Section>
-        <SectionTitle>Open Errors</SectionTitle>
-        {openErrorIncidents.length > 0 ? (
+        <SectionTitle>Errores Abiertos</SectionTitle>
+        {loadingIncidents ? (
+          <LoadingSpinner />
+        ) : openErrorIncidents.length > 0 ? (
           openErrorIncidents.map(inc => (
             <ItemCard key={inc._id}>
-              <p><strong>Details:</strong> {inc.details}</p>
-              <p><strong>Created At:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <ProcessButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolve</ProcessButton>
-              <ProcessButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Discard</ProcessButton>
+              <p><strong>Detalles:</strong> {inc.details}</p>
+              <p><strong>Creado el:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
+              <StyledButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolver</StyledButton>
+              <CancelButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px' }}>Descartar</CancelButton>
             </ItemCard>
           ))
         ) : (
-          <p>No open errors to display.</p>
+          <p>No hay errores abiertos para mostrar.</p>
         )}
       </Section>
 
       <Section>
-        <SectionTitle>Open Warnings</SectionTitle>
-        {openWarningIncidents.length > 0 ? (
+        <SectionTitle>Advertencias Abiertas</SectionTitle>
+        {loadingIncidents ? (
+          <LoadingSpinner />
+        ) : openWarningIncidents.length > 0 ? (
           openWarningIncidents.map(inc => (
             <ItemCard key={inc._id}>
-              <p><strong>Details:</strong> {inc.details}</p>
-              <p><strong>Created At:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <ProcessButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolve</ProcessButton>
-              <ProcessButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px', backgroundColor: '#dc3545' }}>Discard</ProcessButton>
+              <p><strong>Detalles:</strong> {inc.details}</p>
+              <p><strong>Creado el:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
+              <StyledButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolver</StyledButton>
+              <CancelButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px' }}>Descartar</CancelButton>
             </ItemCard>
           ))
         ) : (
-          <p>No open warnings to display.</p>
+          <p>No hay advertencias abiertas para mostrar.</p>
         )}
         </Section>
 
       <Section>
-        <SectionTitle>Resolved Incidents</SectionTitle>
-        {resolvedIncidents.length > 0 ? (
+        <SectionTitle>Incidencias Resueltas</SectionTitle>
+        {loadingIncidents ? (
+          <LoadingSpinner />
+        ) : resolvedIncidents.length > 0 ? (
           resolvedIncidents.map(inc => (
             <ItemCard key={inc._id}>
-              <p><strong>Details:</strong> {inc.details}</p>
-              <p><strong>Created At:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <p><strong>Resolved At:</strong> {inc.resolvedAt ? new Date(inc.resolvedAt).toLocaleString() : 'N/A'}</p>
+              <p><strong>Detalles:</strong> {inc.details}</p>
+              <p><strong>Creado el:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
+              <p><strong>Resuelto el:</strong> {inc.resolvedAt ? new Date(inc.resolvedAt).toLocaleString() : 'N/A'}</p>
             </ItemCard>
           ))
         ) : (
-          <p>No resolved incidents to display.</p>
+          <p>No hay incidencias resueltas para mostrar.</p>
         )}
       </Section>
 
       <Section>
-        <SectionTitle>Unprocessed Forms</SectionTitle>
-        {unprocessed.length > 0 ? (
+        <SectionTitle>Formularios Sin Procesar</SectionTitle>
+        {loadingUnprocessed ? (
+          <LoadingSpinner />
+        ) : unprocessed.length > 0 ? (
           unprocessed.map(res => (
             <ItemCard key={res._id}>
-              <p>Response ID: {res._id}</p>
-              <p>Submitted At: {new Date(res.submittedAt).toLocaleString()}</p>
-              <ProcessButton onClick={() => handleProcessClick(res._id)}>
-                Process
-              </ProcessButton>
+              <p>ID de Respuesta: {res._id}</p>
+              <p>Enviado el: {new Date(res.submittedAt).toLocaleString()}</p>
+              <StyledButton onClick={() => handleProcessClick(res._id)}>
+                Procesar
+              </StyledButton>
             </ItemCard>
           ))
         ) : (
-          <p>No unprocessed forms.</p>
+          <p>No hay formularios sin procesar.</p>
         )}
       </Section>
 

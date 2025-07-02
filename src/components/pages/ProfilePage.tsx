@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { useParams } from 'next/navigation';
 
 import FormPreview from '../../../app/components/FormPreview';
+import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
 
 // --- Type Definitions ---
 interface Candidate {
@@ -160,54 +161,54 @@ const FormResponseCard = styled(ItemCard)`
   
 
   if (!id || !candidate) {
-    return <PageContainer>Loading candidate profile...</PageContainer>;
+    return <LoadingSpinner />;
   }
 
   return (
     <PageContainer>
-      <h1>Candidate Profile: {candidate.name}</h1>
+      <h1>Perfil del Candidato: {candidate.name}</h1>
 
       <Section>
-        <SectionTitle>Candidate Information</SectionTitle>
+        <SectionTitle>Información del Candidato</SectionTitle>
         <ProfileCard>
-          <Avatar src={editablePhotoUrl} alt="Candidate Avatar" onError={(e) => (e.currentTarget.src = defaultAvatar)} />
+          <Avatar src={editablePhotoUrl} alt="Avatar del Candidato" onError={(e) => (e.currentTarget.src = defaultAvatar)} />
             <div>
             <InfoGroup>
-              <Label>Name:</Label>
+              <Label>Nombre:</Label>
               <span>{candidate.name}</span>
             </InfoGroup>
             <InfoGroup>
-              <Label>Email:</Label>
+              <Label>Correo Electrónico:</Label>
               <span>{candidate.email}</span>
             </InfoGroup>
             <InfoGroup>
-              <Label>Photo URL:</Label>
+              <Label>URL de la Foto:</Label>
               <span>{candidate.photoUrl || 'N/A'}</span>
             </InfoGroup>
             <InfoGroup>
-              <Label>Recruitment ID:</Label>
+              <Label>ID de Reclutamiento:</Label>
               <span>{candidate.recruitmentId}</span>
             </InfoGroup>
             <InfoGroup>
-              <Label>Applied At:</Label>
+              <Label>Postulado el:</Label>
               <span>{new Date(candidate.appliedAt).toLocaleString()}</span>
             </InfoGroup>
             <InfoGroup>
-              <Label>Status:</Label>
-              <span>{candidate.active ? 'Active' : 'Inactive'}</span>
+              <Label>Estado:</Label>
+              <span>{candidate.active ? 'Activo' : 'Inactivo'}</span>
             </InfoGroup>
             </div>
         </ProfileCard>
       </Section>
 
       <Section>
-        <SectionTitle>Form Responses</SectionTitle>
+        <SectionTitle>Respuestas del Formulario</SectionTitle>
         {formResponses.length > 0 ? (
           formResponses.map(response => (
             <FormResponseCard key={response._id}>
-              <p><strong>Form ID:</strong> {response.formId._id}</p>
-              <p><strong>Respondent Email:</strong> {response.respondentEmail}</p>
-              <p><strong>Submitted At:</strong> {new Date(response.submittedAt).toLocaleString()}</p>
+              <p><strong>ID del Formulario:</strong> {response.formId._id}</p>
+              <p><strong>Correo del Encuestado:</strong> {response.respondentEmail}</p>
+              <p><strong>Enviado el:</strong> {new Date(response.submittedAt).toLocaleString()}</p>
               {/* Pass the formId.structure directly as it's already a JavaScript object */}
               {response.formId.structure && (
                 <FormPreview formStructure={JSON.stringify(response.formId.structure)} responses={response.responses} />
@@ -215,7 +216,7 @@ const FormResponseCard = styled(ItemCard)`
             </FormResponseCard>
           ))
         ) : (
-          <p>No form responses found for this candidate.</p>
+          <p>No se encontraron respuestas de formulario para este candidato.</p>
         )}
       </Section>
     </PageContainer>

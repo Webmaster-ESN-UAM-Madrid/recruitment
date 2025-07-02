@@ -97,18 +97,28 @@ interface Candidate {
   // Add other properties as needed for arbitrary data
 }
 
+import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
+
 const DashboardPage: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true); // Add loading state
   const defaultAvatar = '/default-avatar.jpg';
 
   useEffect(() => {
     const fetchCandidates = async () => {
-      const res = await fetch('/api/candidates'); // Assuming an API endpoint for all candidates
-      if (res.ok) {
-        const data = await res.json();
-        setCandidates(data);
-      } else {
-        console.error("Failed to fetch candidates");
+      setLoading(true); // Set loading to true before fetching
+      try {
+        const res = await fetch('/api/candidates'); // Assuming an API endpoint for all candidates
+        if (res.ok) {
+          const data = await res.json();
+          setCandidates(data);
+        } else {
+          console.error("Failed to fetch candidates");
+        }
+      } catch (error) {
+        console.error("Failed to fetch candidates:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchCandidates();
@@ -119,19 +129,20 @@ const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <h1>Dashboard Page</h1>
-      <p>Overview of candidates in different phases.</p>
+      <h1>Dashboard</h1>
 
       <Section>
-        <SectionTitle>Active Candidates</SectionTitle>
+        <SectionTitle>Candidatos Activos</SectionTitle>
         <CandidateTable>
           <TableHeader>
-            <DataCell>Photo</DataCell>
-            <DataCell>Name</DataCell>
-            <DataCell>Email</DataCell>
-            <DataCell>Actions</DataCell>
+            <DataCell>Foto</DataCell>
+            <DataCell>Nombre</DataCell>
+            <DataCell>Correo Electrónico</DataCell>
+            <DataCell>Acciones</DataCell>
           </TableHeader>
-          {activeCandidates.length > 0 ? (
+          {loading ? (
+            <LoadingSpinner />
+          ) : activeCandidates.length > 0 ? (
             activeCandidates.map(candidate => (
               <TableRow key={candidate._id} href={`/profile/${candidate._id}`}>
                 <DataCell>
@@ -143,26 +154,28 @@ const DashboardPage: React.FC = () => {
                 <DataCell>{candidate.email}</DataCell>
                 <ActionsCell>
                   {/* Add more actions here if needed */}
-                  <span>View Profile</span>
+                  <span>Ver Perfil</span>
                 </ActionsCell>
               </TableRow>
             ))
           ) : (
-            <ItemCard>No active candidates to display.</ItemCard>
+            <ItemCard>No hay candidatos activos para mostrar.</ItemCard>
           )}
         </CandidateTable>
       </Section>
 
       <Section>
-        <SectionTitle>Inactive Candidates</SectionTitle>
+        <SectionTitle>Candidatos Inactivos</SectionTitle>
         <CandidateTable>
           <TableHeader>
-            <DataCell>Photo</DataCell>
-            <DataCell>Name</DataCell>
-            <DataCell>Email</DataCell>
-            <DataCell>Actions</DataCell>
+            <DataCell>Foto</DataCell>
+            <DataCell>Nombre</DataCell>
+            <DataCell>Correo Electrónico</DataCell>
+            <DataCell>Acciones</DataCell>
           </TableHeader>
-          {inactiveCandidates.length > 0 ? (
+          {loading ? (
+            <LoadingSpinner />
+          ) : inactiveCandidates.length > 0 ? (
             inactiveCandidates.map(candidate => (
               <TableRow key={candidate._id} href={`/profile/${candidate._id}`} $inactive>
                 <DataCell>
@@ -174,12 +187,12 @@ const DashboardPage: React.FC = () => {
                 <DataCell>{candidate.email}</DataCell>
                 <ActionsCell>
                   {/* Add more actions here if needed */}
-                  <span>View Profile</span>
+                  <span>Ver Perfil</span>
                 </ActionsCell>
               </TableRow>
             ))
           ) : (
-            <ItemCard>No inactive candidates to display.</ItemCard>
+            <ItemCard>No hay candidatos inactivos para mostrar.</ItemCard>
           )}
         </CandidateTable>
       </Section>

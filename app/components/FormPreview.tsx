@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import LoadingButton from "./loaders/LoadingButton";
+import Question from "./Question";
 import styled from 'styled-components';
-import Question from './Question';
+import { useEffect, useState } from 'react';
 
 interface FormField {
   id: number;
@@ -29,7 +30,7 @@ interface FormPreviewProps {
 const FormContainer = styled.div`
   background-color: #f9f9f9;
   border: 1px solid #eee;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md); /* Apply rounded corners */
   padding: 20px;
   margin-top: 15px;
 `;
@@ -38,6 +39,7 @@ const SectionTitle = styled.h3`
   margin-top: 20px;
   margin-bottom: 10px;
   color: #333;
+  font-family: 'Montserrat', sans-serif; /* Use Montserrat for titles */
 `;
 
 const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit }) => {
@@ -45,6 +47,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
   const [currentMappings, setCurrentMappings] = useState<Map<string, string>>(initialMappings || new Map());
   const [nameMapped, setNameMapped] = useState<boolean>(false);
   const [emailMapped, setEmailMapped] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (initialMappings) {
@@ -62,7 +65,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
   }, [initialMappings]);
 
   if (!parsedForm || !Array.isArray(parsedForm)) {
-    return <p>No form structure available or invalid format.</p>;
+    return <p>Estructura de formulario no disponible o formato inválido.</p>;
   }
 
   const getFieldValue = (fieldId: number) => {
@@ -88,10 +91,12 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
     setCurrentMappings(newMappings);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
     if (onSaveMappings) {
-      onSaveMappings(currentMappings);
+      await onSaveMappings(currentMappings);
     }
+    setIsSaving(false);
   };
 
   const handleCancel = () => {
@@ -125,8 +130,8 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
       })}
       {isEditing && (
         <div>
-          <button onClick={handleSave}>Save Mappings</button>
-          <button onClick={handleCancel} style={{ marginLeft: '10px' }}>Cancel</button>
+          <LoadingButton isLoading={isSaving} onClick={handleSave}>Guardar Mapeos</LoadingButton>
+          <LoadingButton isLoading={isSaving} onClick={handleCancel} style={{ marginLeft: '10px' }}>Cancelar</LoadingButton>
         </div>
       )}
     </FormContainer>

@@ -4,29 +4,34 @@
 
 import { getProviders, signIn } from "next-auth/react";
 import React from "react";
+import LoadingSpinner from "../loaders/LoadingSpinner";
+import LoadingButton from "../loaders/LoadingButton";
 
 export default function LoginProviders() {
   const [providers, setProviders] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     const fetchProviders = async () => {
+      setIsLoading(true);
       const res = await getProviders();
       setProviders(res);
+      setIsLoading(false);
     };
     fetchProviders();
   }, []);
 
   if (!providers) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (
     <div>
       {Object.values(providers).map((provider: any) => (
         <div key={provider.name}>
-          <button onClick={() => signIn(provider.id, { callbackUrl: "/" })}>
-            Sign in with {provider.name}
-          </button>
+          <LoadingButton isLoading={isLoading} onClick={() => signIn(provider.id, { callbackUrl: "/" })}>
+            Iniciar sesión con {provider.name}
+          </LoadingButton>
         </div>
       ))}
     </div>

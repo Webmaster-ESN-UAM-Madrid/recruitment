@@ -10,9 +10,8 @@ const PageContainer = styled.div`
 const AdminPanelPage: React.FC = () => {
   return (
     <PageContainer>
-      <h1>Admin Panel Page</h1>
-      <p>Manage recruitment settings, users, and logs.</p>
-      {/* TODO: Implement Recruitment Settings, Recruiter List, Logs, and Google Forms Linker */}
+      <h1>Panel de Administración</h1>
+      <p>Gestiona la configuración de reclutamiento, usuarios y registros.</p>
       <GlobalConfigManager />
       <ConnectForm />
     </PageContainer>

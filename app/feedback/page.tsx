@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import FeedbackPage from '../../src/components/pages/FeedbackPage';
+import LoadingSpinner from '../components/loaders/LoadingSpinner';
 
 export default function Feedback() {
   const { data: session, status } = useSession();
@@ -19,7 +20,7 @@ export default function Feedback() {
   }, [session, status, router]);
 
   if (status === 'loading') {
-    return <div>Loading...</div>; // Or a loading spinner
+    return <LoadingSpinner />;
   }
 
   return <FeedbackPage />;

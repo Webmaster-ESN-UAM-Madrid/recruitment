@@ -24,25 +24,30 @@ interface QuestionProps {
 
 const FormGroup = styled.div`
   margin-bottom: 15px;
+  padding: 10px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid #f0f0f0; /* Lighter border for a softer look */
 `;
 
 const Label = styled.label`
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
+  font-family: 'Inter', sans-serif; /* Use Inter for labels */
 `;
 
 const Description = styled.p`
   font-size: 0.9em;
   color: #666;
   margin-bottom: 10px;
+  font-family: 'Inter', sans-serif; /* Use Inter for descriptions */
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md); /* Apply rounded corners */
   background-color: #e9e9e9; /* Make it look disabled */
 `;
 
@@ -50,7 +55,7 @@ const Select = styled.select`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md); /* Apply rounded corners */
   background-color: #e9e9e9;
 `;
 
@@ -58,7 +63,7 @@ const TextArea = styled.textarea`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: var(--border-radius-md); /* Apply rounded corners */
   background-color: #e9e9e9;
   min-height: 80px;
 `;
@@ -70,8 +75,11 @@ const CheckboxGroup = styled.div`
 
 const Table = styled.table`
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate; /* Use separate to allow border-radius on cells */
+  border-spacing: 0; /* Remove space between cells */
   margin-top: 10px;
+  border-radius: var(--border-radius-md); /* Apply rounded corners to the table */
+  overflow: hidden; /* Hide overflowing content for rounded corners */
 
   th, td {
     border: 1px solid #ddd;
@@ -86,7 +94,7 @@ const Table = styled.table`
 
 const Question = ({ question, responseValue, isEditing, mappingOptions, currentMapping, onMappingChange, nameMapped, emailMapped }: QuestionProps) => {
   const renderQuestionType = () => {
-    const displayValue = responseValue !== null && responseValue !== undefined && responseValue !== '' ? String(responseValue) : 'N/A';
+    const displayValue = responseValue !== null && responseValue !== undefined && responseValue !== '' ? String(responseValue) : 'N/D';
 
     switch (question.type) {
       case 'TEXT':
@@ -159,7 +167,7 @@ const Question = ({ question, responseValue, isEditing, mappingOptions, currentM
           </Table>
         );
       default:
-        return <p>Unsupported question type: {question.type}</p>;
+        return <p>Tipo de pregunta no soportado: {question.type}</p>;
     }
   };
 
@@ -173,9 +181,9 @@ const Question = ({ question, responseValue, isEditing, mappingOptions, currentM
           value={currentMapping}
           onChange={(e) => onMappingChange(question.id, e.target.value)}
         >
-          <option value="none">None</option>
-          <option value="user.name" disabled={nameMapped && currentMapping !== 'user.name'}>User Name</option>
-          <option value="user.email" disabled={emailMapped && currentMapping !== 'user.email'}>User Email</option>
+          <option value="none">Ninguno</option>
+          <option value="user.name" disabled={nameMapped && currentMapping !== 'user.name'}>Nombre de Usuario</option>
+          <option value="user.email" disabled={emailMapped && currentMapping !== 'user.email'}>Correo Electrónico de Usuario</option>
         </Select>
       )}
     </FormGroup>

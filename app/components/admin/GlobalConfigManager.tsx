@@ -1,6 +1,5 @@
-'use client';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { HexColorPicker } from 'react-colorful';
 import styled from 'styled-components';
 
@@ -16,6 +15,87 @@ interface Committee {
   color: string;
 }
 
+const Container = styled.div`
+  background-color: #ffffff;
+  border-radius: var(--border-radius-md);
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+`;
+
+const Title = styled.h2`
+  color: #333;
+  margin-bottom: 20px;
+  font-family: 'Montserrat', sans-serif;
+`;
+
+const Subtitle = styled.h3`
+  color: #333;
+  margin-top: 25px;
+  margin-bottom: 15px;
+  font-family: 'Montserrat', sans-serif;
+`;
+
+const StyledInput = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius-md);
+  font-family: 'Inter', sans-serif;
+`;
+
+const StyledLabel = styled.label`
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 5px;
+  display: block;
+`;
+
+const StyledButton = styled.button`
+  background-color: var(--main-color); /* Primary button color */
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md); /* Rounded corners for buttons */
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+  margin-right: 10px;
+
+  &:hover {
+    background-color: #0056b3; /* Darker variant of main color */
+  }
+
+  &:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+`;
+
+const CancelButton = styled(StyledButton)`
+  background-color: #6c757d; /* Secondary button color */
+
+  &:hover {
+    background-color: #5a6268;
+  }
+`;
+
+const RecruiterItem = styled.div`
+  display: flex;
+  align-items: center;
+  border: 1px solid #eee;
+  padding: 10px;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  div {
+    font-family: 'Inter', sans-serif;
+  }
+`;
+
 const CommitteeList = styled.ul`
   list-style: none;
   padding: 0;
@@ -25,11 +105,19 @@ const CommitteeItem = styled.li`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #ccc;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
   &:last-child {
     border-bottom: none;
+  }
+
+  div {
+    font-family: 'Inter', sans-serif;
   }
 `;
 
@@ -39,26 +127,10 @@ const ColorBox = styled.div<{ color: string }>`
   background-color: ${(props) => props.color};
   border: 1px solid #ccc;
   margin-right: 10px;
+  border-radius: var(--border-radius-md);
 `;
 
-const Button = styled.button`
-  padding: 8px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #007bff;
-  color: white;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-
-  & + & {
-    margin-left: 10px;
-  }
-`;
-
-const GlobalConfigManager = () => { // Added comment to force re-render
+const GlobalConfigManager = () => {
   const [currentRecruitment, setCurrentRecruitment] = useState('');
   const [recruitmentPhase, setRecruitmentPhase] = useState('');
   const [recruiters, setRecruiters] = useState<Recruiter[]>([]);
@@ -236,14 +308,14 @@ const GlobalConfigManager = () => { // Added comment to force re-render
   const recruitmentPhaseSuggestions = ['registro', 'entrevistas', 'welcome days'];
 
   return (
-    <div>
-      <h2>Global Configuration</h2>
+    <Container>
+      <Title>Global Configuration</Title>
       {message && <p style={{ color: 'green' }}>{message}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <div>
-        <label htmlFor="currentRecruitment">Current Recruitment ID:</label>
-        <input
+        <StyledLabel htmlFor="currentRecruitment">Current Recruitment ID:</StyledLabel>
+        <StyledInput
           id="currentRecruitment"
           type="text"
           value={currentRecruitment}
@@ -252,8 +324,8 @@ const GlobalConfigManager = () => { // Added comment to force re-render
       </div>
 
       <div>
-        <label htmlFor="recruitmentPhase">Recruitment Phase:</label>
-        <input
+        <StyledLabel htmlFor="recruitmentPhase">Recruitment Phase:</StyledLabel>
+        <StyledInput
           id="recruitmentPhase"
           type="text"
           value={recruitmentPhase}
@@ -266,22 +338,22 @@ const GlobalConfigManager = () => { // Added comment to force re-render
           ))}
         </datalist>
       </div>
-      <button onClick={handleUpdateDetails}>Update Details</button>
+      <StyledButton onClick={handleUpdateDetails}>Update Details</StyledButton>
 
-      <h3>Recruiters</h3>
+      <Subtitle>Recruiters</Subtitle>
       <div>
-        <input
+        <StyledInput
           type="email"
           placeholder="Add recruiter by email"
           value={newRecruiterEmail}
           onChange={(e) => setNewRecruiterEmail(e.target.value)}
         />
-        <button onClick={handleAddRecruiter}>Add Recruiter</button>
+        <StyledButton onClick={handleAddRecruiter}>Add Recruiter</StyledButton>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {recruiters.map((recruiter) => (
-          <div key={recruiter._id} style={{ display: 'flex', alignItems: 'center', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>
+          <RecruiterItem key={recruiter._id}>
             <div style={{ marginRight: '10px' }}>
               <Image src={recruiter.image} alt="Profile" width="50" height="50" style={{ borderRadius: "100%" }} />
             </div>
@@ -290,15 +362,15 @@ const GlobalConfigManager = () => { // Added comment to force re-render
               <div>{recruiter.email}</div>
             </div>
             <div>
-              <button onClick={() => handleRemoveRecruiter(recruiter.email)}>Remove</button>
+              <CancelButton onClick={() => handleRemoveRecruiter(recruiter.email)}>Remove</CancelButton>
             </div>
-          </div>
+          </RecruiterItem>
         ))}
       </div>
 
-      <h3>Committees</h3>
+      <Subtitle>Committees</Subtitle>
       <form onSubmit={handleCommitteeSubmit}>
-        <input
+        <StyledInput
           type="text"
           placeholder="Committee Name"
           value={newCommitteeName}
@@ -306,36 +378,36 @@ const GlobalConfigManager = () => { // Added comment to force re-render
           required
         />
         <HexColorPicker color={newCommitteeColor} onChange={setNewCommitteeColor} />
-        <input
+        <StyledInput
           type="text"
           placeholder="Hex Color"
           value={newCommitteeColor}
           onChange={(e) => setNewCommitteeColor(e.target.value)}
           required
         />
-        <Button type="submit">{editingCommittee ? 'Update Committee' : 'Add Committee'}</Button>
-        {editingCommittee && <Button type="button" onClick={() => {
+        <StyledButton type="submit">{editingCommittee ? 'Update Committee' : 'Add Committee'}</StyledButton>
+        {editingCommittee && <CancelButton type="button" onClick={() => {
           setEditingCommittee(null);
           setNewCommitteeName('');
           setNewCommitteeColor('#aabbcc');
-        }}>Cancel Edit</Button>}
+        }}>Cancel Edit</CancelButton>}
       </form>
 
       <CommitteeList>
         {committees.map((committee) => (
           <CommitteeItem key={committee.name}>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <ColorBox color={committee.color} />
               {committee.name} ({committee.color})
             </div>
             <div>
-              <Button onClick={() => handleEditCommittee(committee)}>Edit</Button>
-              <Button onClick={() => handleDeleteCommittee(committee.name)}>Delete</Button>
+              <StyledButton onClick={() => handleEditCommittee(committee)}>Edit</StyledButton>
+              <CancelButton onClick={() => handleDeleteCommittee(committee.name)}>Delete</CancelButton>
             </div>
           </CommitteeItem>
         ))}
       </CommitteeList>
-    </div>
+    </Container>
   );
 };
 
