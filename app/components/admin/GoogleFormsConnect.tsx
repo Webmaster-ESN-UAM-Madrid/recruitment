@@ -29,6 +29,7 @@ const GoogleFormsConnect = () => {
   const [formIdentifier, setFormIdentifier] = useState<string>('');
   const [canCreateUsers, setCanCreateUsers] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [editingForm, setEditingForm] = useState<IForm | null>(null); // New state for editing
 
   const getAppsScript = () => {
     return `function validateForm() {
@@ -261,7 +262,63 @@ const GoogleFormsConnect = () => {
     startNewConnection(); // Start the connection process with pre-filled data
   };
 
+  const handleEditForm = (form: IForm) => {
+    // Convert fieldMappings from plain object to Map if it's not already a Map
+    const fieldMappingsMap = form.fieldMappings instanceof Map 
+      ? form.fieldMappings 
+      : new Map(Object.entries(form.fieldMappings || {}).map(([key, value]) => [key, String(value)]));
+    
+    // Directly modify the form object's fieldMappings and then set it as the editingForm
+    form.fieldMappings = fieldMappingsMap;
+    setEditingForm(form);
+  };
+
+  const handleSaveMappings = async (mappings: Map<string, string>) => {
+    if (!editingForm) return;
+
+    try {
+      const response = await fetch(`/api/forms/${editingForm._id}/map`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) }), // Convert Map to object for JSON
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage(data.message || 'Mappings updated successfully!');
+        setEditingForm(null); // Exit editing mode
+        fetchConnectedForms(); // Refresh list
+      } else {
+        setError(data.message || 'Failed to update mappings.');
+      }
+    } catch (e) {
+      setError(`Failed to save mappings: ${(e as Error).message}`);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingForm(null); // Exit editing mode
+  };
+
   const formIdentifierSuggestions = connectedForms.map(form => form.formIdentifier).filter(Boolean) as string[];
+
+  if (editingForm) {
+    return (
+      <div>
+        <h2>Edit Form Mappings: {editingForm.formIdentifier || editingForm._id as string}</h2>
+        {message && <p style={{ color: 'green' }}>{message}</p>}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <FormPreview
+          formStructure={editingForm.structure}
+          responses={new Map()}
+          isEditing={true}
+          initialMappings={editingForm.fieldMappings}
+          onSaveMappings={handleSaveMappings}
+          onCancelEdit={handleCancelEdit}
+        />
+      </div>
+    );
+  }
 
   if (step === 0) {
     return (
@@ -283,6 +340,7 @@ const GoogleFormsConnect = () => {
                   <p><strong>Can Create Users:</strong> {form.canCreateUsers ? 'Yes' : 'No'}</p>
                   <button onClick={() => handleDeleteForm(form._id as string)}>Delete</button>
                   <button onClick={() => handleReplaceForm(form as ConnectedForm)} style={{ marginLeft: '10px' }}>Replace</button>
+                  <button onClick={() => handleEditForm(form)} style={{ marginLeft: '10px' }}>Edit</button>
                 </li>
               ))}
             </ul>

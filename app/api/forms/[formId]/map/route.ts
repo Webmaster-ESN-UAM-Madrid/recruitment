@@ -1,34 +1,27 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
 import Form from "@/lib/models/form";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { checkAdminAccess } from "@/lib/utils/authUtils";
 
-export async function POST(request: Request, context: any) {
-    const session = await getServerSession(authOptions);
-    if (!session || !checkAdminAccess(session.user?.email)) {
-        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-    }
-    const { params } = context as { params: { formId: string } };
-    await dbConnect();
+export async function PATCH(req: NextRequest, context: any) {
+    await connectDB();
+    const { formId } = context.params;
 
     try {
-        const { formId } = params;
-        const { fieldMappings } = await request.json();
+        const { fieldMappings } = await req.json();
 
-        const form = await Form.findById(formId);
+        if (!fieldMappings || typeof fieldMappings !== "object") {
+            return NextResponse.json({ message: "Invalid fieldMappings provided" }, { status: 400 });
+        }
 
-        if (!form) {
+        const updatedForm = await Form.findByIdAndUpdate(formId, { $set: { fieldMappings: fieldMappings } }, { new: true, runValidators: true });
+
+        if (!updatedForm) {
             return NextResponse.json({ message: "Form not found" }, { status: 404 });
         }
 
-        form.fieldMappings = fieldMappings;
-        await form.save();
-
-        return NextResponse.json({ message: "Field mappings saved" });
-    } catch (error) {
-        console.error("Error saving field mappings:", error);
-        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ message: "Form mappings updated successfully", form: updatedForm });
+    } catch (error: any) {
+        console.error("Error updating form mappings:", error);
+        return NextResponse.json({ message: "Error updating form mappings", error: error.message }, { status: 500 });
     }
 }

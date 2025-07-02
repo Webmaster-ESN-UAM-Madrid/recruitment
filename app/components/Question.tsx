@@ -14,6 +14,12 @@ interface QuestionType {
 interface QuestionProps {
   question: QuestionType;
   responseValue?: string | number | boolean | object | string[];
+  isEditing?: boolean; // New prop
+  mappingOptions?: string[]; // New prop
+  currentMapping?: string; // New prop
+  onMappingChange?: (questionId: number, mapping: string) => void; // New prop
+  nameMapped?: boolean; // New prop
+  emailMapped?: boolean; // New prop
 }
 
 const FormGroup = styled.div`
@@ -78,7 +84,7 @@ const Table = styled.table`
   }
 `;
 
-const Question = ({ question, responseValue }: QuestionProps) => {
+const Question = ({ question, responseValue, isEditing, mappingOptions, currentMapping, onMappingChange, nameMapped, emailMapped }: QuestionProps) => {
   const renderQuestionType = () => {
     const displayValue = responseValue !== null && responseValue !== undefined && responseValue !== '' ? String(responseValue) : 'N/A';
 
@@ -162,6 +168,16 @@ const Question = ({ question, responseValue }: QuestionProps) => {
       <Label>{question.title}{question.required && " *"}</Label>
       {question.description && <Description>{question.description}</Description>}
       {renderQuestionType()}
+      {isEditing && mappingOptions && onMappingChange && (
+        <Select
+          value={currentMapping}
+          onChange={(e) => onMappingChange(question.id, e.target.value)}
+        >
+          <option value="none">None</option>
+          <option value="user.name" disabled={nameMapped && currentMapping !== 'user.name'}>User Name</option>
+          <option value="user.email" disabled={emailMapped && currentMapping !== 'user.email'}>User Email</option>
+        </Select>
+      )}
     </FormGroup>
   );
 };
