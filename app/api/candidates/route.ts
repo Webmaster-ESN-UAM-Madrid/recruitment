@@ -7,10 +7,22 @@ import { getCandidates } from "@/lib/controllers/candidateController";
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
-    if (!session || !(await checkRecruiterAccess(session.user?.email))) {
+    if (!session) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
+    const isRecruiter = await checkRecruiterAccess(session.user?.email);
+
     const candidates = await getCandidates();
-    return NextResponse.json(candidates);
+
+    if (isRecruiter) {
+        return NextResponse.json(candidates);
+    } else {
+        const limitedCandidates = candidates.map(candidate => ({
+            _id: candidate._id,
+            name: candidate.name,
+            photoUrl: candidate.photoUrl,
+        }));
+        return NextResponse.json(limitedCandidates);
+    }
 }

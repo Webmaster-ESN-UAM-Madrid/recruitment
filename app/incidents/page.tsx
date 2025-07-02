@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import IncidentsPage from '../../src/pages/IncidentsPage';
+import IncidentsPage from '../../src/components/pages/IncidentsPage';
 
 export default function Incidents() {
   const { data: session, status } = useSession();

@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import ProfilePage from '../../src/pages/ProfilePage';
+import ProfilePage from '../../src/components/pages/ProfilePage';
 
 export default function Profile() {
   const { data: session, status } = useSession();

@@ -52,6 +52,16 @@ export const authOptions: AuthOptions = {
             else {
                 return "/auth/error?error=InvalidDomain";
             }
+        },
+        async session({ session, token }) {
+            if (session.user && token.email) {
+                await dbConnect();
+                const user = await User.findOne({ email: token.email });
+                if (user) {
+                    session.user.id = user._id.toString();
+                }
+            }
+            return session;
         }
     },
     pages: {

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useParams } from 'next/navigation';
 
-import FormPreview from '../../app/components/FormPreview';
+import FormPreview from '../../../app/components/FormPreview';
 
 // --- Type Definitions ---
 interface Candidate {
@@ -20,9 +20,27 @@ interface Candidate {
   interests: string[]; // Array of interest IDs
 }
 
+interface FormQuestion {
+  question: string;
+  type: string;
+  options?: string[];
+}
+
+interface FormSection {
+  title: string;
+  description?: string;
+  questions: FormQuestion[];
+}
+
+interface FormStructure {
+  title: string;
+  description?: string;
+  sections: FormSection[];
+}
+
 interface FormResponse {
   _id: string;
-  formId: { _id: string; structure: any; }; // Assuming formId is populated with _id and structure
+  formId: { _id: string; structure: FormStructure; };
   respondentEmail: string;
   responses: Map<string, string | number | boolean | object>;
   processed: boolean;
@@ -192,7 +210,7 @@ const FormResponseCard = styled(ItemCard)`
               <p><strong>Submitted At:</strong> {new Date(response.submittedAt).toLocaleString()}</p>
               {/* Pass the formId.structure directly as it's already a JavaScript object */}
               {response.formId.structure && (
-                <FormPreview formStructure={response.formId.structure} responses={response.responses} />
+                <FormPreview formStructure={JSON.stringify(response.formId.structure)} responses={response.responses} />
               )}
             </FormResponseCard>
           ))

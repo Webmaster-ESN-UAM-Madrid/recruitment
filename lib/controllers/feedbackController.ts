@@ -1,25 +1,59 @@
-interface Feedback {
-    id: string;
-    message: string;
-    // Add other properties as needed
+import Feedback from "../models/feedback";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { NextRequest } from "next/server";
+
+interface Context {
+    params: {
+        id: string;
+    };
 }
 
-export const updateFeedback = async (feedback: Feedback) => {
-    console.log("updateFeedback called with:", feedback);
-    return { success: true, updatedId: feedback.id };
-};
-
-export const deleteFeedback = async (id: string) => {
-    console.log(`deleteFeedback called with id: ${id}`);
-    return { success: true, deletedId: id };
-};
-
-export const createFeedback = async (feedback: Feedback) => {
-    console.log("createFeedback called with:", feedback);
-    return { success: true, createdId: "new-feedback-id" };
-};
-
 export const getFeedback = async () => {
-    console.log("getFeedback called");
-    return [{ id: "1", message: "Feedback 1" }, { id: "2", message: "Feedback 2" }];
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+        return [];
+    }
+    const feedback = await Feedback.find({ givenBy: session.user.id });
+    return feedback;
+};
+
+export const createFeedback = async (req: NextRequest) => {
+    const session = await getServerSession(authOptions);
+    console.log("Session:", session);
+    if (!session?.user?.id) {
+        return { success: false, message: "Unauthorized" };
+    }
+    const body = await req.json();
+    const { candidateId, feedback } = body;
+    const newFeedback = new Feedback({
+        candidateId,
+        givenBy: session.user.id,
+        recruitmentId: "2025",
+        content: feedback
+    });
+    await newFeedback.save();
+    return newFeedback;
+};
+
+export const updateFeedback = async (req: NextRequest, context: Context) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+        return { success: false, message: "Unauthorized" };
+    }
+    const { params } = context;
+    const body = await req.json();
+    const { feedback } = body;
+    const updatedFeedback = await Feedback.findOneAndUpdate({ _id: params.id, givenBy: session.user.id }, { content: feedback, isEdited: true, updatedAt: new Date() }, { new: true });
+    return updatedFeedback;
+};
+
+export const deleteFeedback = async (req: NextRequest, context: Context) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+        return { success: false, message: "Unauthorized" };
+    }
+    const { params } = context;
+    await Feedback.findOneAndDelete({ _id: params.id, givenBy: session.user.id });
+    return { success: true };
 };

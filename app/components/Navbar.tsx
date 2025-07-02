@@ -36,16 +36,21 @@ const UserInfo = styled.div`
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isRecruiter, setIsRecruiter] = useState(false);
 
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkAccess = async () => {
       if (status === 'authenticated') {
-        const res = await fetch('/api/access/admin');
-        const data = await res.json();
-        setIsAdmin(data.isAdmin);
+        const adminRes = await fetch('/api/access/admin');
+        const adminData = await adminRes.json();
+        setIsAdmin(adminData.isAdmin);
+
+        const recruiterRes = await fetch('/api/access/recruiter');
+        const recruiterData = await recruiterRes.json();
+        setIsRecruiter(recruiterData.hasAccess);
       }
     };
-    checkAdmin();
+    checkAccess();
   }, [session, status]);
 
   if (status === 'loading') {
@@ -55,9 +60,9 @@ const Navbar: React.FC = () => {
   return (
     <NavContainer>
       <NavLinks>
-        <NavLink href="/dashboard">Dashboard</NavLink>
-        <NavLink href="/feedback">Feedback</NavLink>
-        <NavLink href="/incidents">Incidents</NavLink>
+        {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>}
+        {session && <NavLink href="/feedback">Feedback</NavLink>}
+        {isRecruiter && <NavLink href="/incidents">Incidents</NavLink>}
         {isAdmin && <NavLink href="/admin">Admin</NavLink>}
       </NavLinks>
       <UserInfo>
