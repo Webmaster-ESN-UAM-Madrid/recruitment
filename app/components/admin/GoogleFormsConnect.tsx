@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unescaped-entities */
-/* eslint-disable react/no-unescaped-entities */
 import { useState, useEffect } from 'react';
 import FormPreview from '../FormPreview';
 import { config } from '@/lib/config';

@@ -1,9 +1,11 @@
 'use client';
 
-import LoadingButton from "./loaders/LoadingButton";
 import Question from "./Question";
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
+import { ButtonProvider } from './buttons/IconButton';
+import { SaveButton } from './buttons/SaveButton';
+import { CancelButton } from './buttons/CancelButton';
 
 interface FormField {
   id: number;
@@ -28,8 +30,7 @@ interface FormPreviewProps {
 }
 
 const FormContainer = styled.div`
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
+  border: 2px solid #eee;
   border-radius: var(--border-radius-md); /* Apply rounded corners */
   padding: 20px;
   margin-top: 15px;
@@ -40,10 +41,19 @@ const SectionTitle = styled.h3`
   margin-bottom: 10px;
   color: #333;
   font-family: 'Montserrat', sans-serif; /* Use Montserrat for titles */
+
+  &:first-child {
+    margin-top: 0; /* Remove top margin for the first section */
+  }
+`;
+
+const ButtonWrapper = styled.div`
+  margin-left: 10px;
 `;
 
 const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit }) => {
   const parsedForm: FormSection[] = JSON.parse(formStructure);
+  console.log(parsedForm)
   const [currentMappings, setCurrentMappings] = useState<Map<string, string>>(initialMappings || new Map());
   const [nameMapped, setNameMapped] = useState<boolean>(false);
   const [emailMapped, setEmailMapped] = useState<boolean>(false);
@@ -129,10 +139,12 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
         );
       })}
       {isEditing && (
-        <div>
-          <LoadingButton isLoading={isSaving} onClick={handleSave}>Guardar Mapeos</LoadingButton>
-          <LoadingButton isLoading={isSaving} onClick={handleCancel} style={{ marginLeft: '10px' }}>Cancelar</LoadingButton>
-        </div>
+        <ButtonProvider>
+          <SaveButton isLoading={isSaving} onClick={handleSave} />
+          <ButtonWrapper>
+            <CancelButton isLoading={isSaving} onClick={handleCancel} />
+          </ButtonWrapper>
+        </ButtonProvider>
       )}
     </FormContainer>
   );

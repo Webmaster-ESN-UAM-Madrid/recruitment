@@ -1,7 +1,7 @@
 import React from "react";
 import { IconButton } from "./IconButton";
 
-interface SaveButtonProps {
+interface ViewButtonProps {
   onClick: () => Promise<void> | void;
   ariaLabel?: string;
   disabled?: boolean;
@@ -11,19 +11,19 @@ interface SaveButtonProps {
   iconSize?: number;
 }
 
-export const SaveButton: React.FC<SaveButtonProps> = ({
+export const ViewButton: React.FC<ViewButtonProps> = ({
   onClick,
-  ariaLabel = "Guardar",
+  ariaLabel = "Ocultar",
   disabled = false,
   isLoading = false,
-  showSpinner = true,
+  showSpinner = false,
   className,
   iconSize = 24,
 }) => {
   return (
     <IconButton
       onClick={onClick}
-      path="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z"
+      path="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"
       color="primary"
       ariaLabel={ariaLabel}
       disabled={disabled}

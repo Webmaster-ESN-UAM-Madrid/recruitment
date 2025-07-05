@@ -11,7 +11,6 @@ const AdminPanelPage: React.FC = () => {
   return (
     <PageContainer>
       <h1>Panel de Administración</h1>
-      <p>Gestiona la configuración de reclutamiento, usuarios y registros.</p>
       <GlobalConfigManager />
       <ConnectForm />
     </PageContainer>

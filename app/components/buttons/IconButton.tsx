@@ -6,34 +6,32 @@ import styled, { keyframes } from "styled-components";
 
 // Define a styled component for the button to apply custom styles
 const StyledButton = styled(Button)<{ iconSize: number }>`
-  background-color: transparent;
+  background-color: rgba(0, 0, 0, 0.035);
   width: ${({ iconSize }) => iconSize * 2}px;
   height: ${({ iconSize }) => iconSize * 2}px;
   min-width: ${({ iconSize }) => iconSize * 2}px;
   min-height: ${({ iconSize }) => iconSize * 2}px;
-  padding: 0; // Remove default padding
-  border: none; // Remove border
-  border-radius: 8px; // Rounded corners for the button itself
+  padding: 0;
+  border: none;
+  border-radius: 8px;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative; // Ensure proper positioning for children
-  overflow: hidden; // Hide overflowing content like ripples
+  position: relative;
+  overflow: hidden;
   transition: background-color 0.2s ease-in-out, border-radius 0.2s ease-in-out;
 
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.08); // Transparent gray on hover (Material Design ripple effect)
-    border-radius: 8px; // Keep rounded corners on hover
+  &:not(:disabled):hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
   }
 
-  // Hide the NextUI ripple effect
   .nextui-ripple {
     display: none !important;
   }
 
-  // Ensure icon color matches button color
   & .nextui-button-icon {
-    color: currentColor; // Inherit color from the button
+    color: currentColor;
   }
 `;
 
@@ -141,6 +139,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
     }
   };
 
+  const iconColor = disabled ? "#999" : getColor(color);
+
   return (
     <StyledButton
       isIconOnly
@@ -160,7 +160,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
           height={`${iconSize}px`}
           viewBox="0 -960 960 960"
           width={`${iconSize}px`}
-          fill={getColor(color)}
+          fill={iconColor}
         >
           <path d={path} />
         </svg>

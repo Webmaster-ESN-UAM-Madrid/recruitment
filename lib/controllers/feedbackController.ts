@@ -41,8 +41,9 @@ export const updateFeedback = async (req: NextRequest, context: Context) => {
     if (!session?.user?.id) {
         return { success: false, message: "Unauthorized" };
     }
-    const { params } = context;
+    let { params } = context;
     const body = await req.json();
+    params = await params;
     const { feedback } = body;
     const updatedFeedback = await Feedback.findOneAndUpdate({ _id: params.id, givenBy: session.user.id }, { content: feedback, isEdited: true, updatedAt: new Date() }, { new: true });
     return updatedFeedback;

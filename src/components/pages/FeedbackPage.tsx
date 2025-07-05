@@ -8,6 +8,9 @@ import { EditButton } from '../../../app/components/buttons/EditButton';
 import { AddButton } from '../../../app/components/buttons/AddButton';
 import { CancelButton } from '../../../app/components/buttons/CancelButton';
 import { SaveButton } from '../../../app/components/buttons/SaveButton';
+import { ViewButton } from '../../../app/components/buttons/ViewButton';
+import { HideButton } from '../../../app/components/buttons/HideButton';
+import { useToast } from '../../../app/components/toasts/ToastContext';
 
 const PageContainer = styled.div`
   padding: 20px;
@@ -19,6 +22,8 @@ const CandidateTable = styled.div`
   border: 1px solid #ddd;
   border-radius: var(--border-radius-md);
   overflow: hidden;
+  max-width: 1000px;
+  margin: 0 auto;
 `;
 
 const TableHeader = styled.div`
@@ -35,7 +40,7 @@ const TableRow = styled.div`
   grid-template-columns: 60px 1fr 150px 120px;
   align-items: center;
   padding: 10px 15px;
-  border-bottom: 1px solid #eee;
+  border-top: 2px solid #eee;
   cursor: pointer;
 
   &:hover {
@@ -68,20 +73,58 @@ const ActionsCell = styled.div`
   justify-content: flex-end;
 `;
 
-const AccordionContent = styled.div<{ expanded: boolean }>`
-  background-color: #f9f9f9;
-  max-height: ${({ expanded }) => (expanded ? '9999px' : '0')};
-  padding-left: 35px;
+const AccordionContent = styled.div<{ expanded: boolean; hasFeedback: boolean }>`
+  display: grid;
+  grid-template-rows: ${({ expanded }) => (expanded ? '1fr' : '0fr')};
+  transition: grid-template-rows 0.25s ease-in-out;
   overflow: hidden;
-  transition: max-height 0.3s ease-in-out;
+
+  & > div {
+    overflow: hidden;
+    padding-left: 20px;
+    position: relative;
+  }
+
+  & > div::before {
+    // content: ${({ hasFeedback }) => (hasFeedback ? "''" : 'none')};
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 44px;
+    bottom: 10px;
+    width: 2px;
+    background-color: #ccc;
+  }
 `;
 
 const FeedbackItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
+  padding: 8px 15px 8px 40px;
   border-bottom: 1px solid #eee;
+  position: relative;
+
+  &:before {
+    content: '●';
+    position: absolute;
+    top: -1px;
+    left:16.35px;
+    color: #0070f040;
+    font-family: monospace;
+    font-size: 2.5em;
+  }
+    
+  &:after {
+    content: '●';
+    position: absolute;
+    top: 7px;
+    left:20px;
+    color: #0070f0;
+    font-family: monospace;
+    font-size: 1.5em;
+  }
+
   &:last-child {
     border-bottom: none;
   }
@@ -161,6 +204,7 @@ interface Feedback {
 
 const FeedbackPage: React.FC = () => {
   const { data: session } = useSession();
+  const { addToast } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
@@ -183,21 +227,25 @@ const FeedbackPage: React.FC = () => {
         if (candidatesRes.ok) {
           const data = await candidatesRes.json();
           setCandidates(data);
+        } else {
+          addToast('Error al obtener los candidatos', 'error');
         }
 
         if (feedbackRes.ok) {
           const data = await feedbackRes.json();
           setFeedback(data);
+        } else {
+          addToast('Error al obtener el feedback', 'error');
         }
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
+      } catch {
+        addToast('Error al obtener los datos', 'error');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [addToast]);
 
   const handleRowClick = (candidateId: string) => {
     setExpandedRows(prev =>
@@ -234,37 +282,52 @@ const FeedbackPage: React.FC = () => {
       : '/api/feedback';
     const method = editingFeedback ? 'PUT' : 'POST';
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        candidateId: selectedCandidate._id,
-        feedback: feedbackText,
-      }),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          candidateId: selectedCandidate._id,
+          feedback: feedbackText.trim(),
+        }),
+      });
 
-    if (res.ok) {
-      const updatedFeedback = await res.json();
-      if (editingFeedback) {
-        setFeedback(
-          feedback.map(f => (f._id === editingFeedback._id ? updatedFeedback : f))
-        );
+      if (res.ok) {
+        const updatedFeedback = await res.json();
+        if (editingFeedback) {
+          setFeedback(
+            feedback.map(f => (f._id === editingFeedback._id ? updatedFeedback : f))
+          );
+          addToast('Feedback actualizado correctamente', 'success');
+        } else {
+          setFeedback([...feedback, updatedFeedback]);
+          addToast('Feedback añadido correctamente', 'success');
+        }
+        closeModal();
       } else {
-        setFeedback([...feedback, updatedFeedback]);
+        addToast('No se pudo enviar el feedback', 'error');
       }
-      closeModal();
+    } catch {
+      addToast('Ocurrió un error', 'error');
     }
   };
 
   const handleDeleteFeedback = async (feedbackId: string) => {
-    const res = await fetch(`/api/feedback/${feedbackId}`, {
-      method: 'DELETE',
-    });
+    try {
+      const res = await fetch(`/api/feedback/${feedbackId}`, {
+        method: 'DELETE',
+      });
 
-    if (res.ok) {
-      setFeedback(feedback.filter(f => f._id !== feedbackId));
+      if (res.ok) {
+        setFeedback(feedback.filter(f => f._id !== feedbackId));
+        addToast('Feedback eliminado correctamente', 'success');
+      } else {
+        addToast('No se pudo eliminar el feedback', 'error');
+      }
+    } catch {
+      addToast('Ocurrió un error', 'error');
     }
   };
 
@@ -283,6 +346,9 @@ const FeedbackPage: React.FC = () => {
         ) : candidates.length > 0 ? (
           candidates.map(candidate => {
             const candidateFeedback = feedback.filter(f => f.candidateId === candidate._id && f.givenBy === session?.user?.id);
+            const isExpanded = expandedRows.includes(candidate._id);
+            const hasFeedback = candidateFeedback.length > 0;
+
             return (
               <div key={candidate._id}>
                 <TableRow onClick={() => handleRowClick(candidate._id)}>
@@ -294,39 +360,58 @@ const FeedbackPage: React.FC = () => {
                   </DataCell>
                   <DataCell>{candidateFeedback.length}</DataCell>
                   <ActionsCell>
+                    {isExpanded ? (
+                      <HideButton
+                        onClick={() => handleRowClick(candidate._id)}
+                        ariaLabel="Ocultar comentarios"
+                        iconSize={22}
+                      />
+                    ) : (
+                      <ViewButton
+                        onClick={() => handleRowClick(candidate._id)}
+                        ariaLabel="Ver comentarios"
+                        iconSize={22}
+                        disabled={!hasFeedback}
+                      />
+                    )}
                     <AddButton
                       onClick={() => openModal(candidate)}
                       ariaLabel="Añadir Comentario"
                       showSpinner={false}
+                      iconSize={22}
                     />
                   </ActionsCell>
                 </TableRow>
-                <AccordionContent expanded={expandedRows.includes(candidate._id)}>
-                  {candidateFeedback.length > 0 ? (
-                    candidateFeedback.map(f => (
-                      <FeedbackItem key={f._id}>
-                        <FeedbackContent>
-                          <p>{f.content}</p>
-                          <FeedbackDates>
-                            Publicado el {new Date(f.createdAt).toLocaleDateString()}
-                            {f.isEdited && (
-                              <> · Editado el {new Date(f.updatedAt).toLocaleDateString()}</>
-                            )}
-                          </FeedbackDates>
-                        </FeedbackContent>
-                        {f.givenBy === session?.user?.id && (
-                          <ButtonProvider>
-                            <FeedbackActions>
-                              <EditButton onClick={() => openModal(candidate, f)} iconSize={20} />
-                              <DeleteButton onClick={() => handleDeleteFeedback(f._id)} iconSize={20} />
-                            </FeedbackActions>
-                          </ButtonProvider>
-                        )}
-                      </FeedbackItem>
-                    ))
-                  ) : (
-                    <p>No hay comentarios todavía.</p>
-                  )}
+                <AccordionContent expanded={isExpanded} hasFeedback={hasFeedback}>
+                  <div>
+                    {hasFeedback ? (
+                      candidateFeedback.map(f => (
+                        <FeedbackItem key={f._id}>
+                          <FeedbackContent>
+                            {f.content.split('\n').map((line, idx) => (
+                              <p key={idx}>{line}‎ </p>
+                            ))}
+                            <FeedbackDates>
+                              Publicado el {new Date(f.createdAt).toLocaleDateString()}
+                              {f.isEdited && (
+                                <> · Editado el {new Date(f.updatedAt).toLocaleDateString()}</>
+                              )}
+                            </FeedbackDates>
+                          </FeedbackContent>
+                          {f.givenBy === session?.user?.id && (
+                            <ButtonProvider>
+                              <FeedbackActions>
+                                <EditButton onClick={() => openModal(candidate, f)} iconSize={20} />
+                                <DeleteButton onClick={() => handleDeleteFeedback(f._id)} iconSize={20} />
+                              </FeedbackActions>
+                            </ButtonProvider>
+                          )}
+                        </FeedbackItem>
+                      ))
+                    ) : (
+                      <p style={{padding: 15, paddingLeft: 40, paddingTop: 5}}>No hay comentarios para este newbie.</p>
+                    )}
+                  </div>
                 </AccordionContent>
               </div>
             );

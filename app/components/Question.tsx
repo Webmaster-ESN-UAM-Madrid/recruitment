@@ -14,48 +14,56 @@ interface QuestionType {
 interface QuestionProps {
   question: QuestionType;
   responseValue?: string | number | boolean | object | string[];
-  isEditing?: boolean; // New prop
-  mappingOptions?: string[]; // New prop
-  currentMapping?: string; // New prop
-  onMappingChange?: (questionId: number, mapping: string) => void; // New prop
-  nameMapped?: boolean; // New prop
-  emailMapped?: boolean; // New prop
+  isEditing?: boolean;
+  mappingOptions?: string[];
+  currentMapping?: string;
+  onMappingChange?: (questionId: number, mapping: string) => void;
+  nameMapped?: boolean;
+  emailMapped?: boolean;
 }
 
 const FormGroup = styled.div`
   margin-bottom: 15px;
   padding: 10px;
   border-radius: var(--border-radius-md);
-  border: 1px solid #f0f0f0; /* Lighter border for a softer look */
+  border: 2px solid #f0f0f0;
+
+  &:hover {
+    // Go up slightly and add a shadow on hover
+    transform: translateY(-2px);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    // Transition effect for smoothness
+    transition: transform 0.2s ease, box-shadow 0.2s ease
+  }
 `;
 
 const Label = styled.label`
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
-  font-family: 'Inter', sans-serif; /* Use Inter for labels */
+  font-family: 'Inter', sans-serif;
 `;
 
 const Description = styled.p`
   font-size: 0.9em;
   color: #666;
   margin-bottom: 10px;
-  font-family: 'Inter', sans-serif; /* Use Inter for descriptions */
+  font-family: 'Inter', sans-serif;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: var(--border-radius-md); /* Apply rounded corners */
-  background-color: #e9e9e9; /* Make it look disabled */
+  border-radius: var(--border-radius-md);
+  background-color: #e9e9e9;
 `;
 
 const Select = styled.select`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: var(--border-radius-md); /* Apply rounded corners */
+  border-radius: var(--border-radius-md);
   background-color: #e9e9e9;
 `;
 
@@ -63,9 +71,10 @@ const TextArea = styled.textarea`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
-  border-radius: var(--border-radius-md); /* Apply rounded corners */
-  background-color: #e9e9e9;
+  border-radius: var(--border-radius-md);
+  background-color: #f4f4f4;
   min-height: 80px;
+  resize: vertical;
 `;
 
 const CheckboxGroup = styled.div`
@@ -73,15 +82,61 @@ const CheckboxGroup = styled.div`
   flex-direction: column;
 `;
 
+const HiddenInput = styled.input`
+  display: none;
+`;
+
+const CustomCheckWrapper = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+`;
+
+const CustomCheckbox = styled.span<{ checked: boolean }>`
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  border: 2px solid ${({ checked }) => (checked ? '#0070f0' : '#ccc')};
+  background-color: ${({ checked }) => (checked ? '#57a5ff' : '#fff')};
+  border-radius: 3px;
+  position: relative;
+  box-sizing: border-box;
+
+  &::after {
+    content: '';
+    display: ${({ checked }) => (checked ? 'block' : 'none')};
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+`;
+
+const CustomRadio = styled.span<{ checked: boolean }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid ${({ checked }) => (checked ? '#0070f0' : '#ccc')};
+  background-color: ${({ checked }) =>
+    checked ? '#57a5ff' : '#fff'};
+  display: inline-block;
+`;
+
 const Table = styled.table`
   width: 100%;
-  border-collapse: separate; /* Use separate to allow border-radius on cells */
-  border-spacing: 0; /* Remove space between cells */
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: 10px;
-  border-radius: var(--border-radius-md); /* Apply rounded corners to the table */
-  overflow: hidden; /* Hide overflowing content for rounded corners */
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
 
-  th, td {
+  th,
+  td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: center;
@@ -92,72 +147,137 @@ const Table = styled.table`
   }
 `;
 
-const Question = ({ question, responseValue, isEditing, mappingOptions, currentMapping, onMappingChange, nameMapped, emailMapped }: QuestionProps) => {
-  const renderQuestionType = () => {
-    const displayValue = responseValue !== null && responseValue !== undefined && responseValue !== '' ? String(responseValue) : 'N/D';
+const Question = ({
+  question,
+  responseValue,
+  isEditing,
+  mappingOptions,
+  currentMapping,
+  onMappingChange,
+  nameMapped,
+  emailMapped,
+}: QuestionProps) => {
+  const displayValue =
+    responseValue !== null &&
+    responseValue !== undefined &&
+    responseValue !== ''
+      ? String(responseValue)
+      : 'N/D';
 
+  const renderQuestionType = () => {
     switch (question.type) {
       case 'TEXT':
       case 'DATE':
-        return <Input type={question.type === 'DATE' ? 'date' : 'text'} value={displayValue} disabled />;
+        return (
+          <Input
+            id={`question-${question.id}`}
+            type={question.type === 'DATE' ? 'date' : 'text'}
+            value={displayValue}
+            disabled
+          />
+        );
       case 'PARAGRAPH_TEXT':
-        return <TextArea value={displayValue} disabled />;
+        return (
+          <TextArea
+            id={`question-${question.id}`}
+            value={displayValue}
+            disabled
+          />
+        );
       case 'MULTIPLE_CHOICE':
         return (
           <CheckboxGroup>
-            {question.options?.map(option => (
-              <div key={option}>
-                <input type="radio" checked={responseValue === option} disabled />
-                <label>{option}</label>
-              </div>
-            ))}
+            {question.options?.map((option, index) => {
+              const inputId = `question-${question.id}-option-${index}`;
+              const isChecked = responseValue === option;
+
+              return (
+                <CustomCheckWrapper key={option} htmlFor={inputId}>
+                  <HiddenInput
+                    id={inputId}
+                    type="radio"
+                    checked={isChecked}
+                    disabled
+                  />
+                  <CustomRadio checked={isChecked} />
+                  <span>{option}</span>
+                </CustomCheckWrapper>
+              );
+            })}
           </CheckboxGroup>
         );
       case 'CHECKBOX':
         return (
           <CheckboxGroup>
-            {question.options?.map(option => (
-              <div key={option}>
-                <input type="checkbox" checked={Array.isArray(responseValue) && responseValue.includes(option)} disabled />
-                <label>{option}</label>
-              </div>
-            ))}
+            {question.options?.map((option, index) => {
+              const inputId = `question-${question.id}-option-${index}`;
+              const isChecked =
+                Array.isArray(responseValue) && responseValue.includes(option);
+
+              return (
+                <CustomCheckWrapper key={option} htmlFor={inputId}>
+                  <HiddenInput
+                    id={inputId}
+                    type="checkbox"
+                    checked={isChecked}
+                    disabled
+                  />
+                  <CustomCheckbox checked={isChecked} />
+                  <span>{option}</span>
+                </CustomCheckWrapper>
+              );
+            })}
           </CheckboxGroup>
         );
-      case 'LIST': // Assuming LIST is a dropdown/select
+      case 'LIST':
         return (
-          <Select value={displayValue} disabled>
-            {question.options?.map(option => (
-              <option key={option} value={option}>{option}</option>
+          <Select 
+            id={`question-${question.id}`}
+            value={displayValue}
+            disabled
+          >
+            {question.options?.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
             ))}
           </Select>
         );
       case 'GRID':
       case 'CHECKBOX_GRID':
         const isCheckboxGrid = question.type === 'CHECKBOX_GRID';
-        const currentResponse = Array.isArray(responseValue) ? responseValue : [];
+        const currentResponse = Array.isArray(responseValue)
+          ? responseValue
+          : [];
 
         return (
           <Table>
             <thead>
               <tr>
                 <th></th>
-                {question.columns?.map(col => <th key={col}>{col}</th>)}
+                {question.columns?.map((col) => (
+                  <th key={col}>{col}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {question.rows?.map((row, rowIndex) => (
                 <tr key={row}>
                   <td>{row}</td>
-                  {question.columns?.map(col => {
+                  {question.columns?.map((col) => {
                     const isChecked = currentResponse[rowIndex] === col;
                     return (
                       <td key={col}>
-                        <input
+                        <HiddenInput
                           type={isCheckboxGrid ? 'checkbox' : 'radio'}
                           checked={isChecked}
                           disabled
                         />
+                        {isCheckboxGrid ? (
+                          <CustomCheckbox checked={isChecked} />
+                        ) : (
+                          <CustomRadio checked={isChecked} />
+                        )}
                       </td>
                     );
                   })}
@@ -173,7 +293,10 @@ const Question = ({ question, responseValue, isEditing, mappingOptions, currentM
 
   return (
     <FormGroup>
-      <Label>{question.title}{question.required && " *"}</Label>
+      <Label htmlFor={`question-${question.id}`}>
+        {question.title}
+        {question.required && <span style={{ color: '#f00000', marginLeft: -2.5 }}> *</span>}
+      </Label>
       {question.description && <Description>{question.description}</Description>}
       {renderQuestionType()}
       {isEditing && mappingOptions && onMappingChange && (
@@ -182,8 +305,18 @@ const Question = ({ question, responseValue, isEditing, mappingOptions, currentM
           onChange={(e) => onMappingChange(question.id, e.target.value)}
         >
           <option value="none">Ninguno</option>
-          <option value="user.name" disabled={nameMapped && currentMapping !== 'user.name'}>Nombre de Usuario</option>
-          <option value="user.email" disabled={emailMapped && currentMapping !== 'user.email'}>Correo Electrónico de Usuario</option>
+          <option
+            value="user.name"
+            disabled={nameMapped && currentMapping !== 'user.name'}
+          >
+            Nombre de Usuario
+          </option>
+          <option
+            value="user.email"
+            disabled={emailMapped && currentMapping !== 'user.email'}
+          >
+            Correo Electrónico de Usuario
+          </option>
         </Select>
       )}
     </FormGroup>

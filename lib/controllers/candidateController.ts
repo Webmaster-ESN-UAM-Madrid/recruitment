@@ -45,10 +45,10 @@ export const createCandidate = async (candidateData: Partial<ICandidate>): Promi
     }
 };
 
-export const getCandidates = async (): Promise<ICandidate[]> => {
+export const getCandidates = async (active: boolean = false): Promise<ICandidate[]> => {
     await dbConnect();
     try {
-        const candidates = await Candidate.find({});
+        const candidates = await Candidate.find(active ? { active: true } : {});
         return candidates;
     } catch (error) {
         console.error("Error fetching candidates:", error);

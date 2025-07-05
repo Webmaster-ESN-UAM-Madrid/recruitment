@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
@@ -13,15 +13,15 @@ export async function GET(req: NextRequest) {
 
     const isRecruiter = await checkRecruiterAccess(session.user?.email);
 
-    const candidates = await getCandidates();
-
     if (isRecruiter) {
+        const candidates = await getCandidates();
         return NextResponse.json(candidates);
     } else {
-        const limitedCandidates = candidates.map(candidate => ({
+        const candidates = await getCandidates(true);
+        const limitedCandidates = candidates.map((candidate) => ({
             _id: candidate._id,
             name: candidate.name,
-            photoUrl: candidate.photoUrl,
+            photoUrl: candidate.photoUrl
         }));
         return NextResponse.json(limitedCandidates);
     }

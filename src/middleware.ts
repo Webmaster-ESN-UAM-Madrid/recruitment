@@ -9,10 +9,8 @@ function isPublicPath(pathname: string): boolean {
 export default withAuth(
     async function middleware(req) {
         const pathname = req.nextUrl.pathname;
-        console.log(`Middleware: Processing request for ${pathname}`);
 
         if (isPublicPath(pathname)) {
-            console.log(`Middleware: Allowing public path ${pathname}`);
             return NextResponse.next();
         }
 
@@ -23,13 +21,11 @@ export default withAuth(
             authorized: ({ token, req }) => {
                 const pathname = req.nextUrl.pathname;
                 if (isPublicPath(pathname)) {
-                    console.log(`Authorized Callback: Public path ${pathname}, returning true`);
                     return true;
                 }
 
                 // For all other routes, simply check if the user is authenticated
                 const isAuthenticated = !!token;
-                console.log(`Authorized Callback: Protected route ${pathname}, authenticated: ${isAuthenticated}`);
                 return isAuthenticated;
             }
         },

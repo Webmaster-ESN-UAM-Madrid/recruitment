@@ -8,6 +8,7 @@ interface CancelButtonProps {
   isLoading?: boolean;
   showSpinner?: boolean;
   className?: string;
+  iconSize?: number;
 }
 
 export const CancelButton: React.FC<CancelButtonProps> = ({
@@ -17,6 +18,7 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
   isLoading = false,
   showSpinner = false,
   className,
+  iconSize = 24,
 }) => {
   return (
     <IconButton
@@ -28,6 +30,7 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
       isLoading={isLoading}
       showSpinner={showSpinner}
       className={className}
+      iconSize={iconSize}
     />
   );
 };

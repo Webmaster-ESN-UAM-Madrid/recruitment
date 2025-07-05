@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 
 import FormPreview from '../../../app/components/FormPreview';
 import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
+import { useToast } from '../../../app/components/toasts/ToastContext';
 
 // --- Type Definitions ---
 interface Candidate {
@@ -91,23 +92,11 @@ const Label = styled.span`
   margin-right: 5px;
 `;
 
-const ItemCard = styled.div`
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 15px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-`;
-
-const FormResponseCard = styled(ItemCard)`
-  background-color: #f9f9f9;
-`;
-
 // --- Component ---
   const ProfilePage: React.FC = () => {
   const params = useParams<{ id: string }>();
   const [id, setId] = useState<string | undefined>(undefined);
+  const { addToast } = useToast();
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
@@ -117,33 +106,47 @@ const FormResponseCard = styled(ItemCard)`
 
   const fetchCandidate = useCallback(async () => {
     if (!id) return; // Ensure id is defined before fetching
-    const res = await fetch(`/api/candidates/${id}`);
-    if (res.ok) {
-      const data = await res.json();
-      setCandidate(data);
-      setEditablePhotoUrl(data.photoUrl || defaultAvatar);
-    } else {
-      console.error("Failed to fetch candidate");
+    try {
+      const res = await fetch(`/api/candidates/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCandidate(data);
+        setEditablePhotoUrl(data.photoUrl || defaultAvatar);
+      } else {
+        const errorData = await res.json();
+        addToast(`Error al cargar el candidato: ${errorData.message || res.statusText}`, 'error');
+        console.error("Error al cargar el candidato:", errorData);
+      }
+    } catch (error) {
+      addToast("Error de red al cargar el candidato.", 'error');
+      console.error("Error de red al cargar el candidato:", error);
     }
-  }, [id, defaultAvatar]);
+  }, [id, defaultAvatar, addToast]);
 
   const fetchFormResponses = useCallback(async () => {
     if (!id) return; // Ensure id is defined before fetching
-    const res = await fetch(`/api/forms/candidate/${id}`);
-    if (res.ok) {
-      const data = await res.json();
-      console.log("Fetched form responses data:", data);
-      // Convert the plain object 'responses' back into a Map
-      const processedData = data.map((item: FormResponse) => ({
-        ...item,
-        responses: new Map(Object.entries(item.responses || {})),
-      }));
-      console.log("Processed form responses data:", processedData);
-      setFormResponses(processedData);
-    } else {
-      console.error("Failed to fetch form responses");
+    try {
+      const res = await fetch(`/api/forms/candidate/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Datos de respuestas de formulario obtenidos:", data);
+        // Convert the plain object 'responses' back into a Map
+        const processedData = data.map((item: FormResponse) => ({
+          ...item,
+          responses: new Map(Object.entries(item.responses || {})),
+        }));
+        console.log("Datos de respuestas de formulario procesados:", processedData);
+        setFormResponses(processedData);
+      } else {
+        const errorData = await res.json();
+        addToast(`Error al cargar las respuestas del formulario: ${errorData.message || res.statusText}`, 'error');
+        console.error("Error al cargar las respuestas del formulario:", errorData);
+      }
+    } catch (error) {
+      addToast("Error de red al cargar las respuestas del formulario.", 'error');
+      console.error("Error de red al cargar las respuestas del formulario:", error);
     }
-  }, [id]);
+  }, [id, addToast]);
 
   useEffect(() => {
     if (params?.id) {
@@ -205,15 +208,7 @@ const FormResponseCard = styled(ItemCard)`
         <SectionTitle>Respuestas del Formulario</SectionTitle>
         {formResponses.length > 0 ? (
           formResponses.map(response => (
-            <FormResponseCard key={response._id}>
-              <p><strong>ID del Formulario:</strong> {response.formId._id}</p>
-              <p><strong>Correo del Encuestado:</strong> {response.respondentEmail}</p>
-              <p><strong>Enviado el:</strong> {new Date(response.submittedAt).toLocaleString()}</p>
-              {/* Pass the formId.structure directly as it's already a JavaScript object */}
-              {response.formId.structure && (
-                <FormPreview formStructure={JSON.stringify(response.formId.structure)} responses={response.responses} />
-              )}
-            </FormResponseCard>
+            <FormPreview key={response._id} formStructure={response.formId.structure as unknown as string} responses={response.responses} />
           ))
         ) : (
           <p>No se encontraron respuestas de formulario para este candidato.</p>
