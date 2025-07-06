@@ -9,6 +9,7 @@ interface ViewButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const ViewButton: React.FC<ViewButtonProps> = ({
@@ -19,6 +20,7 @@ export const ViewButton: React.FC<ViewButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const ViewButton: React.FC<ViewButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };

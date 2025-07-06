@@ -1,8 +1,18 @@
+'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from "react";
-import { HexColorPicker } from 'react-colorful';
+import { useState, useEffect, useCallback } from "react";
 import styled from 'styled-components';
+import { TextField, Autocomplete } from '@mui/material';
+
+import { SaveButton } from '@/app/components/buttons/SaveButton';
+import { AddButton } from '@/app/components/buttons/AddButton';
+import { DeleteButton } from '@/app/components/buttons/DeleteButton';
+import { EditButton } from '@/app/components/buttons/EditButton';
+import { useToast } from '@/app/components/toasts/ToastContext';
+import CommitteeModal from './CommitteeModal';
+import FormPreviewModal from './FormPreviewModal';
+import FormOnboardingModal from './FormOnboardingModal';
 
 interface Recruiter {
   _id: string;
@@ -17,12 +27,28 @@ interface Committee {
   color: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface ConnectedForm {
+  _id: string;
+  formIdentifier: string;
+  canCreateUsers: boolean;
+  structure: string;
+  fieldMappings: { [key: string]: string };
+}
+
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const Container = styled.div`
   background-color: #ffffff;
   border-radius: var(--border-radius-md);
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+  padding: 32px;
+  margin: 20px auto;
+  max-width: 1000px;
 `;
 
 const Title = styled.h2`
@@ -38,98 +64,35 @@ const Subtitle = styled.h3`
   font-family: 'Montserrat', sans-serif;
 `;
 
-const StyledInput = styled.input`
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius-md);
-  font-family: 'Inter', sans-serif;
-`;
-
-const StyledLabel = styled.label`
-  font-family: 'Inter', sans-serif;
-  margin-bottom: 5px;
-  display: block;
-`;
-
-const StyledButton = styled.button`
-  background-color: var(--main-color); /* Primary button color */
-  color: white;
-  border: none;
-  border-radius: var(--border-radius-md); /* Rounded corners for buttons */
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
-  margin-right: 10px;
-
-  &:hover {
-    background-color: #0056b3; /* Darker variant of main color */
-  }
-
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-`;
-
-const CancelButton = styled(StyledButton)`
-  background-color: #6c757d; /* Secondary button color */
-
-  &:hover {
-    background-color: #5a6268;
-  }
-`;
-
-const RecruiterItem = styled.div`
+const ButtonContainer = styled.div`
   display: flex;
-  align-items: center;
-  border: 1px solid #eee;
-  padding: 10px;
-  border-radius: var(--border-radius-md);
-  margin-bottom: 10px;
-  background-color: #f9f9f9;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  div {
-    font-family: 'Inter', sans-serif;
-  }
+  gap: 10px;
 `;
 
-const CommitteeList = styled.ul`
-  list-style: none;
-  padding: 0;
+const TableHeader = styled.div`
+  display: grid;
+  grid-template-columns: 50px 1fr 1.5fr 80px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  font-weight: bold;
+  border-bottom: 2px solid #ccc;
 `;
 
-const CommitteeItem = styled.li`
-  display: flex;
-  justify-content: space-between;
+const TableRow = styled.div`
+  display: grid;
+  grid-template-columns: 50px 1fr 1.5fr 80px;
+  gap: 10px;
   align-items: center;
-  padding: 10px;
+  padding: 5px 0;
   border-bottom: 1px solid #eee;
-  background-color: #f9f9f9;
-  border-radius: var(--border-radius-md);
-  margin-bottom: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  div {
-    font-family: 'Inter', sans-serif;
-  }
 `;
 
-const ColorBox = styled.div<{ color: string }>`
-  width: 20px;
-  height: 20px;
-  background-color: ${(props) => props.color};
-  border: 1px solid #ccc;
-  margin-right: 10px;
-  border-radius: var(--border-radius-md);
+const RecruiterInputContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
 `;
 
 const GlobalConfigManager = () => {
@@ -138,13 +101,17 @@ const GlobalConfigManager = () => {
   const [recruiters, setRecruiters] = useState<Recruiter[]>([]);
   const [committees, setCommittees] = useState<Committee[]>([]);
   const [newRecruiterEmail, setNewRecruiterEmail] = useState('');
-  const [newCommitteeName, setNewCommitteeName] = useState('');
-  const [newCommitteeColor, setNewCommitteeColor] = useState('#aabbcc');
   const [editingCommittee, setEditingCommittee] = useState<Committee | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [isCommitteeModalOpen, setIsCommitteeModalOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [connectedForms, setConnectedForms] = useState<ConnectedForm[]>([]);
+  const [isFormPreviewModalOpen, setIsFormPreviewModalOpen] = useState(false);
+  const [isFormOnboardingModalOpen, setIsFormOnboardingModalOpen] = useState(false);
+  const [selectedFormForPreview, setSelectedFormForPreview] = useState<ConnectedForm | null>(null);
 
-  const fetchConfig = async () => {
+  const { addToast } = useToast();
+
+  const fetchConfig = useCallback(async () => {
     try {
       const response = await fetch('/api/config');
       if (!response.ok) {
@@ -155,11 +122,11 @@ const GlobalConfigManager = () => {
       setRecruitmentPhase(data.recruitmentPhase);
       setRecruiters(data.recruiters);
     } catch (e) {
-      setError(`Failed to fetch config: ${(e as Error).message}`);
+      addToast(`Error al cargar la configuración: ${(e as Error).message}`, 'error');
     }
-  };
+  }, [addToast]);
 
-  const fetchCommittees = async () => {
+  const fetchCommittees = useCallback(async () => {
     try {
       const response = await fetch('/api/committees');
       if (!response.ok) {
@@ -168,18 +135,42 @@ const GlobalConfigManager = () => {
       const data = await response.json();
       setCommittees(data);
     } catch (e) {
-      setError(`Failed to fetch committees: ${(e as Error).message}`);
+      addToast(`Error al cargar los comités: ${(e as Error).message}`, 'error');
     }
-  };
+  }, [addToast]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/users');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setUsers(data.filter((user: User) => user.email.endsWith('@esnuam.org')));
+    } catch (err) {
+      console.error('No se pudieron cargar los usuarios', err);
+    }
+  }, []);
+
+  const fetchConnectedForms = useCallback(async () => {
+    try {
+      const response = await fetch('/api/forms');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setConnectedForms(data);
+    } catch (e) {
+      addToast(`Error al cargar los formularios conectados: ${(e as Error).message}`, 'error');
+    }
+  }, [addToast]);
 
   useEffect(() => {
     fetchConfig();
     fetchCommittees();
-  }, []);
+    fetchUsers();
+    fetchConnectedForms();
+  }, [fetchConfig, fetchCommittees, fetchUsers, fetchConnectedForms]);
 
   const handleUpdateDetails = async () => {
-    setMessage(null);
-    setError(null);
     try {
       const response = await fetch('/api/config/update-details', {
         method: 'POST',
@@ -188,41 +179,42 @@ const GlobalConfigManager = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        setMessage(data.message);
-        fetchConfig(); // Re-fetch to ensure UI is up-to-date
+        addToast(data.message, 'success');
+        fetchConfig();
       } else {
-        setError(data.message);
+        addToast(data.message, 'error');
       }
     } catch (e) {
-      setError(`Failed to update config: ${(e as Error).message}`);
+      addToast(`Error al actualizar la configuración: ${(e as Error).message}`, 'error');
     }
   };
 
   const handleAddRecruiter = async () => {
-    setMessage(null);
-    setError(null);
+    const sanitizedEmail = newRecruiterEmail.trim().toLowerCase();
+    if (!isValidEmail(sanitizedEmail)) {
+      addToast('Correo electrónico inválido.', 'error');
+      return;
+    }
     try {
       const response = await fetch('/api/config/recruiters/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newRecruiterEmail }),
+        body: JSON.stringify({ email: sanitizedEmail }),
       });
       const data = await response.json();
       if (response.ok) {
-        setMessage(data.message);
+        addToast(data.message, 'success');
         setNewRecruiterEmail('');
-        fetchConfig(); // Re-fetch to update recruiter list
+        fetchConfig();
       } else {
-        setError(data.message);
+        addToast(data.message, 'error');
       }
     } catch (e) {
-      setError(`Failed to add recruiter: ${(e as Error).message}`);
+      addToast(`Error al añadir reclutador: ${(e as Error).message}`, 'error');
     }
   };
 
   const handleRemoveRecruiter = async (email: string) => {
-    setMessage(null);
-    setError(null);
     try {
       const response = await fetch('/api/config/recruiters/remove', {
         method: 'POST',
@@ -231,66 +223,74 @@ const GlobalConfigManager = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        setMessage(data.message);
-        fetchConfig(); // Re-fetch to update recruiter list
+        addToast(data.message, 'success');
+        fetchConfig();
       } else {
-        setError(data.message);
+        addToast(data.message, 'error');
       }
     } catch (e) {
-      setError(`Failed to remove recruiter: ${(e as Error).message}`);
+      addToast(`Error al eliminar reclutador: ${(e as Error).message}`, 'error');
     }
   };
 
-  const handleCommitteeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-    setError(null);
-    const url = editingCommittee ? `/api/committees/${editingCommittee._id}` : '/api/committees';
-    const method = editingCommittee ? 'PUT' : 'POST';
+  const handleSaveCommittee = async (committee: { name: string; color: string; _id?: string }) => {
+    const url = committee._id ? `/api/committees?id=${committee._id}` : '/api/committees';
+    const method = committee._id ? 'PUT' : 'POST';
 
     try {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCommitteeName, color: newCommitteeColor }),
+        body: JSON.stringify({ name: committee.name, color: committee.color }),
       });
       const data = await response.json();
       if (response.ok) {
-        setMessage(data.message);
+        addToast(data.message, 'success');
         fetchCommittees();
-        setEditingCommittee(null);
-        setNewCommitteeName('');
-        setNewCommitteeColor('#aabbcc');
       } else {
-        setError(data.message);
+        addToast(data.message, 'error');
       }
     } catch (e) {
-      setError(`Failed to save committee: ${(e as Error).message}`);
+      addToast(`Error al guardar comité: ${(e as Error).message}`, 'error');
     }
   };
 
   const handleEditCommittee = (committee: Committee) => {
     setEditingCommittee(committee);
-    setNewCommitteeName(committee.name);
-    setNewCommitteeColor(committee.color);
+    setIsCommitteeModalOpen(true);
   };
 
   const handleDeleteCommittee = async (id: string) => {
-    setMessage(null);
-    setError(null);
     try {
-      const response = await fetch(`/api/committees/${id}`, {
+      const response = await fetch(`/api/committees?id=${id}`, {
         method: 'DELETE',
       });
       const data = await response.json();
       if (response.ok) {
-        setMessage(data.message);
+        addToast(data.message, 'success');
         fetchCommittees();
       } else {
-        setError(data.message);
+        addToast(data.message, 'error');
       }
     } catch (e) {
-      setError(`Failed to delete committee: ${(e as Error).message}`);
+      addToast(`Error al eliminar comité: ${(e as Error).message}`, 'error');
+    }
+  };
+
+  const handleDeleteForm = async (id: string) => {
+    try {
+      const response = await fetch(`/api/forms?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (response.ok) {
+        addToast(data.message, 'success');
+        fetchConnectedForms();
+      } else {
+        addToast(data.message, 'error');
+      }
+    } catch (e) {
+      addToast(`Error al eliminar formulario: ${(e as Error).message}`, 'error');
     }
   };
 
@@ -298,104 +298,134 @@ const GlobalConfigManager = () => {
 
   return (
     <Container>
-      <Title>Global Configuration</Title>
-      {message && <p style={{ color: 'green' }}>{message}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <Title>Configuración Global</Title>
 
-      <div>
-        <StyledLabel htmlFor="currentRecruitment">Current Recruitment ID:</StyledLabel>
-        <StyledInput
-          id="currentRecruitment"
-          type="text"
-          value={currentRecruitment}
-          onChange={(e) => setCurrentRecruitment(e.target.value)}
-        />
-      </div>
+      <Subtitle>Detalles de Reclutamiento</Subtitle>
+      <TextField
+        label="ID de Reclutamiento Actual"
+        value={currentRecruitment}
+        onChange={(e) => setCurrentRecruitment(e.target.value)}
+        fullWidth
+        margin="normal"
+      />
+      <Autocomplete
+        options={recruitmentPhaseSuggestions}
+        value={recruitmentPhase}
+        onChange={(_, newValue) => setRecruitmentPhase(newValue || '')}
+        renderInput={(params) => <TextField {...params} label="Fase de Reclutamiento" fullWidth margin="normal" />}
+      />
+      <ButtonContainer style={{ marginTop: 5 }}>
+        <SaveButton onClick={handleUpdateDetails} />
+      </ButtonContainer>
 
-      <div>
-        <StyledLabel htmlFor="recruitmentPhase">Recruitment Phase:</StyledLabel>
-        <StyledInput
-          id="recruitmentPhase"
-          type="text"
-          value={recruitmentPhase}
-          onChange={(e) => setRecruitmentPhase(e.target.value)}
-          list="recruitmentPhaseSuggestions"
-        />
-        <datalist id="recruitmentPhaseSuggestions">
-          {recruitmentPhaseSuggestions.map((suggestion) => (
-            <option key={suggestion} value={suggestion} />
-          ))}
-        </datalist>
-      </div>
-      <StyledButton onClick={handleUpdateDetails}>Update Details</StyledButton>
-
-      <Subtitle>Recruiters</Subtitle>
-      <div>
-        <StyledInput
-          type="email"
-          placeholder="Add recruiter by email"
+      <Subtitle>Reclutadores</Subtitle>
+      <RecruiterInputContainer>
+        <Autocomplete
+          options={users.map(u => u.email)}
+          freeSolo
           value={newRecruiterEmail}
-          onChange={(e) => setNewRecruiterEmail(e.target.value)}
+          onChange={(_, newValue) => setNewRecruiterEmail(newValue || '')}
+          onInputChange={(_, newInput) => setNewRecruiterEmail(newInput)}
+          renderInput={(params) => <TextField {...params} label="Añadir reclutador por correo" fullWidth margin="normal" />}
+          sx={{ flexGrow: 1 }}
         />
-        <StyledButton onClick={handleAddRecruiter}>Add Recruiter</StyledButton>
-      </div>
+        <AddButton
+          onClick={handleAddRecruiter}
+          disabled={!isValidEmail(newRecruiterEmail)}
+          iconSize={28}
+          showSpinner={true}
+          style={{ marginTop: 16, marginBottom: 8 }}
+        />
+      </RecruiterInputContainer>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ marginTop: '20px' }}>
+        <TableHeader>
+          <div /> {/* For avatar */}
+          <div>Nombre</div>
+          <div>Correo</div>
+          <div>Acciones</div>
+        </TableHeader>
         {recruiters.map((recruiter) => (
-          <RecruiterItem key={recruiter._id}>
-            <div style={{ marginRight: '10px' }}>
-              <Image src={recruiter.image} alt="Profile" width="50" height="50" style={{ borderRadius: "100%" }} />
-            </div>
-            <div style={{ flexGrow: 1 }}>
-              <div style={{ fontWeight: 'bold' }}>{recruiter.name}</div>
-              <div>{recruiter.email}</div>
-            </div>
+          <TableRow key={recruiter._id}>
             <div>
-              <CancelButton onClick={() => handleRemoveRecruiter(recruiter.email)}>Remove</CancelButton>
+              <Image src={recruiter.image} alt="Profile" width="40" height="40" style={{ borderRadius: "100%" }} />
             </div>
-          </RecruiterItem>
+            <div>{recruiter.name}</div>
+            <div>{recruiter.email}</div>
+            <div>
+              <DeleteButton onClick={() => handleRemoveRecruiter(recruiter.email)} />
+            </div>
+          </TableRow>
         ))}
       </div>
 
-      <Subtitle>Committees</Subtitle>
-      <form onSubmit={handleCommitteeSubmit}>
-        <StyledInput
-          type="text"
-          placeholder="Committee Name"
-          value={newCommitteeName}
-          onChange={(e) => setNewCommitteeName(e.target.value)}
-          required
-        />
-        <HexColorPicker color={newCommitteeColor} onChange={setNewCommitteeColor} />
-        <StyledInput
-          type="text"
-          placeholder="Hex Color"
-          value={newCommitteeColor}
-          onChange={(e) => setNewCommitteeColor(e.target.value)}
-          required
-        />
-        <StyledButton type="submit">{editingCommittee ? 'Update Committee' : 'Add Committee'}</StyledButton>
-        {editingCommittee && <CancelButton type="button" onClick={() => {
+      <Subtitle>Comités</Subtitle>
+      <ButtonContainer>
+        <AddButton onClick={() => {
           setEditingCommittee(null);
-          setNewCommitteeName('');
-          setNewCommitteeColor('#aabbcc');
-        }}>Cancel Edit</CancelButton>}
-      </form>
+          setIsCommitteeModalOpen(true);
+        }} />
+      </ButtonContainer>
 
-      <CommitteeList>
+      <div style={{ marginTop: '20px' }}>
+        <TableHeader style={{ gridTemplateColumns: '1fr 150px 120px' }}>
+          <div>Nombre</div>
+          <div>Color</div>
+          <div>Acciones</div>
+        </TableHeader>
         {committees.map((committee) => (
-          <CommitteeItem key={committee._id}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <ColorBox color={committee.color} />
-              {committee.name} ({committee.color})
-            </div>
-            <div>
-              <StyledButton onClick={() => handleEditCommittee(committee)}>Edit</StyledButton>
-              <CancelButton onClick={() => handleDeleteCommittee(committee._id)}>Delete</CancelButton>
-            </div>
-          </CommitteeItem>
+          <TableRow key={committee._id} style={{ gridTemplateColumns: '1fr 150px 120px' }}>
+            <div>{committee.name}</div>
+            <div style={{ backgroundColor: committee.color, width: '30px', height: '30px', borderRadius: '50%' }} />
+            <ButtonContainer>
+              <EditButton onClick={() => handleEditCommittee(committee)} />
+              <DeleteButton onClick={() => handleDeleteCommittee(committee._id)} />
+            </ButtonContainer>
+          </TableRow>
         ))}
-      </CommitteeList>
+      </div>
+
+      <Subtitle>Formularios Conectados</Subtitle>
+      <AddButton onClick={() => setIsFormOnboardingModalOpen(true)} />
+
+      <div style={{ marginTop: '20px' }}>
+        <TableHeader style={{ gridTemplateColumns: '1fr 150px 120px' }}>
+          <div>Identificador</div>
+          <div>Crear Usuarios</div>
+          <div>Acciones</div>
+        </TableHeader>
+        {connectedForms.map((form) => (
+          <TableRow key={form._id} style={{ gridTemplateColumns: '1fr 150px 120px' }}>
+            <div>{form.formIdentifier}</div>
+            <div>{form.canCreateUsers ? 'Sí' : 'No'}</div>
+            <ButtonContainer>
+              <EditButton onClick={() => {
+                setSelectedFormForPreview(form);
+                setIsFormPreviewModalOpen(true);
+              }} />
+              <DeleteButton onClick={() => handleDeleteForm(form._id)} />
+            </ButtonContainer>
+          </TableRow>
+        ))}
+      </div>
+
+      <CommitteeModal
+        open={isCommitteeModalOpen}
+        onClose={() => setIsCommitteeModalOpen(false)}
+        onSave={handleSaveCommittee}
+        editingCommittee={editingCommittee}
+      />
+
+      <FormPreviewModal
+        open={isFormPreviewModalOpen}
+        onClose={() => setIsFormPreviewModalOpen(false)}
+        form={selectedFormForPreview}
+      />
+
+      <FormOnboardingModal
+        open={isFormOnboardingModalOpen}
+        onClose={() => setIsFormOnboardingModalOpen(false)}
+      />
     </Container>
   );
 };

@@ -82,6 +82,7 @@ interface IconButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number; // New prop for icon size
+  style?: React.CSSProperties; // New prop for custom styles
 }
 
 interface ButtonContextType {
@@ -120,6 +121,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24, // Default icon size
+  style, // New prop for custom styles
 }) => {
   const [loading, setLoading] = useState(isLoading);
   const { disableAll, setDisableAll } = useButtonContext();
@@ -151,6 +153,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       className={className}
       disableRipple
       iconSize={iconSize}
+      style={style}
     >
       {loading && showSpinner ? (
         <CustomSpinner size={iconSize} color={color} />

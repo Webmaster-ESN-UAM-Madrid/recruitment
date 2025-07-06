@@ -1,6 +1,5 @@
 import React from 'react';
-import ConnectForm from '../../../app/components/admin/ConnectForm';
-import GlobalConfigManager from '../../../app/components/admin/GlobalConfigManager';
+import GlobalConfigManager from '@/app/components/admin/GlobalConfigManager';
 import styled from 'styled-components';
 
 const PageContainer = styled.div`
@@ -12,7 +11,6 @@ const AdminPanelPage: React.FC = () => {
     <PageContainer>
       <h1>Panel de Administración</h1>
       <GlobalConfigManager />
-      <ConnectForm />
     </PageContainer>
   );
 };

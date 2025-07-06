@@ -9,6 +9,7 @@ interface AddButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const AddButton: React.FC<AddButtonProps> = ({
@@ -19,6 +20,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };

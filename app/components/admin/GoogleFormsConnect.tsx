@@ -22,9 +22,6 @@ type FormSection = [string, any[]]; // Using any[] for fields for now to avoid c
 const Container = styled.div`
   background-color: #ffffff;
   border-radius: var(--border-radius-md);
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
 `;
 
 const Title = styled.h2`
@@ -43,6 +40,7 @@ const StyledButton = styled.button`
   font-size: 16px;
   transition: background-color 0.3s ease;
   margin-right: 10px;
+  margin-top: 20px;
 
   &:hover {
     background-color: #0056b3; /* Darker variant of main color */
@@ -95,29 +93,6 @@ const StyledLabel = styled.label`
   font-family: 'Inter', sans-serif;
 `;
 
-const FormList = styled.ul`
-  list-style: none;
-  padding: 0;
-`;
-
-const FormListItem = styled.li`
-  border: 1px solid #eee;
-  border-radius: var(--border-radius-md);
-  padding: 15px;
-  margin-bottom: 10px;
-  background-color: #f9f9f9;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-  p {
-    margin-bottom: 5px;
-    font-family: 'Inter', sans-serif;
-  }
-
-  strong {
-    font-weight: 600;
-  }
-`;
-
 const CodeBlock = styled.pre`
   background-color: #eef;
   border: 1px solid #ddd;
@@ -131,17 +106,15 @@ const CodeBlock = styled.pre`
 `;
 
 const GoogleFormsConnect = () => {
-  const [step, setStep] = useState(0); // Step 0 for form list, 1-4 for connection process
+  const [step, setStep] = useState(1); // Start directly at step 1 for connection process
   const [key, setKey] = useState<string | null>(null);
   const [code, setCode] = useState(Array(6).fill(''));
   const [message, setMessage] = useState<string>('');
   const [formId, setFormId] = useState<string | null>(null);
   const [formStructure, setFormStructure] = useState<FormSection[] | null>(null); // Updated type
-  const [connectedForms, setConnectedForms] = useState<IForm[]>([]);
   const [formIdentifier, setFormIdentifier] = useState<string>('');
   const [canCreateUsers, setCanCreateUsers] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [editingForm, setEditingForm] = useState<IForm | null>(null); // New state for editing
 
   const getAppsScript = () => {
     return `function validateForm() {
@@ -286,21 +259,8 @@ const GoogleFormsConnect = () => {
     }`;
   };
 
-  const fetchConnectedForms = async () => {
-    try {
-      const response = await fetch('/api/forms');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setConnectedForms(data);
-    } catch (e) {
-      setError(`Failed to fetch connected forms: ${(e as Error).message}`);
-    }
-  };
-
   useEffect(() => {
-    fetchConnectedForms();
+    startNewConnection();
   }, []);
 
   const startNewConnection = async () => {
@@ -343,125 +303,13 @@ const GoogleFormsConnect = () => {
         .then(data => data.structure);
       setFormStructure(structure);
       setStep(4);
-      fetchConnectedForms(); // Refresh list after successful connection
     } else {
       setError(data.message);
     }
   };
 
-  const handleDeleteForm = async (id: string) => {
-    setError('');
-    setMessage('');
-    try {
-      const response = await fetch(`/api/forms/${id}`, {
-        method: 'DELETE',
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMessage(data.message);
-        fetchConnectedForms(); // Refresh list
-      } else {
-        setError(data.message);
-      }
-    } catch (e) {
-      setError(`Failed to delete form: ${(e as Error).message}`);
-    }
-  };
-
-  const handleReplaceForm = (form: ConnectedForm) => {
-    setFormIdentifier(form.formIdentifier || '');
-    setCanCreateUsers(form.canCreateUsers);
-    startNewConnection(); // Start the connection process with pre-filled data
-  };
-
-  const handleEditForm = (form: IForm) => {
-    // Convert fieldMappings from plain object to Map if it's not already a Map
-    const fieldMappingsMap = form.fieldMappings instanceof Map 
-      ? form.fieldMappings 
-      : new Map(Object.entries(form.fieldMappings || {}).map(([key, value]) => [key, String(value)]));
-    
-    // Directly modify the form object's fieldMappings and then set it as the editingForm
-    form.fieldMappings = fieldMappingsMap;
-    setEditingForm(form);
-  };
-
-  const handleSaveMappings = async (mappings: Map<string, string>) => {
-    if (!editingForm) return;
-
-    try {
-      const response = await fetch(`/api/forms/${editingForm._id}/map`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) }), // Convert Map to object for JSON
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setMessage(data.message || 'Mappings updated successfully!');
-        setEditingForm(null); // Exit editing mode
-        fetchConnectedForms(); // Refresh list
-      } else {
-        setError(data.message || 'Failed to update mappings.');
-      }
-    } catch (e) {
-      setError(`Failed to save mappings: ${(e as Error).message}`);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingForm(null); // Exit editing mode
-  };
-
-  const formIdentifierSuggestions = connectedForms.map(form => form.formIdentifier).filter(Boolean) as string[];
-
-  if (editingForm) {
-    return (
-      <Container>
-        <Title>Edit Form Mappings: {editingForm.formIdentifier || editingForm._id as string}</Title>
-        {message && <p style={{ color: 'green' }}>{message}</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <FormPreview
-          formStructure={editingForm.structure}
-          responses={new Map()}
-          isEditing={true}
-          initialMappings={editingForm.fieldMappings}
-          onSaveMappings={handleSaveMappings}
-          onCancelEdit={handleCancelEdit}
-        />
-      </Container>
-    );
-  }
-
   return (
     <Container>
-      {step === 0 && (
-        <div>
-          <Title>Connected Forms</Title>
-          {message && <p style={{ color: 'green' }}>{message}</p>}
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <StyledButton onClick={startNewConnection}>Connect New Form</StyledButton>
-          <div style={{ marginTop: '20px' }}>
-            {connectedForms.length === 0 ? (
-              <p>No forms connected yet.</p>
-            ) : (
-              <FormList>
-                {connectedForms.map((form) => (
-                  <FormListItem key={form._id as string}>
-                    <p><strong>ID:</strong> {form._id as string}</p>
-                    <p><strong>Identifier:</strong> {form.formIdentifier || 'N/A'}</p>
-                    <p><strong>Provider:</strong> {form.provider}</p>
-                    <p><strong>Can Create Users:</strong> {form.canCreateUsers ? 'Yes' : 'No'}</p>
-                    <StyledButton onClick={() => handleDeleteForm(form._id as string)}>Delete</StyledButton>
-                    <StyledButton onClick={() => handleReplaceForm(form as ConnectedForm)}>Replace</StyledButton>
-                    <StyledButton onClick={() => handleEditForm(form)}>Edit</StyledButton>
-                  </FormListItem>
-                ))}
-              </FormList>
-            )}
-          </div>
-        </div>
-      )}
-
       {step === 1 && (
         <div>
           <Title>Step 1: Go to Script Editor</Title>
@@ -493,13 +341,7 @@ const GoogleFormsConnect = () => {
               type="text"
               value={formIdentifier}
               onChange={(e) => setFormIdentifier(e.target.value)}
-              list="formIdentifierSuggestions"
             />
-            <datalist id="formIdentifierSuggestions">
-              {formIdentifierSuggestions.map((suggestion) => (
-                <option key={suggestion} value={suggestion} />
-              ))}
-            </datalist>
           </div>
           <StyledCheckboxContainer>
             <StyledCheckbox

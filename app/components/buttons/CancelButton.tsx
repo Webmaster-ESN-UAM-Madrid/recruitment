@@ -9,6 +9,7 @@ interface CancelButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const CancelButton: React.FC<CancelButtonProps> = ({
@@ -19,6 +20,7 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };

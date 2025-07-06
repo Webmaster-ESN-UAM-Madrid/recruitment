@@ -9,6 +9,7 @@ interface DeleteButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const DeleteButton: React.FC<DeleteButtonProps> = ({
@@ -19,6 +20,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
   showSpinner = true,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };

@@ -29,6 +29,7 @@ interface FormPreviewProps {
   onSaveMappings?: (mappings: Map<string, string>) => void; // New prop
   onCancelEdit?: () => void; // New prop
   isAccordion?: boolean;
+  startsExpanded?: boolean;
 }
 
 const FormContainer = styled.div`
@@ -70,16 +71,19 @@ const SectionTitle = styled.h3`
 `;
 
 const ButtonWrapper = styled.div`
-  margin-left: 10px;
+  display: flex;
+  gap: 10px;
+  margin-top: -5px;
+  margin-bottom: 15px;
 `;
 
-const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit, isAccordion = false }) => {
+const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit, isAccordion = false, startsExpanded = true }) => {
   const parsedForm: FormSection[] = JSON.parse(formStructure);
   const [currentMappings, setCurrentMappings] = useState<Map<string, string>>(initialMappings || new Map());
   const [nameMapped, setNameMapped] = useState<boolean>(false);
   const [emailMapped, setEmailMapped] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(!isAccordion);
+  const [isExpanded, setIsExpanded] = useState(startsExpanded);
 
   useEffect(() => {
     if (initialMappings) {
@@ -173,8 +177,8 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
           })}
           {isEditing && (
             <ButtonProvider>
-              <SaveButton isLoading={isSaving} onClick={handleSave} />
               <ButtonWrapper>
+                <SaveButton isLoading={isSaving} onClick={handleSave} />
                 <CancelButton isLoading={isSaving} onClick={handleCancel} />
               </ButtonWrapper>
             </ButtonProvider>

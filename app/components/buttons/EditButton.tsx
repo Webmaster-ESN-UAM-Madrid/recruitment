@@ -9,6 +9,7 @@ interface EditButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const EditButton: React.FC<EditButtonProps> = ({
@@ -19,6 +20,7 @@ export const EditButton: React.FC<EditButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const EditButton: React.FC<EditButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };

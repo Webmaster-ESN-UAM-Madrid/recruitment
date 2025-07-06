@@ -9,6 +9,7 @@ interface HideButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const HideButton: React.FC<HideButtonProps> = ({
@@ -19,6 +20,7 @@ export const HideButton: React.FC<HideButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const HideButton: React.FC<HideButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };

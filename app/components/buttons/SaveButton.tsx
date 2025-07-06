@@ -9,6 +9,7 @@ interface SaveButtonProps {
   showSpinner?: boolean;
   className?: string;
   iconSize?: number;
+  style?: React.CSSProperties;
 }
 
 export const SaveButton: React.FC<SaveButtonProps> = ({
@@ -19,6 +20,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   showSpinner = true,
   className,
   iconSize = 24,
+  style,
 }) => {
   return (
     <IconButton
@@ -31,6 +33,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      style={style}
     />
   );
 };
