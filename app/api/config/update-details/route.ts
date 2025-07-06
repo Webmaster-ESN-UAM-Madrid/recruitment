@@ -1,31 +1,15 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Config from "@/lib/models/config";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkAdminAccess } from "@/lib/utils/authUtils";
+import { updateRecruitmentDetails } from "@/lib/controllers/adminController";
 
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     if (!session || !checkAdminAccess(session.user?.email)) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
-    await dbConnect();
-    try {
-        const { currentRecruitment, recruitmentPhase } = await request.json();
-
-        const globalConfig = await Config.findById("globalConfig");
-        if (!globalConfig) {
-            return NextResponse.json({ message: "Global config not found" }, { status: 404 });
-        }
-
-        globalConfig.currentRecruitment = currentRecruitment;
-        globalConfig.recruitmentPhase = recruitmentPhase;
-        await globalConfig.save();
-
-        return NextResponse.json({ message: "Config updated successfully" });
-    } catch (error) {
-        console.error("Error updating config details:", error);
-        return NextResponse.json({ message: "Internal server error" }, { status: 500 });
-    }
+    const { currentRecruitment, recruitmentPhase } = await request.json();
+    const result = await updateRecruitmentDetails(currentRecruitment, recruitmentPhase);
+    return NextResponse.json({ message: result.message }, { status: result.status });
 }

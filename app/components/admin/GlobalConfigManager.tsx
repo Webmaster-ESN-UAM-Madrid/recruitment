@@ -197,7 +197,7 @@ const GlobalConfigManager = () => {
       return;
     }
     try {
-      const response = await fetch('/api/config/recruiters/add', {
+      const response = await fetch('/api/config/recruiters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: sanitizedEmail }),
@@ -216,8 +216,8 @@ const GlobalConfigManager = () => {
 
   const handleRemoveRecruiter = async (email: string) => {
     try {
-      const response = await fetch('/api/config/recruiters/remove', {
-        method: 'POST',
+      const response = await fetch('/api/config/recruiters', {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
@@ -233,7 +233,7 @@ const GlobalConfigManager = () => {
   };
 
   const handleSaveCommittee = async (committee: { name: string; color: string; _id?: string }) => {
-    const url = committee._id ? `/api/committees?id=${committee._id}` : '/api/committees';
+    const url = committee._id ? `/api/committees/${committee._id}` : '/api/committees';
     const method = committee._id ? 'PUT' : 'POST';
 
     try {
@@ -260,7 +260,7 @@ const GlobalConfigManager = () => {
 
   const handleDeleteCommittee = async (id: string) => {
     try {
-      const response = await fetch(`/api/committees?id=${id}`, {
+      const response = await fetch(`/api/committees/${id}`, {
         method: 'DELETE',
       });
       if (response.ok) {

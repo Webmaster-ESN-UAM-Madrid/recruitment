@@ -1,5 +1,6 @@
 import Candidate, { ICandidate } from "@/lib/models/candidate";
 import dbConnect from "@/lib/mongodb";
+import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
 
 export const getCandidateById = async (id: string): Promise<ICandidate | null> => {
     await dbConnect();
@@ -37,7 +38,14 @@ export const deleteCandidate = async (id: string): Promise<boolean> => {
 export const createCandidate = async (candidateData: Partial<ICandidate>): Promise<ICandidate | null> => {
     await dbConnect();
     try {
-        const candidate = await Candidate.create(candidateData);
+        const recruitmentDetails = await getCurrentRecruitmentDetails();
+        if (!recruitmentDetails.currentRecruitment) {
+            console.error("Could not retrieve current recruitment details.");
+            return null;
+        }
+        const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+        const candidate = await Candidate.create({ ...candidateData, recruitmentId: currentRecruitmentId });
         return candidate;
     } catch (error) {
         console.error("Error creating candidate:", error);
@@ -48,7 +56,19 @@ export const createCandidate = async (candidateData: Partial<ICandidate>): Promi
 export const getCandidates = async (active: boolean = false): Promise<ICandidate[]> => {
     await dbConnect();
     try {
-        const candidates = await Candidate.find(active ? { active: true } : {});
+        const recruitmentDetails = await getCurrentRecruitmentDetails();
+        if (!recruitmentDetails.currentRecruitment) {
+            console.error("Could not retrieve current recruitment details.");
+            return [];
+        }
+        const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const query: any = { recruitmentId: currentRecruitmentId };
+        if (active) {
+            query.active = true;
+        }
+        const candidates = await Candidate.find(query);
         return candidates;
     } catch (error) {
         console.error("Error fetching candidates:", error);

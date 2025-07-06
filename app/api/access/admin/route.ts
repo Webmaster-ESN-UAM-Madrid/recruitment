@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { checkRecruiterAccess } from "@/lib/utils/authUtils";
 import { NextResponse } from "next/server";
 
 // Hardcoded admin emails

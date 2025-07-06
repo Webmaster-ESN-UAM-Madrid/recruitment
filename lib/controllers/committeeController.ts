@@ -1,4 +1,3 @@
-
 import Committee, { ICommittee } from "@/lib/models/committee";
 import dbConnect from "@/lib/mongodb";
 

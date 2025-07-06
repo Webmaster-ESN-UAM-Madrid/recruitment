@@ -1,13 +1,13 @@
-import User from '../models/user';
-import connectToDatabase from '../mongodb';
+import User from "../models/user";
+import dbConnect from "@/lib/mongodb";
 
 export const getUsers = async () => {
-    await connectToDatabase();
+    await dbConnect();
     try {
-        const users = await User.find({}, 'name email');
+        const users = await User.find({}, "name email");
         return users;
     } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
         return [];
     }
 };

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { processFormResponse } from "@/lib/controllers/formProcessor";
+import { processSingleFormResponse } from "@/lib/controllers/formController";
 
 export async function POST(request: Request, context: any) {
     try {
@@ -12,13 +12,13 @@ export async function POST(request: Request, context: any) {
             return NextResponse.json({ message: "responseId is required" }, { status: 400 });
         }
 
-        const result = await processFormResponse(responseId);
+        const result = await processSingleFormResponse(responseId);
 
-        if (result.status === 'failed') {
-            return NextResponse.json({ message: "Processing failed", incidents: result.incidents }, { status: 422 });
+        if (result.status === 422) {
+            return NextResponse.json({ message: result.message, incidents: result.incidents }, { status: result.status });
         }
 
-        return NextResponse.json({ message: "Form response processed successfully" });
+        return NextResponse.json({ message: result.message }, { status: result.status });
     } catch (error) {
         console.error("Error processing form response:", error);
         return NextResponse.json({ message: "Internal server error" }, { status: 500 });

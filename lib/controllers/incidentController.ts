@@ -1,5 +1,6 @@
 import Incident, { IIncident } from "@/lib/models/incident";
 import dbConnect from "@/lib/mongodb";
+import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
 
 export const getIncidentById = async (id: string): Promise<IIncident | null> => {
     await dbConnect();
@@ -59,8 +60,30 @@ export const createIncident = async (incidentData: Partial<IIncident>): Promise<
 export const getIncidents = async (): Promise<IIncident[]> => {
     await dbConnect();
     try {
-        const incidents = await Incident.find({});
-        return incidents;
+        const recruitmentDetails = await getCurrentRecruitmentDetails();
+        if (!recruitmentDetails.currentRecruitment) {
+            console.error("Could not retrieve current recruitment details.");
+            return [];
+        }
+        const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+        const incidents = await Incident.find({})
+            .populate({
+                path: "form",
+                match: { recruitmentProcessId: currentRecruitmentId }
+            })
+            .populate({
+                path: "formResponse",
+                populate: {
+                    path: "formId",
+                    match: { recruitmentProcessId: currentRecruitmentId }
+                }
+            });
+
+        // Filter out incidents where neither form nor formResponse's formId matches the current recruitmentProcessId
+        const filteredIncidents = incidents.filter((incident) => (incident.form && incident.form.recruitmentProcessId === currentRecruitmentId) || (incident.formResponse && incident.formResponse.formId && incident.formResponse.formId.recruitmentProcessId === currentRecruitmentId));
+
+        return filteredIncidents;
     } catch (error) {
         console.error("Error fetching incidents:", error);
         return [];

@@ -12,36 +12,31 @@ const uri = config.mongoURI;
 
 async function connectToDatabase() {
     if (global._mongooseConnection) {
-        console.log("Using existing Mongoose connection.");
         return global._mongooseConnection;
     }
 
     if (!global._mongoClientPromise) {
-        console.log("Initializing new MongoClient...");
         const client = new MongoClient(uri, {});
         global._mongoClientPromise = client.connect();
     }
 
     try {
-        const client = await global._mongoClientPromise;
+        await global._mongoClientPromise;
         console.log("MongoDB client connected.");
 
         // Use the connected client for Mongoose
         const mongooseInstance = await mongoose.connect(uri, { bufferCommands: true });
         global._mongooseConnection = mongooseInstance;
-        console.log("Mongoose connected to DB!");
 
         // Check for and create globalConfig if it doesn't exist
-        const globalConfig = await Config.findById('globalConfig');
+        const globalConfig = await Config.findById("globalConfig");
         if (!globalConfig) {
-            console.log("globalConfig not found, creating default entry.");
             await Config.create({
-                _id: 'globalConfig',
-                currentRecruitment: 'placeholder',
-                recruitmentPhase: 'placeholder1',
-                recruiters: [],
+                _id: "globalConfig",
+                currentRecruitment: "placeholder",
+                recruitmentPhase: "placeholder1",
+                recruiters: []
             });
-            console.log("Default globalConfig created.");
         }
 
         return mongooseInstance;

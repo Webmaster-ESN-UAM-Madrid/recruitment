@@ -1,27 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import Form from "@/lib/models/form";
+import { updateFormMappings } from "@/lib/controllers/formController";
 
 export async function PATCH(req: NextRequest, context: any) {
-    await connectDB();
     const { formId } = context.params;
+    const { fieldMappings } = await req.json();
 
-    try {
-        const { fieldMappings } = await req.json();
+    const result = await updateFormMappings(formId, fieldMappings);
 
-        if (!fieldMappings || typeof fieldMappings !== "object") {
-            return NextResponse.json({ message: "Invalid fieldMappings provided" }, { status: 400 });
-        }
-
-        const updatedForm = await Form.findByIdAndUpdate(formId, { $set: { fieldMappings: fieldMappings } }, { new: true, runValidators: true });
-
-        if (!updatedForm) {
-            return NextResponse.json({ message: "Form not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ message: "Form mappings updated successfully", form: updatedForm });
-    } catch (error: any) {
-        console.error("Error updating form mappings:", error);
-        return NextResponse.json({ message: "Error updating form mappings", error: error.message }, { status: 500 });
+    if (result.status === 200) {
+        return NextResponse.json({ message: result.message, form: result.data }, { status: result.status });
+    } else {
+        return NextResponse.json({ message: result.message }, { status: result.status });
     }
 }
