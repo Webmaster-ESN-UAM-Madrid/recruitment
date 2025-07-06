@@ -191,6 +191,7 @@ interface Candidate {
   _id: string;
   name: string;
   photoUrl?: string;
+  tutor: string;
 }
 
 interface Feedback {
