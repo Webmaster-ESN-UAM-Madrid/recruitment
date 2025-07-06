@@ -8,7 +8,7 @@ export interface ICandidate extends Document {
     photoUrl?: string;
     active: boolean;
     appliedAt: Date;
-    guide?: string;
+    tutor?: string;
     interests: Schema.Types.ObjectId[];
 }
 
@@ -29,8 +29,8 @@ const candidateSchema = new Schema({
     photoUrl: String,
     active: { type: Boolean, default: true },
     appliedAt: { type: Date, default: Date.now },
-    guide: { type: String },
-    interests: [{ type: Schema.Types.ObjectId, ref: 'Committee' }]
+    tutor: { type: String },
+    interests: [{ type: Schema.Types.ObjectId, ref: "Committee" }]
 });
 
 export default models.Candidate || model<ICandidate>("Candidate", candidateSchema);

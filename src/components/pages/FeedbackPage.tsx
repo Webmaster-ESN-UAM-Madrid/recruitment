@@ -35,7 +35,8 @@ const TableHeader = styled.div`
   border-bottom: 1px solid #ddd;
 `;
 
-const TableRow = styled.div`
+const TableRow = styled.div<{ isTutor?: boolean }>`
+  background-color: ${({ isTutor }) => (isTutor ? '#daf6f8' : '#fff')};
   display: grid;
   grid-template-columns: 60px 1fr 150px 120px;
   align-items: center;
@@ -44,7 +45,7 @@ const TableRow = styled.div`
   cursor: pointer;
 
   &:hover {
-    background-color: #f9f9f9;
+    background-color: ${({ isTutor }) => (isTutor ? '#ccf2f5' : '#f9f9f9')};
   }
 
   &:last-child {
@@ -314,6 +315,11 @@ const FeedbackPage: React.FC = () => {
     }
   };
 
+  const tutorCandidates = candidates.filter(candidate => candidate.tutor === session?.user?.email);
+  const otherCandidates = candidates.filter(candidate => candidate.tutor !== session?.user?.email);
+
+  const sortedCandidates = [...tutorCandidates, ...otherCandidates];
+
   const handleDeleteFeedback = async (feedbackId: string) => {
     try {
       const res = await fetch(`/api/feedback/${feedbackId}`, {
@@ -344,14 +350,17 @@ const FeedbackPage: React.FC = () => {
         {loading ? (
           <LoadingSpinner />
         ) : candidates.length > 0 ? (
-          candidates.map(candidate => {
+          sortedCandidates.map(candidate => {
             const candidateFeedback = feedback.filter(f => f.candidateId === candidate._id && f.givenBy === session?.user?.id);
             const isExpanded = expandedRows.includes(candidate._id);
             const hasFeedback = candidateFeedback.length > 0;
 
             return (
               <div key={candidate._id}>
-                <TableRow onClick={() => handleRowClick(candidate._id)}>
+                <TableRow
+                  onClick={() => handleRowClick(candidate._id)}
+                  isTutor={candidate.tutor === session?.user?.email}
+                >
                   <DataCell>
                     <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
                   </DataCell>

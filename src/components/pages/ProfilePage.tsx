@@ -31,7 +31,7 @@ interface Candidate {
   name: string;
   email: string;
   alternateEmails: string[];
-  guide: string;
+  tutor: string;
   interests: string[];
   photoUrl?: string;
   active: boolean;
@@ -293,7 +293,7 @@ export default function ProfilePage() {
       const updatedCandidate = {
         ...candidate,
         email: sanitizedMainEmail,
-        guide: candidate.guide,
+        tutor: candidate.tutor,
         alternateEmails: cleanedAlternateEmails,
         interests: candidateInterests.map(i => i._id),
       };
@@ -333,7 +333,7 @@ export default function ProfilePage() {
           <InfoGroup>
             <LabelGroup><Label>Nombre:</Label> {candidate.name}</LabelGroup>
             <LabelGroup><Label>Correo principal:</Label> {candidate.email}</LabelGroup>
-            <LabelGroup><Label>Padrino:</Label> {candidate.guide || 'Ninguno'}</LabelGroup>
+            <LabelGroup><Label>Padrino:</Label> {candidate.tutor || 'Ninguno'}</LabelGroup>
             
             <ToggleGroup>
               <Label style={{ marginBottom: 0, userSelect: 'none' }}>
@@ -377,7 +377,7 @@ export default function ProfilePage() {
         style={{ marginBottom: 32 }}
       />
 
-      {/* Name | Guide */}
+      {/* Name | Tutor */}
       <TwoColumn>
         <TextField
           label="Nombre"
@@ -390,12 +390,12 @@ export default function ProfilePage() {
         <Autocomplete
           options={users.map((u) => u.email)}
           freeSolo
-          value={candidate.guide}
+          value={candidate.tutor}
           onChange={(_, newValue) =>
-            setCandidate({ ...candidate, guide: newValue || '' })
+            setCandidate({ ...candidate, tutor: newValue || '' })
           }
           onInputChange={(_, newInput) =>
-            setCandidate({ ...candidate, guide: newInput })
+            setCandidate({ ...candidate, tutor: newInput })
           }
           renderInput={(params) => (
             <TextField {...params} label="Padrino" disabled={!isEditing} />
