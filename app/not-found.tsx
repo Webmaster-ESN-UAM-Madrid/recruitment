@@ -3,8 +3,8 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <div>
-      <h2>Not Found</h2>
-      <p>Could not find requested resource</p>
+      <h2>Error 404</h2>
+      <p>No se ha podido encontrar el recurso solicitado</p>
       <Link href="/">Return Home</Link>
     </div>
   );

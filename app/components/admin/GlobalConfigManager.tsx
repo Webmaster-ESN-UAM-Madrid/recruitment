@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { useState, useEffect } from "react";
 import { HexColorPicker } from 'react-colorful';
@@ -11,6 +12,7 @@ interface Recruiter {
 }
 
 interface Committee {
+  _id: string;
   name: string;
   color: string;
 }
@@ -152,14 +154,27 @@ const GlobalConfigManager = () => {
       setCurrentRecruitment(data.currentRecruitment);
       setRecruitmentPhase(data.recruitmentPhase);
       setRecruiters(data.recruiters);
-      setCommittees(data.committees || []);
     } catch (e) {
       setError(`Failed to fetch config: ${(e as Error).message}`);
     }
   };
 
+  const fetchCommittees = async () => {
+    try {
+      const response = await fetch('/api/committees');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setCommittees(data);
+    } catch (e) {
+      setError(`Failed to fetch committees: ${(e as Error).message}`);
+    }
+  };
+
   useEffect(() => {
     fetchConfig();
+    fetchCommittees();
   }, []);
 
   const handleUpdateDetails = async () => {
@@ -230,51 +245,27 @@ const GlobalConfigManager = () => {
     e.preventDefault();
     setMessage(null);
     setError(null);
-    if (editingCommittee) {
-      // Update existing committee
-      try {
-        const response = await fetch('/api/config/committees/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ originalName: editingCommittee.name, name: newCommitteeName, color: newCommitteeColor }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setMessage(data.message);
-          fetchConfig();
-          setEditingCommittee(null);
-          setNewCommitteeName('');
-          setNewCommitteeColor('#aabbcc');
-        } else {
-          setError(data.message);
-        }
-      } catch (e) {
-        setError(`Failed to update committee: ${(e as Error).message}`);
+    const url = editingCommittee ? `/api/committees/${editingCommittee._id}` : '/api/committees';
+    const method = editingCommittee ? 'PUT' : 'POST';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCommitteeName, color: newCommitteeColor }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage(data.message);
+        fetchCommittees();
+        setEditingCommittee(null);
+        setNewCommitteeName('');
+        setNewCommitteeColor('#aabbcc');
+      } else {
+        setError(data.message);
       }
-    } else {
-      // Add new committee
-      if (committees.some(c => c.name === newCommitteeName)) {
-        setError('Committee with this name already exists.');
-        return;
-      }
-      try {
-        const response = await fetch('/api/config/committees/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newCommitteeName, color: newCommitteeColor }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setMessage(data.message);
-          fetchConfig();
-          setNewCommitteeName('');
-          setNewCommitteeColor('#aabbcc');
-        } else {
-          setError(data.message);
-        }
-      } catch (e) {
-        setError(`Failed to add committee: ${(e as Error).message}`);
-      }
+    } catch (e) {
+      setError(`Failed to save committee: ${(e as Error).message}`);
     }
   };
 
@@ -284,19 +275,17 @@ const GlobalConfigManager = () => {
     setNewCommitteeColor(committee.color);
   };
 
-  const handleDeleteCommittee = async (name: string) => {
+  const handleDeleteCommittee = async (id: string) => {
     setMessage(null);
     setError(null);
     try {
-      const response = await fetch('/api/config/committees/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+      const response = await fetch(`/api/committees/${id}`, {
+        method: 'DELETE',
       });
       const data = await response.json();
       if (response.ok) {
         setMessage(data.message);
-        fetchConfig();
+        fetchCommittees();
       } else {
         setError(data.message);
       }
@@ -395,14 +384,14 @@ const GlobalConfigManager = () => {
 
       <CommitteeList>
         {committees.map((committee) => (
-          <CommitteeItem key={committee.name}>
+          <CommitteeItem key={committee._id}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <ColorBox color={committee.color} />
               {committee.name} ({committee.color})
             </div>
             <div>
               <StyledButton onClick={() => handleEditCommittee(committee)}>Edit</StyledButton>
-              <CancelButton onClick={() => handleDeleteCommittee(committee.name)}>Delete</CancelButton>
+              <CancelButton onClick={() => handleDeleteCommittee(committee._id)}>Delete</CancelButton>
             </div>
           </CommitteeItem>
         ))}

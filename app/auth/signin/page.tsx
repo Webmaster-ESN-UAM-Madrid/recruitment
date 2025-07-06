@@ -20,7 +20,7 @@ function SignInContent() {
   const errorMessage = error && (errors[error] || errors.Default);
 
   return (
-    <div>
+    <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>Iniciar Sesión</h1>
       {errorMessage && <p>{errorMessage}</p>}
       <LoginProviders />

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ButtonProvider } from './buttons/IconButton';
 import { SaveButton } from './buttons/SaveButton';
 import { CancelButton } from './buttons/CancelButton';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 interface FormField {
   id: number;
@@ -27,23 +28,44 @@ interface FormPreviewProps {
   initialMappings?: Map<string, string>; // New prop
   onSaveMappings?: (mappings: Map<string, string>) => void; // New prop
   onCancelEdit?: () => void; // New prop
+  isAccordion?: boolean;
 }
 
 const FormContainer = styled.div`
   border: 2px solid #eee;
   border-radius: var(--border-radius-md); /* Apply rounded corners */
   padding: 20px;
+  padding-bottom: 0;
   margin-top: 15px;
+`;
+
+const AccordionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 20px;
+`;
+
+const AccordionContent = styled.div<{ expanded: boolean; }>`
+  display: grid;
+  grid-template-rows: ${({ expanded }) => (expanded ? '1fr' : '0fr')};
+  transition: grid-template-rows 0.5s ease-in-out;
+  overflow: hidden;
+
+  & > div {
+    overflow: hidden;
+  }
 `;
 
 const SectionTitle = styled.h3`
   margin-top: 20px;
   margin-bottom: 10px;
   color: #333;
-  font-family: 'Montserrat', sans-serif; /* Use Montserrat for titles */
+  font-family: 'Montserrat', sans-serif;
 
   &:first-child {
-    margin-top: 0; /* Remove top margin for the first section */
+    margin: 0;
   }
 `;
 
@@ -51,18 +73,17 @@ const ButtonWrapper = styled.div`
   margin-left: 10px;
 `;
 
-const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit }) => {
+const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit, isAccordion = false }) => {
   const parsedForm: FormSection[] = JSON.parse(formStructure);
-  console.log(parsedForm)
   const [currentMappings, setCurrentMappings] = useState<Map<string, string>>(initialMappings || new Map());
   const [nameMapped, setNameMapped] = useState<boolean>(false);
   const [emailMapped, setEmailMapped] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!isAccordion);
 
   useEffect(() => {
     if (initialMappings) {
       setCurrentMappings(initialMappings);
-      // Initialize nameMapped and emailMapped based on initialMappings
       let tempNameMapped = false;
       let tempEmailMapped = false;
       initialMappings.forEach((value) => {
@@ -86,11 +107,9 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
     const newMappings = new Map(currentMappings);
     const oldMapping = newMappings.get(String(questionId));
 
-    // Remove old mapping if it exists
     if (oldMapping === 'user.name') setNameMapped(false);
     if (oldMapping === 'user.email') setEmailMapped(false);
 
-    // Add new mapping
     if (mapping === 'none') {
       newMappings.delete(String(questionId));
     } else {
@@ -115,37 +134,53 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
     }
   };
 
+  const toggleAccordion = () => {
+    if (isAccordion) {
+      setIsExpanded(!isExpanded);
+    }
+  };
+
   return (
     <FormContainer>
-      {parsedForm.map((section, sectionIndex) => {
-        const [sectionTitle, fields] = section;
-        return (
-          <div key={sectionIndex}>
-            <SectionTitle>{sectionTitle}</SectionTitle>
-            {Array.isArray(fields) && fields.map((field) => (
-              <Question
-                key={field.id}
-                question={field}
-                responseValue={getFieldValue(field.id)}
-                isEditing={isEditing}
-                mappingOptions={['none', 'user.name', 'user.email']}
-                currentMapping={currentMappings.get(String(field.id)) || 'none'}
-                onMappingChange={handleMappingChange}
-                nameMapped={nameMapped}
-                emailMapped={emailMapped}
-              />
-            ))}
-          </div>
-        );
-      })}
-      {isEditing && (
-        <ButtonProvider>
-          <SaveButton isLoading={isSaving} onClick={handleSave} />
-          <ButtonWrapper>
-            <CancelButton isLoading={isSaving} onClick={handleCancel} />
-          </ButtonWrapper>
-        </ButtonProvider>
+      {isAccordion && (
+        <AccordionHeader onClick={toggleAccordion}>
+          <SectionTitle>{parsedForm[0][0]}</SectionTitle>
+          {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+        </AccordionHeader>
       )}
+      <AccordionContent expanded={isExpanded}>
+        <div>
+          {parsedForm.map((section, sectionIndex) => {
+            const [sectionTitle, fields] = section;
+            return (
+              <div key={sectionIndex}>
+                {!isAccordion && <SectionTitle>{sectionTitle}</SectionTitle>}
+                {Array.isArray(fields) && fields.map((field) => (
+                  <Question
+                    key={field.id}
+                    question={field}
+                    responseValue={getFieldValue(field.id)}
+                    isEditing={isEditing}
+                    mappingOptions={['none', 'user.name', 'user.email']}
+                    currentMapping={currentMappings.get(String(field.id)) || 'none'}
+                    onMappingChange={handleMappingChange}
+                    nameMapped={nameMapped}
+                    emailMapped={emailMapped}
+                  />
+                ))}
+              </div>
+            );
+          })}
+          {isEditing && (
+            <ButtonProvider>
+              <SaveButton isLoading={isSaving} onClick={handleSave} />
+              <ButtonWrapper>
+                <CancelButton isLoading={isSaving} onClick={handleCancel} />
+              </ButtonWrapper>
+            </ButtonProvider>
+          )}
+        </div>
+      </AccordionContent>
     </FormContainer>
   );
 };

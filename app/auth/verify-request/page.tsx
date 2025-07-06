@@ -1,1 +1,0 @@
-export default function VerifyRequest() { return (<div>Verify Request Page</div>); }

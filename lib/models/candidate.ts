@@ -8,20 +8,29 @@ export interface ICandidate extends Document {
     photoUrl?: string;
     active: boolean;
     appliedAt: Date;
-    guide?: string; // Email of the guide
-    interests: string[]; // Array of interest names
+    guide?: string;
+    interests: Schema.Types.ObjectId[];
 }
 
 const candidateSchema = new Schema({
     recruitmentId: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true },
-    alternateEmails: [String],
+    email: {
+        type: String,
+        required: true,
+        lowercase: true
+    },
+    alternateEmails: [
+        {
+            type: String,
+            lowercase: true
+        }
+    ],
     photoUrl: String,
     active: { type: Boolean, default: true },
     appliedAt: { type: Date, default: Date.now },
     guide: { type: String },
-    interests: [{ type: String }]
+    interests: [{ type: Schema.Types.ObjectId, ref: 'Committee' }]
 });
 
 export default models.Candidate || model<ICandidate>("Candidate", candidateSchema);

@@ -6,21 +6,22 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 
 const NavContainer = styled.nav`
-  background-color: #ffffff; /* White background */
-  padding: 8px 20px; /* Slimmer padding */
-  color: #333; /* Darker text for light background */
+  background-color: #ffffff;
+  padding: 8px 20px;
+  color: #333;
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center the NavLinks container */
   align-items: center;
-  border-bottom: 1px solid var(--border-color); /* Gray separator */
-  border-radius: var(--border-radius-md); /* Rounded corners */
+  position: relative; /* Allow absolute positioning for UserInfo */
+  border-bottom: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  min-height: 50px;
 `;
 
 const NavLinks = styled.div`
   display: flex;
-  flex-grow: 1; /* Take available space */
-  justify-content: center; /* Center links horizontally */
-  align-items: center; /* Center links vertically */
+  justify-content: center;
+  align-items: center;
   gap: 20px;
 `;
 
@@ -31,12 +32,16 @@ const NavLink = styled(Link)`
   &:hover {
     color: #007bff; /* Hover effect */
   }
+  display: flex;
+  justify-content: center;
 `;
 
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+  position: absolute;
+  right: 20px;
 `;
 
 const ProfilePicture = styled.img`
@@ -77,18 +82,14 @@ const Navbar: React.FC = () => {
       <NavLinks>
         {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>} {/* Do not translate this line */}
         {session && <NavLink href="/feedback">Feedback</NavLink>} {/* Do not translate this line */}
-        {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>}
+        {/* {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>} */}
         {isAdmin && <NavLink href="/admin">Administración</NavLink>}
       </NavLinks>
       <UserInfo>
         {session?.user?.image ? (
-          <NavLink href="/profile">
-            <ProfilePicture src={session.user.image} alt="Perfil" />
-          </NavLink>
+          <ProfilePicture src={session.user.image} alt="Perfil" />
         ) : session?.user?.name ? (
-          <NavLink href="/profile">
-            <span>{session.user.name}</span>
-          </NavLink>
+          <span>{session.user.name}</span>
         ) : (
           <NavLink href="/auth/signin">Iniciar Sesión</NavLink>
         )}

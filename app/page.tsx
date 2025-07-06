@@ -10,17 +10,16 @@ export default function Home() {
 
   if (session) {
     return (
-      <div>
-        <h1>Welcome, {session.user?.name}</h1>
-        <Link href="/api/auth/signout">Sign out</Link>
+      <div style={{ textAlign: 'center', marginTop: '50px' }}>
+        <h1>Bienvenido, {session.user?.name}</h1>
+        <Link href="/api/auth/signout">Cerrar sesión</Link>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1>Welcome to ESN Recruitment</h1>
-      <p>You can now proceed to set up Google OAuth in Google Cloud Platform.</p>
+    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+      <h1>Recruitment ESN UAM</h1>
       <LoginProviders />
     </div>
   );
