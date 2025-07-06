@@ -9,13 +9,14 @@ import styled from 'styled-components';
 interface FormOnboardingModalProps {
   open: boolean;
   onClose: () => void;
+  onFormConnected: () => void;
 }
 
 const ModalContent = styled.div`
   padding: 20px;
 `;
 
-const FormOnboardingModal: React.FC<FormOnboardingModalProps> = ({ open, onClose }) => {
+const FormOnboardingModal: React.FC<FormOnboardingModalProps> = ({ open, onClose, onFormConnected }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -32,7 +33,7 @@ const FormOnboardingModal: React.FC<FormOnboardingModalProps> = ({ open, onClose
       </DialogTitle>
       <DialogContent dividers>
         <ModalContent>
-          <GoogleFormsConnect /> {/* Render the GoogleFormsConnect component here */}
+          <GoogleFormsConnect onClose={onClose} onFormConnected={onFormConnected} />
         </ModalContent>
       </DialogContent>
     </Dialog>

@@ -12,7 +12,7 @@ export async function GET(request: Request, context: any) {
     }
     await dbConnect();
     try {
-        const { formId } = context.params;
+        const { formId } = await context.params;
         const form = await Form.findById(formId);
 
         if (!form) {
@@ -33,7 +33,7 @@ export async function DELETE(request: Request, context: any) {
     }
     await dbConnect();
     try {
-        const { formId } = context.params;
+        const { formId } = await context.params;
 
         const deletedForm = await Form.findByIdAndDelete(formId);
 

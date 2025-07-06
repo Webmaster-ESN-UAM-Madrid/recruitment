@@ -41,15 +41,14 @@ const FormPreviewModal: React.FC<FormPreviewModalProps> = ({ open, onClose, form
         body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) }),
       });
 
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message || 'Mappings updated successfully!', 'success');
+        addToast('Formulario actualizado correctamente', 'success');
         onClose(); // Close the modal after successful save
       } else {
-        addToast(data.message || 'Failed to update mappings.', 'error');
+        addToast('No se pudo actualizar el formulario', 'error');
       }
     } catch (e) {
-      addToast(`Failed to save mappings: ${(e as Error).message}`, 'error');
+      addToast(`Error al actualizar el formulario: ${(e as Error).message}`, 'error');
     }
   };
 

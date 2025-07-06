@@ -59,7 +59,7 @@ const Title = styled.h2`
 
 const Subtitle = styled.h3`
   color: #333;
-  margin-top: 25px;
+  margin-top: 50px;
   margin-bottom: 15px;
   font-family: 'Montserrat', sans-serif;
 `;
@@ -92,7 +92,7 @@ const RecruiterInputContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: -10px;
 `;
 
 const GlobalConfigManager = () => {
@@ -157,6 +157,8 @@ const GlobalConfigManager = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      console.log("AAAA")
+      console.log(data)
       setConnectedForms(data);
     } catch (e) {
       addToast(`Error al cargar los formularios conectados: ${(e as Error).message}`, 'error');
@@ -177,12 +179,11 @@ const GlobalConfigManager = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentRecruitment, recruitmentPhase }),
       });
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message, 'success');
+        addToast('Configuración actualizada correctamente', 'success');
         fetchConfig();
       } else {
-        addToast(data.message, 'error');
+        addToast('No se pudo actualizar la configuración', 'error');
       }
     } catch (e) {
       addToast(`Error al actualizar la configuración: ${(e as Error).message}`, 'error');
@@ -192,7 +193,7 @@ const GlobalConfigManager = () => {
   const handleAddRecruiter = async () => {
     const sanitizedEmail = newRecruiterEmail.trim().toLowerCase();
     if (!isValidEmail(sanitizedEmail)) {
-      addToast('Correo electrónico inválido.', 'error');
+      addToast('Correo electrónico inválido', 'error');
       return;
     }
     try {
@@ -201,13 +202,12 @@ const GlobalConfigManager = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: sanitizedEmail }),
       });
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message, 'success');
+        addToast('Reclutador añadido correctamente', 'success');
         setNewRecruiterEmail('');
         fetchConfig();
       } else {
-        addToast(data.message, 'error');
+        addToast('No se pudo añadir el reclutador', 'error');
       }
     } catch (e) {
       addToast(`Error al añadir reclutador: ${(e as Error).message}`, 'error');
@@ -221,12 +221,11 @@ const GlobalConfigManager = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message, 'success');
+        addToast('Reclutador eliminado correctamente', 'success');
         fetchConfig();
       } else {
-        addToast(data.message, 'error');
+        addToast('No se pudo eliminar el reclutador', 'error');
       }
     } catch (e) {
       addToast(`Error al eliminar reclutador: ${(e as Error).message}`, 'error');
@@ -243,12 +242,11 @@ const GlobalConfigManager = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: committee.name, color: committee.color }),
       });
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message, 'success');
+        addToast('Comité guardado correctamente', 'success');
         fetchCommittees();
       } else {
-        addToast(data.message, 'error');
+        addToast('No se pudo guardar el comité', 'error');
       }
     } catch (e) {
       addToast(`Error al guardar comité: ${(e as Error).message}`, 'error');
@@ -265,12 +263,11 @@ const GlobalConfigManager = () => {
       const response = await fetch(`/api/committees?id=${id}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message, 'success');
+        addToast('Comité eliminado correctamente', 'success');
         fetchCommittees();
       } else {
-        addToast(data.message, 'error');
+        addToast('No se pudo eliminar el comité', 'error');
       }
     } catch (e) {
       addToast(`Error al eliminar comité: ${(e as Error).message}`, 'error');
@@ -279,15 +276,14 @@ const GlobalConfigManager = () => {
 
   const handleDeleteForm = async (id: string) => {
     try {
-      const response = await fetch(`/api/forms?id=${id}`, {
+      const response = await fetch(`/api/forms/${id}`, {
         method: 'DELETE',
       });
-      const data = await response.json();
       if (response.ok) {
-        addToast(data.message, 'success');
+        addToast('Formulario eliminado correctamente', 'success');
         fetchConnectedForms();
       } else {
-        addToast(data.message, 'error');
+        addToast('No se pudo eliminar el formulario', 'error');
       }
     } catch (e) {
       addToast(`Error al eliminar formulario: ${(e as Error).message}`, 'error');
@@ -425,6 +421,7 @@ const GlobalConfigManager = () => {
       <FormOnboardingModal
         open={isFormOnboardingModalOpen}
         onClose={() => setIsFormOnboardingModalOpen(false)}
+        onFormConnected={fetchConnectedForms}
       />
     </Container>
   );
