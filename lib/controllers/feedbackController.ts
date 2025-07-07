@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
+import { getCurrentRecruitmentDetails, getGlobalConfig } from "@/lib/controllers/adminController";
+import { getCandidateById } from "@/lib/controllers/candidateController";
+import { IUser } from "../models/user";
 
 interface Context {
     params: {
@@ -76,4 +78,47 @@ export const deleteFeedback = async (req: NextRequest, context: Context) => {
     const params = await context.params;
     await Feedback.findOneAndDelete({ _id: params.id, givenBy: session.user.id });
     return { success: true };
+};
+
+export const getFeedbackByCandidateId = async (candidateId: string) => {
+    await dbConnect();
+    const recruitmentDetails = await getCurrentRecruitmentDetails();
+    if (!recruitmentDetails.currentRecruitment) {
+        console.error("Could not retrieve current recruitment details.");
+        return { recruiters: [], padrino: [], volunteers: [] };
+    }
+    const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+    const feedback = await Feedback.find({ candidateId, recruitmentId: currentRecruitmentId }).populate("givenBy");
+
+    const globalConfig = await getGlobalConfig();
+    const recruiters = globalConfig.data?.recruiters?.map((r: IUser) => r.email) || [];
+
+    const candidate = await getCandidateById(candidateId);
+    const tutorEmail = candidate?.tutor;
+
+    const categorizedFeedback: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        recruiters: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        padrino: any[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        volunteers: any[];
+    } = {
+        recruiters: [],
+        padrino: [],
+        volunteers: []
+    };
+
+    for (const fb of feedback) {
+        if (recruiters.includes(fb.givenBy.email)) {
+            categorizedFeedback.recruiters.push(fb.toObject());
+        } else if (fb.givenBy.email === tutorEmail) {
+            categorizedFeedback.padrino.push(fb.toObject());
+        } else {
+            categorizedFeedback.volunteers.push(fb.toObject());
+        }
+    }
+
+    return categorizedFeedback;
 };

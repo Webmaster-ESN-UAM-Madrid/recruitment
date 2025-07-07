@@ -5,6 +5,7 @@ import { ReadButton } from '../buttons/ReadButton';
 import Modal from '../modals/Modal';
 import Tooltip from '@mui/material/Tooltip';
 import { JSX } from 'react/jsx-runtime';
+import FeedbackForCandidate from '../FeedbackForCandidate';
 
 const ItemContainer = styled.div<{ $isOverflowing: boolean }>`
   padding: 0 5px;
@@ -289,9 +290,7 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         >
-          <p>Lorem ipsum dolor sit amet eu ullamcorper mattis justo. Conubia dis nam himenaeos convallis pharetra habitasse senectus eros augue dolor. Nibh pharetra fames luctus sapien risus donec lacinia felis. Mollis augue habitasse blandit fringilla rhoncus faucibus. Ligula arcu pede vel vitae adipiscing eget. Viverra dolor morbi rhoncus penatibus aliquet litora. Odio sagittis congue tempus augue donec semper.</p>
-          <br />
-          <p>Ut phasellus posuere at inceptos habitasse nec quisque velit. Tempus arcu interdum porta pretium consequat risus molestie ligula. Inceptos vestibulum porttitor tempor penatibus sollicitudin augue tempus parturient. Adipiscing aptent condimentum cursus diam vitae hac.</p>
+          <FeedbackForCandidate candidateId={candidate._id}></FeedbackForCandidate>
         </Modal>
       </ItemContainer>
     );

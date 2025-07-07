@@ -266,6 +266,7 @@ const DashboardPage: React.FC = () => {
       }
     };
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save visibleColumnIds to localStorage whenever it changes

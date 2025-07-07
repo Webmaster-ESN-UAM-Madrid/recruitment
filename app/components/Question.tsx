@@ -147,6 +147,39 @@ const Table = styled.table`
   }
 `;
 
+const MappingDropdownContainer = styled.div`
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  select {
+    flex-grow: 1;
+    max-width: 300px; /* Limit width for better aesthetics */
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius-md);
+    background-color: #fff;
+    font-size: 0.9em;
+    cursor: pointer;
+    -webkit-appearance: none; /* Remove default browser styling */
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 256 256%22 fill%3D%22%23333%22%3E%3Cpath d%3D%22M208 96L128 176 48 96z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+
+    &:focus {
+      border-color: var(--main-color);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+  }
+`;
+
 const Question = ({
   question,
   responseValue,
@@ -162,7 +195,7 @@ const Question = ({
     responseValue !== undefined &&
     responseValue !== ''
       ? String(responseValue)
-      : 'N/D';
+      : question?.required ? 'N/A' : '';
 
   const renderQuestionType = () => {
     switch (question.type) {
@@ -300,24 +333,26 @@ const Question = ({
       {question.description && <Description>{question.description}</Description>}
       {renderQuestionType()}
       {isEditing && mappingOptions && onMappingChange && (
-        <Select
-          value={currentMapping}
-          onChange={(e) => onMappingChange(question.id, e.target.value)}
-        >
-          <option value="none">Ninguno</option>
-          <option
-            value="user.name"
-            disabled={nameMapped && currentMapping !== 'user.name'}
+        <MappingDropdownContainer>
+          <Select
+            value={currentMapping}
+            onChange={(e) => onMappingChange(question.id, e.target.value)}
           >
-            Nombre de Usuario
-          </option>
-          <option
-            value="user.email"
-            disabled={emailMapped && currentMapping !== 'user.email'}
-          >
-            Correo Electrónico de Usuario
-          </option>
-        </Select>
+            <option value="none">Ninguno</option>
+            <option
+              value="user.name"
+              disabled={nameMapped && currentMapping !== 'user.name'}
+            >
+              Nombre de Usuario
+            </option>
+            <option
+              value="user.email"
+              disabled={emailMapped && currentMapping !== 'user.email'}
+            >
+              Correo Electrónico
+            </option>
+          </Select>
+        </MappingDropdownContainer>
       )}
     </FormGroup>
   );

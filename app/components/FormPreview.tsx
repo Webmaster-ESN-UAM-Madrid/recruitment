@@ -64,10 +64,6 @@ const SectionTitle = styled.h3`
   margin-bottom: 10px;
   color: #333;
   font-family: 'Montserrat', sans-serif;
-
-  &:first-child {
-    margin: 0;
-  }
 `;
 
 const ButtonWrapper = styled.div`

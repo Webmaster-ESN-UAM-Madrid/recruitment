@@ -125,7 +125,7 @@ export const getFormResponsesByCandidateId = async (candidateId: string): Promis
             console.error(`Candidate with ID ${candidateId} not found.`);
             return [];
         }
-        const formResponses = await FormResponse.find({ candidateId: candidateId });
+        const formResponses = await FormResponse.find({ candidateId: candidateId }).populate("formId");
         return formResponses;
     } catch (error) {
         console.error(`Error fetching form responses for candidate ${candidateId}:`, error);

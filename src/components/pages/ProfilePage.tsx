@@ -13,6 +13,7 @@ import { DeleteButton } from '../../../app/components/buttons/DeleteButton';
 import { useToast } from '../../../app/components/toasts/ToastContext';
 import FormPreview from '../../../app/components/FormPreview';
 import { FormStructure } from '@/lib/types/form';
+import FeedbackForCandidate from '@/app/components/FeedbackForCandidate';
 
 interface User {
   id: string;
@@ -319,6 +320,8 @@ export default function ProfilePage() {
 
   if (!candidate) return <div>Cargando...</div>;
 
+  console.log(formResponses)
+
   return (
     <Container>
       <Title>Perfil del Candidato</Title>
@@ -494,6 +497,12 @@ export default function ProfilePage() {
         ) : (
           <p>No hay respuestas disponibles para este candidato.</p>
         )}
+      </Section>
+
+      {/* Feedback */}
+      <Section>
+        <SubTitle>Feedback</SubTitle>
+        <FeedbackForCandidate candidateId={candidate._id}></FeedbackForCandidate>
       </Section>
     </Container>
   );
