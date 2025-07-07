@@ -115,11 +115,19 @@ interface FormQuestion {
   type: string;
   required: boolean;
   options?: string[];
+  rows?: string[];
+  columns?: string[];
 }
 
 interface FormSection {
   title: string;
   questions: FormQuestion[];
+}
+
+interface Committee {
+  _id: string;
+  name: string;
+  color: string;
 }
 
 
@@ -133,7 +141,7 @@ interface Column {
 
 const DashboardPage: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  
+  const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
@@ -147,6 +155,7 @@ const DashboardPage: React.FC = () => {
     { key: 'email', header: 'Correo Electrónico', fixed: false, width: '1fr' },
     { key: 'feedback', header: 'Feedback', fixed: false, width: '130px' },
     { key: 'tutor', header: 'Tutor', fixed: false, width: '1fr' },
+    { key: 'interests', header: 'Intereses', fixed: false, width: '1fr' },
     ...formStructure.flatMap(section => section.questions.map(question => ({ key: question.id.toString(), header: question.title, fixed: false, width: '1fr' }))),
   ];
 
@@ -156,26 +165,31 @@ const DashboardPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [candidatesRes, formsRes] = await Promise.all([
+        const [candidatesRes, formsRes, committeesRes] = await Promise.all([
           fetch('/api/candidates'),
           fetch('/api/forms'),
+          fetch('/api/committees'),
         ]);
 
         if (candidatesRes.ok) {
           const candidatesData = await candidatesRes.json();
           // Fetch form responses for each candidate
-          const candidatesWithResponses = await Promise.all(
-            candidatesData.map(async (candidate: Candidate) => {
-              const formResponsesRes = await fetch(`/api/forms/candidate/${candidate._id}`);
-              if (formResponsesRes.ok) {
-                const formResponsesData = await formResponsesRes.json();
-                return { ...candidate, formResponses: formResponsesData };
-              } else {
-                console.error(`Failed to fetch form responses for candidate ${candidate._id}`);
-                return candidate;
-              }
-            })
-          );
+          const allFormResponsesRes = await fetch('/api/forms/all-responses');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let allFormResponses: any[] = [];
+          if (allFormResponsesRes.ok) {
+            allFormResponses = await allFormResponsesRes.json();
+          } else {
+            console.error("Failed to fetch all form responses");
+          }
+
+          const candidatesWithResponses = candidatesData.map((candidate: Candidate) => {
+            const candidateResponses = allFormResponses.filter(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (response: any) => response.candidateId === candidate._id
+            );
+            return { ...candidate, formResponses: candidateResponses };
+          });
           setCandidates(candidatesWithResponses);
         } else {
           console.error("Failed to fetch candidates");
@@ -190,33 +204,59 @@ const DashboardPage: React.FC = () => {
               questions,
             }));
             setFormStructure(structure);
-            const initialVisibleColumnIds: string[] = [];
-            // Add initial non-fixed columns (email, feedback, tutor)
-            const initialNonFixedKeys = ['email', 'feedback', 'tutor'];
-            for (const key of initialNonFixedKeys) {
-              const column = allColumns.find(c => c.key === key);
-              if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
-                initialVisibleColumnIds.push(column.key);
-              }
-            }
 
-            for (const section of structure) {
-              // Ignore the question about the name
-              for (const question of section.questions.slice(1, section.questions.length)) {
-                if (initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
-                  initialVisibleColumnIds.push(question.id.toString());
+            // Load from localStorage or set initial default columns
+            const savedColumns = localStorage.getItem('dashboardVisibleColumns');
+            if (savedColumns) {
+              try {
+                const parsedColumns = JSON.parse(savedColumns);
+                if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
+                  setVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
                 } else {
-                  break;
+                  console.warn("Invalid data in localStorage for dashboardVisibleColumns, using defaults.");
+                  const initialVisibleColumnIds: string[] = [];
+                  const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
+                  for (const key of initialNonFixedKeys) {
+                    const column = allColumns.find(c => c.key === key);
+                    if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
+                      initialVisibleColumnIds.push(column.key);
+                    }
+                  }
+                  setVisibleColumnIds(initialVisibleColumnIds);
+                }
+              } catch (e) {
+                console.error("Error parsing dashboardVisibleColumns from localStorage:", e);
+                const initialVisibleColumnIds: string[] = [];
+                const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
+                for (const key of initialNonFixedKeys) {
+                  const column = allColumns.find(c => c.key === key);
+                  if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
+                    initialVisibleColumnIds.push(column.key);
+                  }
+                }
+                setVisibleColumnIds(initialVisibleColumnIds);
+              }
+            } else {
+              const initialVisibleColumnIds: string[] = [];
+              const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
+              for (const key of initialNonFixedKeys) {
+                const column = allColumns.find(c => c.key === key);
+                if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
+                  initialVisibleColumnIds.push(column.key);
                 }
               }
-              if (initialVisibleColumnIds.length === MAX_SELECTED_COLUMNS) {
-                break;
-              }
+              setVisibleColumnIds(initialVisibleColumnIds);
             }
-            setVisibleColumnIds(initialVisibleColumnIds);
           }
         } else {
           console.error("Failed to fetch forms");
+        }
+
+        if (committeesRes.ok) {
+          const committeesData = await committeesRes.json();
+          setAvailableCommittees(committeesData);
+        } else {
+          console.error("Failed to fetch committees");
         }
 
       } catch (error) {
@@ -227,6 +267,13 @@ const DashboardPage: React.FC = () => {
     };
     fetchData();
   }, []);
+
+  // Save visibleColumnIds to localStorage whenever it changes
+  useEffect(() => {
+    if (visibleColumnIds.length > 0) { // Only save if there are columns to save
+      localStorage.setItem('dashboardVisibleColumns', JSON.stringify(visibleColumnIds));
+    }
+  }, [visibleColumnIds]);
 
   const handleColumnToggle = (columnKey: string) => {
     const column = allColumns.find(c => c.key === columnKey);
@@ -303,7 +350,28 @@ const DashboardPage: React.FC = () => {
                       {column.key === 'tags' && <div />}
                       {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
                       {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
-                      {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && <DashboardItem candidate={candidate} data={candidate[column.key]} columnKey={column.key} formResponses={candidate.formResponses} gridTemplateColumns={gridtemplatecolumns} />}
+                      {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && (
+                        <DashboardItem
+                          candidate={candidate}
+                          data={candidate[column.key]}
+                          columnKey={column.key}
+                          formResponses={candidate.formResponses}
+                          gridTemplateColumns={gridtemplatecolumns}
+                          question={(() => {
+                            if (!isNaN(Number(column.key))) {
+                              for (const section of formStructure) {
+                                for (const question of section.questions) {
+                                  if (question.id.toString() === column.key) {
+                                    return question;
+                                  }
+                                }
+                              }
+                            }
+                            return undefined;
+                          })()}
+                          availableCommittees={availableCommittees}
+                        />
+                      )}
                     </DataCell>
                   );
                 })}

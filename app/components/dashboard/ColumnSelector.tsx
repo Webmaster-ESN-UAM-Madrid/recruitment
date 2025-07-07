@@ -57,6 +57,10 @@ const CustomCheckbox = styled.span<{ checked: boolean }>`
   }
 `;
 
+const CustomLabel = styled.span`
+  flex: 1;
+`;
+
 // Interfaces
 interface FormQuestion {
   id: number;
@@ -154,7 +158,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                     disabled={isDisabled}
                   />
                   <CustomCheckbox checked={isChecked} />
-                  <span>{question.title}</span>
+                  <CustomLabel>{question.title}</CustomLabel>
                 </CustomCheckWrapper>
               );
             })}

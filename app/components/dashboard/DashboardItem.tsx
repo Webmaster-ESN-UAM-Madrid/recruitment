@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { ReadButton } from '../buttons/ReadButton';
 import Modal from '../modals/Modal';
 import Tooltip from '@mui/material/Tooltip';
+import { JSX } from 'react/jsx-runtime';
 
 const ItemContainer = styled.div<{ $isOverflowing: boolean }>`
   padding: 0 5px;
@@ -14,6 +15,64 @@ const ItemContainer = styled.div<{ $isOverflowing: boolean }>`
     text-decoration: underline dotted;
     cursor: help;
   `}
+`;
+
+export const HiddenInput = styled.input`
+  display: none;
+`;
+
+export const CustomCheckbox = styled.span<{ checked: boolean }>`
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  border: 2px solid ${({ checked }) => (checked ? '#0070f0' : '#ccc')};
+  background-color: ${({ checked }) => (checked ? '#57a5ff' : '#fff')};
+  border-radius: 3px;
+  position: relative;
+  box-sizing: border-box;
+
+  &::after {
+    content: '';
+    display: ${({ checked }) => (checked ? 'block' : 'none')};
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+`;
+
+const CustomRadio = styled.span<{ checked: boolean }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid ${({ checked }) => (checked ? '#0070f0' : '#ccc')};
+  background-color: ${({ checked }) =>
+    checked ? '#57a5ff' : '#fff'};
+  display: inline-block;
+`;
+
+const Table = styled.table`
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 10px;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+
+  th,
+  td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
 `;
 
 interface Candidate {
@@ -27,7 +86,42 @@ interface Candidate {
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formResponses?: any[]; // Add formResponses property
+  interests?: string[];
 }
+
+interface FormQuestion {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  required: boolean;
+  options?: string[];
+  rows?: string[];
+  columns?: string[];
+}
+
+interface Committee {
+  _id: string;
+  name: string;
+  color: string;
+}
+
+const InterestBadge = styled.div<{ color: string }>`
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 3px solid ${(props) => props.color};
+  background-color: ${(props) => props.color}20;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  gap: 8px;
+`;
+
+const ChipContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
 
 interface DashboardItemProps {
   candidate: Candidate;
@@ -37,9 +131,11 @@ interface DashboardItemProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formResponses?: any[];
   gridTemplateColumns?: string; // Add this prop
+  question?: FormQuestion; // Add this prop
+  availableCommittees: Committee[]; // Add this prop
 }
 
-const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKey, formResponses, gridTemplateColumns }) => {
+const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKey, formResponses, gridTemplateColumns, question, availableCommittees }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -54,23 +150,128 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
     return () => window.removeEventListener('resize', checkOverflow);
-  }, [data, formResponses, gridTemplateColumns]);
+  }, [data, formResponses, gridTemplateColumns, question, availableCommittees]);
 
   const isFormQuestion = !isNaN(Number(columnKey));
 
-  let displayValue: string;
+  let displayValue: string | JSX.Element;
+  let modalContent: JSX.Element | null = null;
+  let showModalButton = false;
 
   if (isFormQuestion && formResponses) {
     const formResponse = formResponses.find(response => response.responses && response.responses[columnKey] !== undefined);
-    displayValue = formResponse && formResponse.responses[columnKey] !== undefined ? formResponse.responses[columnKey] : "N/A";
+    const rawValue = formResponse && formResponse.responses[columnKey] !== undefined ? formResponse.responses[columnKey] : "";
+
+    switch (question?.type) {
+      case 'DATE':
+        displayValue = rawValue !== "" ? new Date(rawValue).toLocaleDateString() : "";
+        break;
+      case 'CHECKBOX':
+        if (Array.isArray(rawValue) && rawValue.length > 0) {
+          displayValue = `Ver detalles (${rawValue.length} seleccionados)`;
+          modalContent = (
+            <ul>
+              {rawValue.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          );
+          showModalButton = true;
+        } else {
+          displayValue = "";
+        }
+        break;
+      case 'GRID':
+      case 'CHECKBOX_GRID':
+        if (typeof rawValue === 'object' && rawValue !== null) {
+          const isCheckboxGrid = question.type === 'CHECKBOX_GRID';
+
+          displayValue = `Ver detalles`;
+
+          const columns = question.columns || [];
+          const rows = question.rows || [];
+
+          modalContent = (
+            <Table>
+              <thead>
+                <tr>
+                  <th></th>
+                  {columns.map((col, colIndex) => (
+                    <th key={colIndex}>{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    <td>{row}</td>
+                    {columns.map((col, colIndex) => {
+                      const response = rawValue[rowIndex];
+                      const isChecked = isCheckboxGrid
+                        ? Array.isArray(response) && response.includes(col)
+                        : response === col;
+
+                      return (
+                        <td key={colIndex}>
+                          <HiddenInput
+                            type={isCheckboxGrid ? 'checkbox' : 'radio'}
+                            checked={isChecked}
+                            disabled
+                          />
+                          {isCheckboxGrid ? (
+                            <CustomCheckbox checked={isChecked} />
+                          ) : (
+                            <CustomRadio checked={isChecked} />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          );
+          showModalButton = true;
+        } else {
+          displayValue = "";
+        }
+        break;
+      case 'TEXT':
+      case 'PARAGRAPH_TEXT':
+      case 'MULTIPLE_CHOICE':
+      case 'LIST':
+      default:
+        displayValue = typeof rawValue === 'object' ? JSON.stringify(rawValue) : rawValue || '';
+        break;
+    }
   } else if (columnKey === 'email') {
     if (candidate?.alternateEmails && candidate.alternateEmails.length > 0) {
       displayValue = `${candidate.email} (Otros emails: ${candidate.alternateEmails.join(', ')})`;
     } else {
       displayValue = candidate.email;
     }
+  } else if (columnKey === 'interests') {
+    if (candidate?.interests && candidate.interests.length > 0 && availableCommittees.length > 0) {
+      const interestsWithDetails = candidate.interests
+        .map((interestId: string) =>
+          availableCommittees.find((comm) => comm._id === interestId)
+        )
+        .filter(Boolean) as Committee[];
+
+      displayValue = (
+        <ChipContainer>
+          {interestsWithDetails.map((interest) => (
+            <InterestBadge key={interest._id} color={interest.color}>
+              {interest.name}
+            </InterestBadge>
+          ))}
+        </ChipContainer>
+      );
+    } else {
+      displayValue = "";
+    }
   } else {
-    displayValue = typeof data === 'object' ? JSON.stringify(data) : data;
+    displayValue = typeof data === 'object' ? JSON.stringify(data) : data || '';
   }
 
   const content = (
@@ -96,10 +297,25 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
     );
   }
 
+  if (showModalButton) {
+    return (
+      <ItemContainer $isOverflowing={false}>
+        <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} />
+        <Modal
+          title={`Detalles de la respuesta`}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        >
+          {modalContent}
+        </Modal>
+      </ItemContainer>
+    );
+  }
+
   return (
     isOverflowing ? (
       <Tooltip
-        title={displayValue}
+        title={typeof displayValue === 'string' ? displayValue : undefined}
         arrow
         slotProps={{
           tooltip: {

@@ -125,10 +125,34 @@ export const getFormResponsesByCandidateId = async (candidateId: string): Promis
             console.error(`Candidate with ID ${candidateId} not found.`);
             return [];
         }
-        const formResponses = await FormResponse.find({ candidateId: candidateId }).populate("formId");
+        const formResponses = await FormResponse.find({ candidateId: candidateId });
         return formResponses;
     } catch (error) {
         console.error(`Error fetching form responses for candidate ${candidateId}:`, error);
+        return [];
+    }
+};
+
+export const getAllFormResponses = async (): Promise<IFormResponse[]> => {
+    await dbConnect();
+    try {
+        const recruitmentDetails = await getCurrentRecruitmentDetails();
+        if (!recruitmentDetails.currentRecruitment) {
+            console.error("Could not retrieve current recruitment details.");
+            return [];
+        }
+        const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+        const formsInCurrentRecruitment = await Form.find({ recruitmentProcessId: currentRecruitmentId }).select("_id");
+        const formIds = formsInCurrentRecruitment.map((form) => form._id);
+
+        const formResponses = await FormResponse.find({
+            formId: { $in: formIds },
+            candidateId: { $exists: true, $ne: null }
+        });
+        return formResponses;
+    } catch (error) {
+        console.error("Error fetching all form responses for current recruitment:", error);
         return [];
     }
 };
