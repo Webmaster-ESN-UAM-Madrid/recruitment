@@ -30,7 +30,6 @@ export const getFeedback = async () => {
 
 export const createFeedback = async (req: NextRequest) => {
     const session = await getServerSession(authOptions);
-    console.log("Session:", session);
     if (!session?.user?.id) {
         return { success: false, message: "Unauthorized" };
     }
