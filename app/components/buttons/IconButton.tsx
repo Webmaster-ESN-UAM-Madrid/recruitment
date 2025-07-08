@@ -43,17 +43,17 @@ const spin = keyframes`
 const getColor = (color: string) => {
   switch (color) {
     case "primary":
-      return "#0070f0"; // Blue
+      return "var(--button-primary-bg)";
     case "secondary":
-      return "#7828c8"; // Purple
+      return "var(--button-secondary-bg)";
     case "success":
-      return "#17c964"; // Green
+      return "var(--button-success-bg)";
     case "warning":
-      return "#f5a524"; // Yellow
+      return "var(--button-warning-bg)";
     case "danger":
-      return "#f31260"; // Red
+      return "var(--button-danger-bg)";
     default:
-      return "#999"; // Default gray color
+      return "var(--button-default-bg)";
   }
 }
 
@@ -92,9 +92,7 @@ interface ButtonContextType {
 
 const ButtonContext = createContext<ButtonContextType | undefined>(undefined);
 
-export const ButtonProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const ButtonProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [disableAll, setDisableAll] = useState(false);
   return (
     <ButtonContext.Provider value={{ disableAll, setDisableAll }}>
@@ -141,7 +139,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
     }
   };
 
-  const iconColor = disabled ? "#999" : getColor(color);
+  const iconColor = disabled ? "var(--button-disabled-bg)" : getColor(color);
 
   return (
     <StyledButton

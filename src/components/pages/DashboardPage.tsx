@@ -20,15 +20,15 @@ const Section = styled.section`
 `;
 
 const SectionTitle = styled.h2`
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid var(--border-secondary);
   padding-bottom: 10px;
   margin-bottom: 20px;
 `;
 
-const CandidateTable = styled.div`
+const CandidateTableContainer = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-primary);
   border-radius: 5px;
   overflow-x: auto;
 `;
@@ -37,9 +37,9 @@ const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
   display: grid;
   grid-template-columns: ${props => props.gridtemplatecolumns};
   padding: 10px 15px;
-  background-color: #f0f0f0;
+  background-color: var(--table-header-bg);
   font-weight: bold;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-primary);
   align-items: center;
 `;
 
@@ -48,14 +48,14 @@ const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string }
   grid-template-columns: ${props => props.gridtemplatecolumns};
   align-items: center;
   padding: 10px 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-secondary);
   text-decoration: none;
   color: inherit;
   opacity: ${props => (props.$inactive ? 0.6 : 1)};
-  background-color: ${props => (props.$inactive ? '#f9f9f9' : '#fff')};
+  background-color: ${props => (props.$inactive ? '#f9f9f9' : 'var(--bg-primary)')};
 
   &:hover {
-    background-color: ${props => (props.$inactive ? '#f0f0f0' : '#e9e9e9')};
+    background-color: ${props => (props.$inactive ? '#f0f0f0' : 'var(--table-row-hover-bg)')};
   }
 
   &:last-child {
@@ -72,7 +72,7 @@ const Avatar = styled.img`
 
 const CandidateName = styled(Link)`
   font-weight: bold;
-  color: #007bff;
+  color: var(--link-color);
   &:hover {
     text-decoration: underline;
   }
@@ -88,8 +88,8 @@ const DataCell = styled.div`
 `;
 
 const ItemCard = styled.div`
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 5px;
   padding: 15px;
   margin-bottom: 10px;
@@ -130,8 +130,6 @@ interface Committee {
   color: string;
 }
 
-
-
 interface Column {
   key: string;
   header: string;
@@ -139,13 +137,116 @@ interface Column {
   width: string;
 }
 
+interface SelectableTableProps {
+  title: string;
+  candidates: Candidate[];
+  allColumns: Column[];
+  visibleColumnIds: string[];
+  onColumnToggle: (columnKey: string) => void;
+  storageKey: string;
+  formStructure: FormSection[];
+  availableCommittees: Committee[];
+  loading: boolean;
+}
+
+const SelectableTable: React.FC<SelectableTableProps> = ({
+  title,
+  candidates,
+  allColumns,
+  visibleColumnIds,
+  onColumnToggle,
+  formStructure,
+  availableCommittees,
+  loading,
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const defaultAvatar = '/default-avatar.jpg';
+
+  const fixedColumns = allColumns.filter(c => c.fixed);
+  const dynamicColumns = allColumns.filter(c => !c.fixed && visibleColumnIds.includes(c.key));
+  const visibleColumns = [...fixedColumns, ...dynamicColumns];
+
+  const gridtemplatecolumns = visibleColumns.map(c => c.width || '1fr').join(' ') + (dynamicColumns.length > 0 ? " 30px" : " 1fr 30px");
+
+  return (
+    <Section>
+      <SectionTitle>{title}</SectionTitle>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Select Columns"
+      >
+        <ColumnSelector
+          allColumns={allColumns}
+          formStructure={formStructure}
+          visibleColumnIds={visibleColumnIds}
+          onColumnToggle={onColumnToggle}
+          maxColumns={MAX_SELECTED_COLUMNS}
+        />
+      </Modal>
+      <CandidateTableContainer>
+        <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
+          {visibleColumns.map(column => (
+            <DataCell key={column.key}>
+              {column.header}
+              {!column.fixed && (
+                <HideButton onClick={() => onColumnToggle(column.key)} iconSize={12} />
+              )}
+            </DataCell>
+          ))}
+          {dynamicColumns.length === 0 && <div />}
+          <DataCell key={"add-btn"}>
+            <AddButton onClick={() => setIsModalOpen(true)} iconSize={12} />
+          </DataCell>
+        </TableHeader>
+        {loading ? (
+          <LoadingSpinner />
+        ) : candidates.length > 0 ? (
+          candidates.map(candidate => (
+            <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns} $inactive={!candidate.active}>
+              {visibleColumns.map(column => (
+                <DataCell key={column.key}>
+                  {column.key === 'tags' && <div />}
+                  {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
+                  {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
+                  {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && (
+                    <DashboardItem
+                      candidate={candidate}
+                      data={candidate[column.key]}
+                      columnKey={column.key}
+                      formResponses={candidate.formResponses}
+                      gridTemplateColumns={gridtemplatecolumns}
+                      question={(() => {
+                        if (!isNaN(Number(column.key))) {
+                          for (const section of formStructure) {
+                            for (const question of section.questions) {
+                              if (question.id.toString() === column.key) {
+                                return question;
+                              }
+                            }
+                          }
+                        }
+                        return undefined;
+                      })()}
+                      availableCommittees={availableCommittees}
+                    />
+                  )}
+                </DataCell>
+              ))}
+            </TableRow>
+          ))
+        ) : (
+          <ItemCard style={{ border: 'none', marginBottom: 0 }}>No hay candidatos para mostrar.</ItemCard>
+        )}
+      </CandidateTableContainer>
+    </Section>
+  );
+};
+
 const DashboardPage: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const defaultAvatar = '/default-avatar.jpg';
-
   const [formStructure, setFormStructure] = useState<FormSection[]>([]);
 
   const allColumns: Column[] = [
@@ -159,7 +260,8 @@ const DashboardPage: React.FC = () => {
     ...formStructure.flatMap(section => section.questions.map(question => ({ key: question.id.toString(), header: question.title, fixed: false, width: '1fr' }))),
   ];
 
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
+  const [activeVisibleColumnIds, setActiveVisibleColumnIds] = useState<string[]>([]);
+  const [inactiveVisibleColumnIds, setInactiveVisibleColumnIds] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -192,7 +294,6 @@ const DashboardPage: React.FC = () => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (response: any) => response.candidateId === candidate._id
             );
-            // Get feedback for this candidate from the new structure
             const candidateFeedback = allFeedback[candidate._id] || { recruiters: [], tutor: [], volunteers: [] };
             return { ...candidate, formResponses: candidateResponses, feedback: candidateFeedback };
           });
@@ -211,34 +312,16 @@ const DashboardPage: React.FC = () => {
             }));
             setFormStructure(structure);
 
-            const savedColumns = localStorage.getItem('dashboardVisibleColumns');
-            if (savedColumns) {
+            const savedActiveColumns = localStorage.getItem('dashboardActiveVisibleColumns');
+            if (savedActiveColumns) {
               try {
-                const parsedColumns = JSON.parse(savedColumns);
+                const parsedColumns = JSON.parse(savedActiveColumns);
                 if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
-                  setVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
-                } else {
-                  const initialVisibleColumnIds: string[] = [];
-                  const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
-                  for (const key of initialNonFixedKeys) {
-                    const column = allColumns.find(c => c.key === key);
-                    if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
-                      initialVisibleColumnIds.push(column.key);
-                    }
-                  }
-                  setVisibleColumnIds(initialVisibleColumnIds);
+                  setActiveVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
                 }
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-              } catch (error: any) {
-                const initialVisibleColumnIds: string[] = [];
-                const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
-                for (const key of initialNonFixedKeys) {
-                  const column = allColumns.find(c => c.key === key);
-                  if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
-                    initialVisibleColumnIds.push(column.key);
-                  }
-                }
-                setVisibleColumnIds(initialVisibleColumnIds);
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              } catch (error) {
+                // ignore error
               }
             } else {
               const initialVisibleColumnIds: string[] = [];
@@ -249,7 +332,30 @@ const DashboardPage: React.FC = () => {
                   initialVisibleColumnIds.push(column.key);
                 }
               }
-              setVisibleColumnIds(initialVisibleColumnIds);
+              setActiveVisibleColumnIds(initialVisibleColumnIds);
+            }
+            
+            const savedInactiveColumns = localStorage.getItem('dashboardInactiveVisibleColumns');
+            if (savedInactiveColumns) {
+              try {
+                const parsedColumns = JSON.parse(savedInactiveColumns);
+                if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
+                  setInactiveVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
+                }
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              } catch (error) {
+                // ignore error
+              }
+            } else {
+                const initialVisibleColumnIds: string[] = [];
+                const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
+                for (const key of initialNonFixedKeys) {
+                  const column = allColumns.find(c => c.key === key);
+                  if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
+                    initialVisibleColumnIds.push(column.key);
+                  }
+                }
+                setInactiveVisibleColumnIds(initialVisibleColumnIds);
             }
           }
         } else {
@@ -259,8 +365,6 @@ const DashboardPage: React.FC = () => {
         if (committeesRes.ok) {
           const committeesData = await committeesRes.json();
           setAvailableCommittees(committeesData);
-        } else {
-          console.error("Failed to fetch committees");
         }
 
       } catch (error) {
@@ -274,117 +378,65 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (visibleColumnIds.length > 0) { 
-      localStorage.setItem('dashboardVisibleColumns', JSON.stringify(visibleColumnIds));
+    if (activeVisibleColumnIds.length > 0) { 
+      localStorage.setItem('dashboardActiveVisibleColumns', JSON.stringify(activeVisibleColumnIds));
     }
-  }, [visibleColumnIds]);
+  }, [activeVisibleColumnIds]);
 
-  const handleColumnToggle = (columnKey: string) => {
+  useEffect(() => {
+    if (inactiveVisibleColumnIds.length > 0) { 
+      localStorage.setItem('dashboardInactiveVisibleColumns', JSON.stringify(inactiveVisibleColumnIds));
+    }
+  }, [inactiveVisibleColumnIds]);
+
+  const handleColumnToggle = (columnKey: string, tableType: 'active' | 'inactive') => {
     const column = allColumns.find(c => c.key === columnKey);
     if (!column) return;
 
-    const isVisible = visibleColumnIds.includes(columnKey);
+    const visibleIds = tableType === 'active' ? activeVisibleColumnIds : inactiveVisibleColumnIds;
+    const setVisibleIds = tableType === 'active' ? setActiveVisibleColumnIds : setInactiveVisibleColumnIds;
+
+    const isVisible = visibleIds.includes(columnKey);
 
     if (isVisible) {
       if (!column.fixed) {
-        setVisibleColumnIds(visibleColumnIds.filter(id => id !== columnKey));
+        setVisibleIds(visibleIds.filter(id => id !== columnKey));
       }
     } else {
-      if (visibleColumnIds.length < MAX_SELECTED_COLUMNS) {
-        setVisibleColumnIds([...visibleColumnIds, columnKey]);
+      if (visibleIds.length < MAX_SELECTED_COLUMNS) {
+        setVisibleIds([...visibleIds, columnKey]);
       }
     }
   };
 
-  const fixedColumns = allColumns.filter(c => c.fixed);
-  const dynamicColumns = allColumns.filter(c => !c.fixed && visibleColumnIds.includes(c.key));
-  const visibleColumns = [...fixedColumns, ...dynamicColumns];
-
-  const gridtemplatecolumns = visibleColumns.map(c => c.width || '1fr').join(' ') + (dynamicColumns.length > 0 ? " 30px" : " 1fr 30px");
-
   const activeCandidates = candidates.filter(c => c.active);
-  // const inactiveCandidates = candidates.filter(c => !c.active);
+  const inactiveCandidates = candidates.filter(c => !c.active);
 
   return (
     <PageContainer>
       <h1>Dashboard</h1>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Select Columns"
-      >
-        <ColumnSelector
-          allColumns={allColumns}
-          formStructure={formStructure}
-          visibleColumnIds={visibleColumnIds}
-          onColumnToggle={handleColumnToggle}
-          maxColumns={MAX_SELECTED_COLUMNS}
-        />
-      </Modal>
-
-      <Section>
-        <SectionTitle>Candidatos Activos</SectionTitle>
-        <CandidateTable>
-          <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
-            {visibleColumns.map(column => {
-              return (
-                <DataCell key={column.key}>
-                  {column.header}
-                  {!column.fixed && (
-                    <HideButton onClick={() => handleColumnToggle(column.key)} iconSize={12} />
-                  )}
-                </DataCell>
-              );
-            })}
-            {dynamicColumns.length === 0 && <div />}
-            <DataCell key={"add-btn"}>
-              <AddButton onClick={() => setIsModalOpen(true)} iconSize={12} />
-            </DataCell>
-          </TableHeader>
-          {loading ? (
-            <LoadingSpinner />
-          ) : activeCandidates.length > 0 ? (
-            activeCandidates.map(candidate => (
-              <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns}>
-                {visibleColumns.map(column => {
-                  return (
-                    <DataCell key={column.key}>
-                      {column.key === 'tags' && <div />}
-                      {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
-                      {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
-                      {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && (
-                        <DashboardItem
-                          candidate={candidate}
-                          data={candidate[column.key]}
-                          columnKey={column.key}
-                          formResponses={candidate.formResponses}
-                          gridTemplateColumns={gridtemplatecolumns}
-                          question={(() => {
-                            if (!isNaN(Number(column.key))) {
-                              for (const section of formStructure) {
-                                for (const question of section.questions) {
-                                  if (question.id.toString() === column.key) {
-                                    return question;
-                                  }
-                                }
-                              }
-                            }
-                            return undefined;
-                          })()}
-                          availableCommittees={availableCommittees}
-                        />
-                      )}
-                    </DataCell>
-                  );
-                })}
-              </TableRow>
-            ))
-          ) : (
-            <ItemCard>No hay candidatos activos para mostrar.</ItemCard>
-          )}
-        </CandidateTable>
-      </Section>
+      <SelectableTable
+        title="Candidatos Activos"
+        candidates={activeCandidates}
+        allColumns={allColumns}
+        visibleColumnIds={activeVisibleColumnIds}
+        onColumnToggle={(key) => handleColumnToggle(key, 'active')}
+        storageKey="dashboardActiveVisibleColumns"
+        formStructure={formStructure}
+        availableCommittees={availableCommittees}
+        loading={loading}
+      />
+      <SelectableTable
+        title="Candidatos Inactivos"
+        candidates={inactiveCandidates}
+        allColumns={allColumns}
+        visibleColumnIds={inactiveVisibleColumnIds}
+        onColumnToggle={(key) => handleColumnToggle(key, 'inactive')}
+        storageKey="dashboardInactiveVisibleColumns"
+        formStructure={formStructure}
+        availableCommittees={availableCommittees}
+        loading={loading}
+      />
     </PageContainer>
   );
 };

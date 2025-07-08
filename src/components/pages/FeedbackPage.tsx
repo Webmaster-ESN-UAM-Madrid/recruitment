@@ -11,6 +11,7 @@ import { SaveButton } from '../../../app/components/buttons/SaveButton';
 import { ViewButton } from '../../../app/components/buttons/ViewButton';
 import { HideButton } from '../../../app/components/buttons/HideButton';
 import { useToast } from '../../../app/components/toasts/ToastContext';
+import Modal from '../../../app/components/modals/Modal';
 
 const PageContainer = styled.div`
   padding: 20px;
@@ -19,7 +20,7 @@ const PageContainer = styled.div`
 const CandidateTable = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
   overflow: hidden;
   max-width: 1000px;
@@ -30,22 +31,22 @@ const TableHeader = styled.div`
   display: grid;
   grid-template-columns: 60px 1fr 150px 120px;
   padding: 10px 15px;
-  background-color: #f0f0f0;
+  background-color: var(--table-header-bg);
   font-weight: bold;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-primary);
 `;
 
 const TableRow = styled.div<{ isTutor?: boolean }>`
-  background-color: ${({ isTutor }) => (isTutor ? '#daf6f8' : '#fff')};
+  background-color: ${({ isTutor }) => (isTutor ? 'var(--tutor-row-bg)' : 'var(--bg-primary)')};
   display: grid;
   grid-template-columns: 60px 1fr 150px 120px;
   align-items: center;
   padding: 10px 15px;
-  border-top: 2px solid #eee;
+  border-top: 2px solid var(--border-secondary);
   cursor: pointer;
 
   &:hover {
-    background-color: ${({ isTutor }) => (isTutor ? '#ccf2f5' : '#f9f9f9')};
+    background-color: ${({ isTutor }) => (isTutor ? 'var(--tutor-row-hover-bg)' : 'var(--table-row-hover-bg)')};
   }
 
   &:last-child {
@@ -87,14 +88,13 @@ const AccordionContent = styled.div<{ expanded: boolean; hasFeedback: boolean }>
   }
 
   & > div::before {
-    // content: ${({ hasFeedback }) => (hasFeedback ? "''" : 'none')};
     content: '';
     position: absolute;
     top: -10px;
     left: 44px;
     bottom: 10px;
     width: 2px;
-    background-color: #ccc;
+    background-color: var(--border-primary);
   }
 `;
 
@@ -103,7 +103,7 @@ const FeedbackItem = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 8px 15px 8px 40px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-secondary);
   position: relative;
 
   &:before {
@@ -143,40 +143,15 @@ const FeedbackActions = styled.div`
 
 const FeedbackDates = styled.small`
   font-size: 0.75em;
-  color: #666;
+  color: var(--text-secondary);
   white-space: nowrap;
-`;
-
-
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalContent = styled.div`
-  background-color: white;
-  padding: 20px;
-  border-radius: var(--border-radius-md);
-  width: 500px;
-`;
-
-const ModalTitle = styled.h3`
-  margin-top: 0;
 `;
 
 const Textarea = styled.textarea`
   width: 100%;
   min-height: 100px;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
 `;
 
@@ -214,7 +189,7 @@ const FeedbackPage: React.FC = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [editingFeedback, setEditingFeedback] = useState<Feedback | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
   const defaultAvatar = '/default-avatar.jpg';
 
   useEffect(() => {
@@ -340,7 +315,7 @@ const FeedbackPage: React.FC = () => {
 
   return (
     <PageContainer>
-      <h1>Feedback</h1> {/* Do not translate this line */}
+      <h1>Feedback</h1>
       <CandidateTable>
         <TableHeader>
           <DataCell>Foto</DataCell>
@@ -431,26 +406,22 @@ const FeedbackPage: React.FC = () => {
         )}
       </CandidateTable>
 
-      {isModalOpen && selectedCandidate && (
-        <ModalOverlay>
-          <ModalContent>
-            <ModalTitle>
-              {editingFeedback ? 'Editar' : 'Añadir'} Comentario para {selectedCandidate.name}
-            </ModalTitle>
-            <Textarea
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-            />
-            <ModalActions>
-              <CancelButton
-                onClick={closeModal}
-              />
-              <SaveButton
-                onClick={handleFeedbackSubmit}
-              />
-            </ModalActions>
-          </ModalContent>
-        </ModalOverlay>
+      {selectedCandidate && (
+        <Modal
+          isOpen={isModalOpen}
+          // onClose={closeModal}
+          title={`${editingFeedback ? 'Editar' : 'Añadir'} Comentario para ${selectedCandidate.name}`}
+          width='sm'
+        >
+          <Textarea
+            value={feedbackText}
+            onChange={(e) => setFeedbackText(e.target.value)}
+          />
+          <ModalActions>
+            <CancelButton onClick={closeModal} />
+            <SaveButton onClick={handleFeedbackSubmit} />
+          </ModalActions>
+        </Modal>
       )}
     </PageContainer>
   );

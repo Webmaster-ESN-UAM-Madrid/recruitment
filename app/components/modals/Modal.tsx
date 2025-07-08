@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, Breakpoint } from '@mui/material';
 import { CancelButton } from '@/app/components/buttons/CancelButton';
 
 const ModalContent = styled.div`
@@ -9,27 +9,30 @@ const ModalContent = styled.div`
 
 interface ModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   children: React.ReactNode;
   title?: string;
+  width?: Breakpoint;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, width = 'md' }) => {
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={isOpen} onClose={onClose} maxWidth={width} fullWidth>
       <DialogTitle>
         {title}
-        <CancelButton
-          onClick={onClose}
-          ariaLabel="Cerrar"
-          style={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-          }}
-        />
+        {onClose && (
+          <CancelButton
+            onClick={onClose}
+            ariaLabel="Cerrar"
+            style={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+            }}
+          />
+        )}
       </DialogTitle>
       <DialogContent dividers>
         <ModalContent>

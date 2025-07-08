@@ -6,14 +6,14 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 
 const NavContainer = styled.nav`
-  background-color: #ffffff;
+  background-color: var(--navbar-bg);
   padding: 8px 20px;
-  color: #333;
+  color: var(--navbar-text);
   display: flex;
   justify-content: center; /* Center the NavLinks container */
   align-items: center;
   position: relative; /* Allow absolute positioning for UserInfo */
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--navbar-border);
   border-radius: var(--border-radius-md);
   min-height: 50px;
 `;
@@ -26,11 +26,11 @@ const NavLinks = styled.div`
 `;
 
 const NavLink = styled(Link)`
-  color: #333; /* Darker text for links */
+  color: var(--navbar-text);
   text-decoration: none;
   font-weight: 500;
   &:hover {
-    color: #007bff; /* Hover effect */
+    color: var(--link-hover-color);
   }
   display: flex;
   justify-content: center;
@@ -50,7 +50,7 @@ const ProfilePicture = styled.img`
   border-radius: 50%;
   object-fit: cover;
   cursor: pointer;
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--border-primary);
 `;
 
 const Navbar: React.FC = () => {

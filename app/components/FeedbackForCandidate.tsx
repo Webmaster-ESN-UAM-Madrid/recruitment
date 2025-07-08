@@ -16,7 +16,7 @@ const FeedbackContainer = styled.div`
 
 const CategorySection = styled.div`
   margin-bottom: 20px;
-  border: 2px solid #eee;
+  border: 2px solid var(--border-secondary);
   border-radius: var(--border-radius-md);
   overflow: hidden;
 `;
@@ -45,13 +45,13 @@ const AccordionContent = styled.div<{ expanded: boolean; }>`
 `;
 
 const FeedbackList = styled.div`
-  border-top: 2px solid #eee;
+  border-top: 2px solid var(--border-secondary);
   padding: 10px 15px;
 `;
 
 const FeedbackItem = styled.div`
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
   padding: 10px;
   margin-bottom: 10px;
@@ -78,7 +78,7 @@ const FeedbackContent = styled.div`
 
 const UserName = styled.p`
   font-weight: bold;
-  color: var(--main-color);
+  color: var(--brand-primary);
 `;
 
 const FeedbackHeader = styled.div`
@@ -94,7 +94,7 @@ const FeedbackText = styled.p`
 
 const FeedbackDates = styled.small`
   font-size: 0.75em;
-  color: #666;
+  color: var(--text-secondary);
   white-space: nowrap;
   display: block;
 `;

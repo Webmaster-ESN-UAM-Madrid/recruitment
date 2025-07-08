@@ -1,19 +1,18 @@
-
 'use client'
 
 import { signOut } from "next-auth/react";
 import styled from 'styled-components';
 
 const StyledButton = styled.button`
-  background-color: #007bff;
-  color: white;
+  background-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
   padding: 10px 15px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   font-size: 1em;
   &:hover {
-    background-color: #0056b3;
+    background-color: var(--button-primary-hover-bg);
   }
   &:disabled {
     background-color: #cccccc;

@@ -21,9 +21,9 @@ const toastIcons = {
 };
 
 const toastColors = {
-  success: '#4CAF50',
-  error: '#F44336',
-  info: '#2196F3',
+  success: 'var(--toast-success-bg)',
+  error: 'var(--toast-error-bg)',
+  info: 'var(--toast-info-bg)',
 };
 
 const fadeIn = keyframes`

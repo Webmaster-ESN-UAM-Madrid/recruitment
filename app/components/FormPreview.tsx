@@ -32,12 +32,14 @@ interface FormPreviewProps {
   startsExpanded?: boolean;
 }
 
-const FormContainer = styled.div`
-  border: 2px solid #eee;
-  border-radius: var(--border-radius-md); /* Apply rounded corners */
-  padding: 20px;
-  padding-bottom: 0;
-  margin-top: 15px;
+const FormContainer = styled.div<{ isEditing?: boolean; }>`
+  ${({ isEditing }) => (isEditing ? '' : `
+    border: 2px solid var(--border-secondary);
+    border-radius: var(--border-radius-md); /* Apply rounded corners */
+    padding: 20px;
+    padding-bottom: 0;
+    margin-top: 15px;
+  `)};
 `;
 
 const AccordionHeader = styled.div`
@@ -46,6 +48,11 @@ const AccordionHeader = styled.div`
   align-items: center;
   cursor: pointer;
   margin-bottom: 20px;
+
+  & > h3:first-child {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
 `;
 
 const AccordionContent = styled.div<{ expanded: boolean; }>`
@@ -57,12 +64,16 @@ const AccordionContent = styled.div<{ expanded: boolean; }>`
   & > div {
     overflow: hidden;
   }
+
+  & > div > div > h3:first-child {
+    margin-top: 0;
+  }
 `;
 
 const SectionTitle = styled.h3`
   margin-top: 20px;
   margin-bottom: 10px;
-  color: #333;
+  color: var(--text-primary);
   font-family: 'Montserrat', sans-serif;
 `;
 
@@ -70,7 +81,6 @@ const ButtonWrapper = styled.div`
   display: flex;
   gap: 10px;
   margin-top: -5px;
-  margin-bottom: 15px;
 `;
 
 const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isEditing = false, initialMappings, onSaveMappings, onCancelEdit, isAccordion = false, startsExpanded = true }) => {
@@ -141,7 +151,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
   };
 
   return (
-    <FormContainer>
+    <FormContainer isEditing={isEditing}>
       {isAccordion && (
         <AccordionHeader onClick={toggleAccordion}>
           <SectionTitle>{parsedForm[0][0]}</SectionTitle>
@@ -154,7 +164,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
             const [sectionTitle, fields] = section;
             return (
               <div key={sectionIndex}>
-                {!isAccordion && <SectionTitle>{sectionTitle}</SectionTitle>}
+                {(!isAccordion || sectionIndex !== 0) && <SectionTitle>{sectionTitle}</SectionTitle>}
                 {Array.isArray(fields) && fields.map((field) => (
                   <Question
                     key={field.id}

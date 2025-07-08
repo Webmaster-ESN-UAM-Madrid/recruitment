@@ -9,10 +9,11 @@ import { SaveButton } from '@/app/components/buttons/SaveButton';
 import { AddButton } from '@/app/components/buttons/AddButton';
 import { DeleteButton } from '@/app/components/buttons/DeleteButton';
 import { EditButton } from '@/app/components/buttons/EditButton';
+import { CancelButton } from '@/app/components/buttons/CancelButton';
 import { useToast } from '@/app/components/toasts/ToastContext';
-import CommitteeModal from './CommitteeModal';
-import FormPreviewModal from './FormPreviewModal';
-import FormOnboardingModal from './FormOnboardingModal';
+import Modal from '@/app/components/modals/Modal';
+import FormPreview from '@/app/components/FormPreview';
+import GoogleFormsConnect from './GoogleFormsConnect';
 
 interface Recruiter {
   _id: string;
@@ -103,6 +104,8 @@ const GlobalConfigManager = () => {
   const [newRecruiterEmail, setNewRecruiterEmail] = useState('');
   const [editingCommittee, setEditingCommittee] = useState<Committee | null>(null);
   const [isCommitteeModalOpen, setIsCommitteeModalOpen] = useState(false);
+  const [committeeName, setCommitteeName] = useState('');
+  const [committeeColor, setCommitteeColor] = useState('#000000');
   const [users, setUsers] = useState<User[]>([]);
   const [connectedForms, setConnectedForms] = useState<ConnectedForm[]>([]);
   const [isFormPreviewModalOpen, setIsFormPreviewModalOpen] = useState(false);
@@ -157,8 +160,6 @@ const GlobalConfigManager = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("AAAA")
-      console.log(data)
       setConnectedForms(data);
     } catch (e) {
       addToast(`Error al cargar los formularios conectados: ${(e as Error).message}`, 'error');
@@ -232,19 +233,26 @@ const GlobalConfigManager = () => {
     }
   };
 
-  const handleSaveCommittee = async (committee: { name: string; color: string; _id?: string }) => {
-    const url = committee._id ? `/api/committees/${committee._id}` : '/api/committees';
-    const method = committee._id ? 'PUT' : 'POST';
+  const handleSaveCommittee = async () => {
+    const committeeData = {
+      name: committeeName,
+      color: committeeColor,
+      _id: editingCommittee?._id,
+    };
+
+    const url = committeeData._id ? `/api/committees/${committeeData._id}` : '/api/committees';
+    const method = committeeData._id ? 'PUT' : 'POST';
 
     try {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: committee.name, color: committee.color }),
+        body: JSON.stringify({ name: committeeData.name, color: committeeData.color }),
       });
       if (response.ok) {
         addToast('Comité guardado correctamente', 'success');
         fetchCommittees();
+        setIsCommitteeModalOpen(false);
       } else {
         addToast('No se pudo guardar el comité', 'error');
       }
@@ -255,6 +263,8 @@ const GlobalConfigManager = () => {
 
   const handleEditCommittee = (committee: Committee) => {
     setEditingCommittee(committee);
+    setCommitteeName(committee.name);
+    setCommitteeColor(committee.color);
     setIsCommitteeModalOpen(true);
   };
 
@@ -287,6 +297,27 @@ const GlobalConfigManager = () => {
       }
     } catch (e) {
       addToast(`Error al eliminar formulario: ${(e as Error).message}`, 'error');
+    }
+  };
+
+  const handleSaveMappings = async (mappings: Map<string, string>) => {
+    if (!selectedFormForPreview) return;
+
+    try {
+      const response = await fetch(`/api/forms/${selectedFormForPreview._id}/map`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) }),
+      });
+
+      if (response.ok) {
+        addToast('Formulario actualizado correctamente', 'success');
+        setIsFormPreviewModalOpen(false);
+      } else {
+        addToast('No se pudo actualizar el formulario', 'error');
+      }
+    } catch (e) {
+      addToast(`Error al actualizar el formulario: ${(e as Error).message}`, 'error');
     }
   };
 
@@ -359,6 +390,8 @@ const GlobalConfigManager = () => {
       <ButtonContainer>
         <AddButton onClick={() => {
           setEditingCommittee(null);
+          setCommitteeName('');
+          setCommitteeColor('#000000');
           setIsCommitteeModalOpen(true);
         }} />
       </ButtonContainer>
@@ -405,24 +438,60 @@ const GlobalConfigManager = () => {
         ))}
       </div>
 
-      <CommitteeModal
-        open={isCommitteeModalOpen}
+      <Modal
+        isOpen={isCommitteeModalOpen}
         onClose={() => setIsCommitteeModalOpen(false)}
-        onSave={handleSaveCommittee}
-        editingCommittee={editingCommittee}
-      />
+        title={editingCommittee ? 'Editar Comité' : 'Añadir Comité'}
+        width='xs'
+      >
+        <TextField
+          label="Nombre del comité"
+          value={committeeName}
+          onChange={(e) => setCommitteeName(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Color del comité"
+          type="color"
+          value={committeeColor}
+          onChange={(e) => setCommitteeColor(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        <ButtonContainer style={{ marginTop: 20, justifyContent: 'flex-end' }}>
+          <CancelButton onClick={() => setIsCommitteeModalOpen(false)} />
+          <SaveButton onClick={handleSaveCommittee} />
+        </ButtonContainer>
+      </Modal>
 
-      <FormPreviewModal
-        open={isFormPreviewModalOpen}
-        onClose={() => setIsFormPreviewModalOpen(false)}
-        form={selectedFormForPreview}
-      />
+      {selectedFormForPreview && (
+        <Modal
+          isOpen={isFormPreviewModalOpen}
+          onClose={() => setIsFormPreviewModalOpen(false)}
+          title={`Formulario: ${selectedFormForPreview.formIdentifier}`}
+        >
+          <FormPreview
+            formStructure={selectedFormForPreview.structure}
+            responses={new Map()}
+            isEditing={true}
+            initialMappings={new Map(Object.entries(selectedFormForPreview.fieldMappings || {}))}
+            onSaveMappings={handleSaveMappings}
+            onCancelEdit={() => setIsFormPreviewModalOpen(false)}
+          />
+        </Modal>
+      )}
 
-      <FormOnboardingModal
-        open={isFormOnboardingModalOpen}
+      <Modal
+        isOpen={isFormOnboardingModalOpen}
         onClose={() => setIsFormOnboardingModalOpen(false)}
-        onFormConnected={fetchConnectedForms}
-      />
+        title="Añadir Nuevo Formulario"
+      >
+        <GoogleFormsConnect
+          onClose={() => setIsFormOnboardingModalOpen(false)}
+          onFormConnected={fetchConnectedForms}
+        />
+      </Modal>
     </Container>
   );
 };

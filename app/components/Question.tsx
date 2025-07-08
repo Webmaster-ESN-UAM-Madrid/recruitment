@@ -26,7 +26,7 @@ const FormGroup = styled.div`
   margin-bottom: 15px;
   padding: 10px;
   border-radius: var(--border-radius-md);
-  border: 2px solid #f0f0f0;
+  border: 2px solid var(--bg-tertiary);
 
   &:hover {
     // Go up slightly and add a shadow on hover
@@ -46,7 +46,7 @@ const Label = styled.label`
 
 const Description = styled.p`
   font-size: 0.9em;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 10px;
   font-family: 'Inter', sans-serif;
 `;
@@ -54,7 +54,7 @@ const Description = styled.p`
 const Input = styled.input`
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
   background-color: #e9e9e9;
 `;
@@ -62,7 +62,7 @@ const Input = styled.input`
 const Select = styled.select`
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
   background-color: #e9e9e9;
 `;
@@ -70,7 +70,7 @@ const Select = styled.select`
 const TextArea = styled.textarea`
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
   background-color: #f4f4f4;
   min-height: 80px;
@@ -97,8 +97,8 @@ const CustomCheckbox = styled.span<{ checked: boolean }>`
   width: 16px;
   height: 16px;
   display: inline-block;
-  border: 2px solid ${({ checked }) => (checked ? '#0070f0' : '#ccc')};
-  background-color: ${({ checked }) => (checked ? '#57a5ff' : '#fff')};
+  border: 2px solid ${({ checked }) => (checked ? 'var(--brand-primary)' : '#ccc')};
+  background-color: ${({ checked }) => (checked ? '#57a5ff' : 'var(--bg-primary)')};
   border-radius: 3px;
   position: relative;
   box-sizing: border-box;
@@ -121,9 +121,9 @@ const CustomRadio = styled.span<{ checked: boolean }>`
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2px solid ${({ checked }) => (checked ? '#0070f0' : '#ccc')};
+  border: 2px solid ${({ checked }) => (checked ? 'var(--brand-primary)' : '#ccc')};
   background-color: ${({ checked }) =>
-    checked ? '#57a5ff' : '#fff'};
+    checked ? '#57a5ff' : 'var(--bg-primary)'};
   display: inline-block;
 `;
 
@@ -137,20 +137,20 @@ const Table = styled.table`
 
   th,
   td {
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-primary);
     padding: 8px;
     text-align: center;
   }
 
   th {
-    background-color: #f2f2f2;
+    background-color: var(--bg-tertiary);
   }
 `;
 
 const MappingDropdownContainer = styled.div`
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-secondary);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -173,7 +173,7 @@ const MappingDropdownContainer = styled.div`
     background-size: 12px;
 
     &:focus {
-      border-color: var(--main-color);
+      border-color: var(--border-focus);
       outline: none;
       box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
     }

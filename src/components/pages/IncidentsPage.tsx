@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
@@ -29,14 +28,14 @@ const Section = styled.section`
 `;
 
 const SectionTitle = styled.h2`
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid var(--border-secondary);
   padding-bottom: 10px;
   margin-bottom: 20px;
 `;
 
 const ItemCard = styled.div`
-  background-color: #fff;
-  border: 1px solid #ddd;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: var(--border-radius-md);
   padding: 15px;
   margin-bottom: 10px;
@@ -44,22 +43,22 @@ const ItemCard = styled.div`
 `;
 
 const StyledButton = styled.button`
-  background-color: var(--main-color);
-  color: white;
+  background-color: var(--button-primary-bg);
+  color: var(--button-primary-text);
   border: none;
   padding: 8px 15px;
   border-radius: var(--border-radius-md);
   cursor: pointer;
   &:hover {
-    background-color: #0056b3;
+    background-color: var(--button-primary-hover-bg);
   }
 `;
 
 const CancelButton = styled(StyledButton)`
-  background-color: #6c757d; /* Secondary button color */
+  background-color: var(--button-default-bg);
 
   &:hover {
-    background-color: #5a6268;
+    background-color: var(--button-default-hover-bg);
   }
 `;
 

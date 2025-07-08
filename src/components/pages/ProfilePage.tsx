@@ -80,7 +80,7 @@ const Avatar = styled.img`
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-primary);
 `;
 
 const InfoGroup = styled.div`
