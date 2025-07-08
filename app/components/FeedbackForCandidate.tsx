@@ -99,52 +99,44 @@ const FeedbackDates = styled.small`
   display: block;
 `;
 
-interface UserInfo {
-  _id: string;
-  name: string;
-  email: string;
-  image?: string;
-}
-
-interface FeedbackEntry {
-  _id: string;
-  candidateId: string;
-  givenBy: UserInfo;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  isEdited: boolean;
-}
-
 interface CategorizedFeedback {
-  recruiters: FeedbackEntry[];
-  padrino: FeedbackEntry[];
-  volunteers: FeedbackEntry[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  recruiters: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tutor: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  volunteers: any[];
 }
 
 interface FeedbackForCandidateProps {
   candidateId: string;
+  feedbackData?: CategorizedFeedback;
 }
 
-const FeedbackForCandidate: React.FC<FeedbackForCandidateProps> = ({ candidateId }) => {
+const FeedbackForCandidate: React.FC<FeedbackForCandidateProps> = ({ candidateId, feedbackData }) => {
   const { addToast } = useToast();
   const [feedback, setFeedback] = useState<CategorizedFeedback | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<{
     recruiters: boolean;
-    padrino: boolean;
+    tutor: boolean;
     volunteers: boolean;
-  }>({ recruiters: true, padrino: true, volunteers: true });
+  }>({ recruiters: true, tutor: true, volunteers: true });
   const defaultAvatar = '/default-avatar.jpg';
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const processFeedback = (data: any) => {
+        setFeedback(data);
+    };
+
     const fetchFeedback = async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/feedback/candidate/${candidateId}`);
         if (res.ok) {
           const data: CategorizedFeedback = await res.json();
-          setFeedback(data);
+          processFeedback(data);
         } else {
           addToast('Error al obtener el feedback del candidato', 'error');
         }
@@ -156,10 +148,14 @@ const FeedbackForCandidate: React.FC<FeedbackForCandidateProps> = ({ candidateId
       }
     };
 
-    if (candidateId) {
+    if (feedbackData) {
+      console.log(feedbackData)
+      processFeedback(feedbackData);
+      setLoading(false);
+    } else if (candidateId) {
       fetchFeedback();
     }
-  }, [candidateId, addToast]);
+  }, [candidateId, feedbackData, addToast]);
 
   const toggleAccordion = (category: keyof typeof expandedCategories) => {
     setExpandedCategories(prev => ({
@@ -218,7 +214,7 @@ const FeedbackForCandidate: React.FC<FeedbackForCandidateProps> = ({ candidateId
   return (
     <FeedbackContainer>
       {renderFeedbackCategory('recruiters', 'Reclutadores')}
-      {renderFeedbackCategory('padrino', 'Padrino')}
+      {renderFeedbackCategory('tutor', 'Padrino')}
       {renderFeedbackCategory('volunteers', 'Voluntarios')}
     </FeedbackContainer>
   );

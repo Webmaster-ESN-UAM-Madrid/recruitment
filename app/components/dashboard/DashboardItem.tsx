@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { ReadButton } from '../buttons/ReadButton';
@@ -82,12 +81,20 @@ interface Candidate {
   email: string;
   photoUrl?: string;
   active: boolean;
-  alternateEmails?: string[]; // Optional property for alternate emails
+  alternateEmails?: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formResponses?: any[]; // Add formResponses property
+  formResponses?: any[];
   interests?: string[];
+  feedback?: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recruiters: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tutor: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    volunteers: any[];
+  };
 }
 
 interface FormQuestion {
@@ -131,9 +138,9 @@ interface DashboardItemProps {
   columnKey: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   formResponses?: any[];
-  gridTemplateColumns?: string; // Add this prop
-  question?: FormQuestion; // Add this prop
-  availableCommittees: Committee[]; // Add this prop
+  gridTemplateColumns?: string;
+  question?: FormQuestion;
+  availableCommittees: Committee[];
 }
 
 const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKey, formResponses, gridTemplateColumns, question, availableCommittees }) => {
@@ -184,7 +191,7 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
         break;
       case 'GRID':
       case 'CHECKBOX_GRID':
-        if (typeof rawValue === 'object' && rawValue !== null) {
+        if (typeof rawValue === 'object' && rawValue !== null && Object.keys(rawValue).length > 0) {
           const isCheckboxGrid = question.type === 'CHECKBOX_GRID';
 
           displayValue = `Ver detalles`;
@@ -282,16 +289,23 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
   );
 
   if (columnKey === 'feedback') {
+    console.log("candidate", candidate.feedback);
+    const hasFeedback = candidate.feedback && (candidate.feedback.recruiters.length > 0 || candidate.feedback.tutor.length > 0 || candidate.feedback.volunteers.length > 0);
     return (
       <ItemContainer $isOverflowing={false}>
-        <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} />
-        <Modal
-          title={`Feedback de ${candidate?.name || '[Candidato]'}`}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        >
-          <FeedbackForCandidate candidateId={candidate._id}></FeedbackForCandidate>
-        </Modal>
+        <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} disabled={!hasFeedback} />
+        {hasFeedback && (
+            <Modal
+            title={`Feedback de ${candidate?.name || '[Candidato]'}`}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            >
+            <FeedbackForCandidate
+              candidateId={candidate._id}
+              feedbackData={candidate.feedback}
+            />
+            </Modal>
+        )}
       </ItemContainer>
     );
   }

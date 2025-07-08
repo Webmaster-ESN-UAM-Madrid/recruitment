@@ -85,7 +85,7 @@ export const getFeedbackByCandidateId = async (candidateId: string) => {
     const recruitmentDetails = await getCurrentRecruitmentDetails();
     if (!recruitmentDetails.currentRecruitment) {
         console.error("Could not retrieve current recruitment details.");
-        return { recruiters: [], padrino: [], volunteers: [] };
+        return { recruiters: [], tutor: [], volunteers: [] };
     }
     const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
@@ -101,12 +101,12 @@ export const getFeedbackByCandidateId = async (candidateId: string) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recruiters: any[];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        padrino: any[];
+        tutor: any[];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         volunteers: any[];
     } = {
         recruiters: [],
-        padrino: [],
+        tutor: [],
         volunteers: []
     };
 
@@ -114,9 +114,72 @@ export const getFeedbackByCandidateId = async (candidateId: string) => {
         if (recruiters.includes(fb.givenBy.email)) {
             categorizedFeedback.recruiters.push(fb.toObject());
         } else if (fb.givenBy.email === tutorEmail) {
-            categorizedFeedback.padrino.push(fb.toObject());
+            categorizedFeedback.tutor.push(fb.toObject());
         } else {
             categorizedFeedback.volunteers.push(fb.toObject());
+        }
+    }
+
+    return categorizedFeedback;
+};
+
+export const getAllFeedbackWithCategories = async () => {
+    await dbConnect();
+    const recruitmentDetails = await getCurrentRecruitmentDetails();
+    if (!recruitmentDetails.currentRecruitment) {
+        console.error("Could not retrieve current recruitment details.");
+        return [];
+    }
+    const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+    const feedback = await Feedback.find({ recruitmentId: currentRecruitmentId }).populate("givenBy");
+
+    const globalConfig = await getGlobalConfig();
+    const recruiters = globalConfig.data?.recruiters?.map((r: IUser) => r.email) || [];
+
+    // Map of candidateId to tutor email
+    const candidateTutorMap: Record<string, string | undefined> = {};
+
+    // Get all unique candidateIds
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const candidateIds = [...new Set(feedback.map((fb: any) => fb.candidateId.toString()))];
+
+    // Fetch tutors for all candidates
+    const candidateTutorPromises = candidateIds.map(async (candidateId) => {
+        const candidate = await getCandidateById(candidateId);
+        candidateTutorMap[candidateId] = candidate?.tutor;
+    });
+    await Promise.all(candidateTutorPromises);
+
+    // Categorize feedback per candidate
+    const categorizedFeedback: Record<
+        string,
+        {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            recruiters: any[];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            tutor: any[];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            volunteers: any[];
+        }
+    > = {};
+
+    for (const fb of feedback) {
+        const candidateId = fb.candidateId.toString();
+        if (!categorizedFeedback[candidateId]) {
+            categorizedFeedback[candidateId] = {
+                recruiters: [],
+                tutor: [],
+                volunteers: []
+            };
+        }
+        const tutorEmail = candidateTutorMap[candidateId];
+        if (recruiters.includes(fb.givenBy.email)) {
+            categorizedFeedback[candidateId].recruiters.push(fb.toObject());
+        } else if (fb.givenBy.email === tutorEmail) {
+            categorizedFeedback[candidateId].tutor.push(fb.toObject());
+        } else {
+            categorizedFeedback[candidateId].volunteers.push(fb.toObject());
         }
     }
 

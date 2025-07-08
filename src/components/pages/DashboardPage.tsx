@@ -165,39 +165,45 @@ const DashboardPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [candidatesRes, formsRes, committeesRes] = await Promise.all([
+        const [candidatesRes, formsRes, committeesRes, feedbackRes] = await Promise.all([
           fetch('/api/candidates'),
           fetch('/api/forms'),
           fetch('/api/committees'),
+          fetch('/api/feedback/all'),
         ]);
 
         if (candidatesRes.ok) {
           const candidatesData = await candidatesRes.json();
-          // Fetch form responses for each candidate
           const allFormResponsesRes = await fetch('/api/forms/all-responses');
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let allFormResponses: any[] = [];
           if (allFormResponsesRes.ok) {
             allFormResponses = await allFormResponsesRes.json();
-          } else {
-            console.error("Failed to fetch all form responses");
           }
 
-          const candidatesWithResponses = candidatesData.map((candidate: Candidate) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let allFeedback: any = {};
+          if (feedbackRes.ok) {
+            allFeedback = await feedbackRes.json();
+          }
+
+          const candidatesWithData = candidatesData.map((candidate: Candidate) => {
             const candidateResponses = allFormResponses.filter(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (response: any) => response.candidateId === candidate._id
             );
-            return { ...candidate, formResponses: candidateResponses };
+            // Get feedback for this candidate from the new structure
+            const candidateFeedback = allFeedback[candidate._id] || { recruiters: [], tutor: [], volunteers: [] };
+            return { ...candidate, formResponses: candidateResponses, feedback: candidateFeedback };
           });
-          setCandidates(candidatesWithResponses);
+
+          setCandidates(candidatesWithData);
         } else {
           console.error("Failed to fetch candidates");
         }
 
         if (formsRes.ok) {
           const formsData = await formsRes.json();
-          // Assuming the first form in the array is the one we care about for structure
           if (formsData.length > 0) {
             const structure = JSON.parse(formsData[0].structure).map(([title, questions]: [string, FormQuestion[]]) => ({
               title,
@@ -205,7 +211,6 @@ const DashboardPage: React.FC = () => {
             }));
             setFormStructure(structure);
 
-            // Load from localStorage or set initial default columns
             const savedColumns = localStorage.getItem('dashboardVisibleColumns');
             if (savedColumns) {
               try {
@@ -213,7 +218,6 @@ const DashboardPage: React.FC = () => {
                 if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
                   setVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
                 } else {
-                  console.warn("Invalid data in localStorage for dashboardVisibleColumns, using defaults.");
                   const initialVisibleColumnIds: string[] = [];
                   const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
                   for (const key of initialNonFixedKeys) {
@@ -224,8 +228,8 @@ const DashboardPage: React.FC = () => {
                   }
                   setVisibleColumnIds(initialVisibleColumnIds);
                 }
-              } catch (e) {
-                console.error("Error parsing dashboardVisibleColumns from localStorage:", e);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+              } catch (error: any) {
                 const initialVisibleColumnIds: string[] = [];
                 const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
                 for (const key of initialNonFixedKeys) {
@@ -269,9 +273,8 @@ const DashboardPage: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save visibleColumnIds to localStorage whenever it changes
   useEffect(() => {
-    if (visibleColumnIds.length > 0) { // Only save if there are columns to save
+    if (visibleColumnIds.length > 0) { 
       localStorage.setItem('dashboardVisibleColumns', JSON.stringify(visibleColumnIds));
     }
   }, [visibleColumnIds]);
@@ -300,8 +303,7 @@ const DashboardPage: React.FC = () => {
   const gridtemplatecolumns = visibleColumns.map(c => c.width || '1fr').join(' ') + (dynamicColumns.length > 0 ? " 30px" : " 1fr 30px");
 
   const activeCandidates = candidates.filter(c => c.active);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const inactiveCandidates = candidates.filter(c => !c.active);
+  // const inactiveCandidates = candidates.filter(c => !c.active);
 
   return (
     <PageContainer>
@@ -383,43 +385,6 @@ const DashboardPage: React.FC = () => {
           )}
         </CandidateTable>
       </Section>
-
-      {/* <Section>
-        <SectionTitle>Candidatos Inactivos</SectionTitle>
-        <CandidateTable>
-          <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
-            {visibleColumnIds.map(columnId => {
-              const column = allColumns.find(c => c.key === columnId.toString());
-              if (!column) return null;
-              return (
-                <DataCell key={column.key}>
-                  {column.header}
-                </DataCell>
-              );
-            })}
-          </TableHeader>
-          {loading ? (
-            <LoadingSpinner />
-          ) : inactiveCandidates.length > 0 ? (
-            inactiveCandidates.map(candidate => (
-              <TableRow key={candidate._id} $inactive gridtemplatecolumns={gridtemplatecolumns}>
-                {visibleColumns.map(column => {
-                  return (
-                    <DataCell key={column.key}>
-                      {column.key === 'tags' && <div />}
-                      {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
-                      {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
-                      {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && <DashboardItem candidate={candidate} data={candidate[column.key]} columnKey={column.key} formResponses={candidate.formResponses} gridTemplateColumns={gridtemplatecolumns} />}
-                    </DataCell>
-                  );
-                })}
-              </TableRow>
-            ))
-          ) : (
-            <ItemCard>No hay candidatos inactivos para mostrar.</ItemCard>
-          )}
-        </CandidateTable>
-      </Section> */}
     </PageContainer>
   );
 };
