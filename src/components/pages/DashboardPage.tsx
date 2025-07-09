@@ -114,10 +114,11 @@ const TagIconsContainer = styled.div`
   grid-template-columns: repeat(2, min-content);
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   margin-left: -10px;
-  width: 35px;
-  height: 35px;
+  margin-right: -10px;
+  width: 40px;
+  height: 40px;
   color: var(--brand-primary-dark);
 `;
 
@@ -127,6 +128,7 @@ interface Candidate {
   email: string;
   photoUrl?: string;
   active: boolean;
+  rejectedReason?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -173,6 +175,8 @@ interface SelectableTableProps {
   formStructure: FormSection[];
   availableCommittees: Committee[];
   loading: boolean;
+  maxSelectableColumns: number;
+  isInactiveTable: boolean;
 }
 
 const SelectableTable: React.FC<SelectableTableProps> = ({
@@ -184,12 +188,19 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
   formStructure,
   availableCommittees,
   loading,
+  maxSelectableColumns,
+  isInactiveTable,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
 
-  const fixedColumns = allColumns.filter(c => c.fixed);
+  let fixedColumns = allColumns.filter(c => c.fixed);
   const dynamicColumns = allColumns.filter(c => !c.fixed && visibleColumnIds.includes(c.key));
+
+  if (isInactiveTable) {
+    fixedColumns = [...fixedColumns, { key: 'rejectedReason', header: 'Motivo de Rechazo', fixed: true, width: '1fr' }];
+  }
+
   const visibleColumns = [...fixedColumns, ...dynamicColumns];
 
   const gridtemplatecolumns = visibleColumns.map(c => c.width || '1fr').join(' ') + (dynamicColumns.length > 0 ? " 30px" : " 1fr 30px");
@@ -207,7 +218,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
           formStructure={formStructure}
           visibleColumnIds={visibleColumnIds}
           onColumnToggle={onColumnToggle}
-          maxColumns={MAX_SELECTED_COLUMNS}
+          maxColumns={maxSelectableColumns}
         />
       </Modal>
       <CandidateTableContainer>
@@ -270,7 +281,8 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
                   )}
                   {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
                   {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
-                  {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && (
+                  {column.key === 'rejectedReason' && candidate.rejectedReason}
+                  {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && column.key !== 'rejectedReason' && (
                     <DashboardItem
                       candidate={candidate}
                       data={candidate[column.key]}
@@ -401,18 +413,18 @@ const DashboardPage: React.FC = () => {
               try {
                 const parsedColumns = JSON.parse(savedInactiveColumns);
                 if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
-                  setInactiveVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
+                  setInactiveVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS - 1));
                 }
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               } catch (error) {
                 // ignore error
               }
             } else {
-                const initialVisibleColumnIds: string[] = [];
+                const initialVisibleColumnIds: string[] = ['rejectedReason']; // Add rejectedReason by default
                 const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
                 for (const key of initialNonFixedKeys) {
                   const column = allColumns.find(c => c.key === key);
-                  if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
+                  if (column && initialVisibleColumnIds.length < (MAX_SELECTED_COLUMNS - 1)) {
                     initialVisibleColumnIds.push(column.key);
                   }
                 }
@@ -439,18 +451,18 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (activeVisibleColumnIds.length > 0) { 
+    if (!loading) {
       localStorage.setItem('dashboardActiveVisibleColumns', JSON.stringify(activeVisibleColumnIds));
     }
-  }, [activeVisibleColumnIds]);
+  }, [activeVisibleColumnIds, loading]);
 
   useEffect(() => {
-    if (inactiveVisibleColumnIds.length > 0) { 
+    if (!loading) {
       localStorage.setItem('dashboardInactiveVisibleColumns', JSON.stringify(inactiveVisibleColumnIds));
     }
-  }, [inactiveVisibleColumnIds]);
+  }, [inactiveVisibleColumnIds, loading]);
 
-  const handleColumnToggle = (columnKey: string, tableType: 'active' | 'inactive') => {
+  const handleColumnToggle = (columnKey: string, tableType: 'active' | 'inactive', maxAllowedColumns: number) => {
     const column = allColumns.find(c => c.key === columnKey);
     if (!column) return;
 
@@ -464,7 +476,7 @@ const DashboardPage: React.FC = () => {
         setVisibleIds(visibleIds.filter(id => id !== columnKey));
       }
     } else {
-      if (visibleIds.length < MAX_SELECTED_COLUMNS) {
+      if (visibleIds.length < maxAllowedColumns) {
         setVisibleIds([...visibleIds, columnKey]);
       }
     }
@@ -481,22 +493,26 @@ const DashboardPage: React.FC = () => {
         candidates={activeCandidates}
         allColumns={allColumns}
         visibleColumnIds={activeVisibleColumnIds}
-        onColumnToggle={(key) => handleColumnToggle(key, 'active')}
+        onColumnToggle={(key) => handleColumnToggle(key, 'active', MAX_SELECTED_COLUMNS)}
         storageKey="dashboardActiveVisibleColumns"
         formStructure={formStructure}
         availableCommittees={availableCommittees}
         loading={loading}
+        maxSelectableColumns={MAX_SELECTED_COLUMNS}
+        isInactiveTable={false}
       />
       <SelectableTable
         title="Candidatos Inactivos"
         candidates={inactiveCandidates}
         allColumns={allColumns}
         visibleColumnIds={inactiveVisibleColumnIds}
-        onColumnToggle={(key) => handleColumnToggle(key, 'inactive')}
+        onColumnToggle={(key) => handleColumnToggle(key, 'inactive', MAX_SELECTED_COLUMNS - 1)}
         storageKey="dashboardInactiveVisibleColumns"
         formStructure={formStructure}
         availableCommittees={availableCommittees}
         loading={loading}
+        maxSelectableColumns={MAX_SELECTED_COLUMNS - 1}
+        isInactiveTable={true}
       />
     </PageContainer>
   );
