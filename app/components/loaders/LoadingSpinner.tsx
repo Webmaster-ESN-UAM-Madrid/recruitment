@@ -17,7 +17,7 @@ const SpinnerContainer = styled.div`
 
 const Spinner = styled.div`
   border: 4px solid #f3f3f3; /* Light grey */
-  border-top: 4px solid var(--main-color); /* Main color */
+  border-top: 4px solid var(--brand-primary);
   border-radius: 50%;
   width: 40px;
   height: 40px;

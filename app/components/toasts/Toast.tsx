@@ -44,7 +44,7 @@ const ToastContainer = styled.div<{ type: ToastType; isClosing?: boolean }>`
   margin-bottom: 10px;
   border-radius: 8px;
   color: white;
-  background-color: ${({ type }) => toastColors[type]}c0;
+  background-color: color-mix(in srgb, ${({ type }) => toastColors[type]}, transparent 25%);;
   border: 3px solid ${({ type }) => toastColors[type]};
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   animation: ${fadeIn} 0.3s ease-in-out;

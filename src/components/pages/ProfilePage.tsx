@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useParams } from 'next/navigation';
-import { TextField, Autocomplete, Switch } from '@mui/material';
+import { TextField, Autocomplete, Switch } from '@mui/material'; // Removed Button import
 
 import { AddButton } from '../../../app/components/buttons/AddButton';
 import { SaveButton } from '../../../app/components/buttons/SaveButton';
@@ -14,6 +14,15 @@ import { useToast } from '../../../app/components/toasts/ToastContext';
 import FormPreview from '../../../app/components/FormPreview';
 import { FormStructure } from '@/lib/types/form';
 import FeedbackForCandidate from '@/app/components/FeedbackForCandidate';
+import Modal from '../../../app/components/modals/Modal';
+import { InfoButton } from '../../../app/components/buttons/InfoButton';
+import { AcceptButton } from '@/app/components/buttons/AcceptButton';
+
+// Import tag icons
+import { NextSemIcon } from '../../../app/components/icons/tags/NextSemIcon';
+import { ErasmusIcon } from '../../../app/components/icons/tags/ErasmusIcon';
+import { FriendIcon } from '../../../app/components/icons/tags/FriendIcon';
+import { RedFlagIcon } from '../../../app/components/icons/tags/RedFlagIcon';
 
 interface User {
   id: string;
@@ -36,6 +45,8 @@ interface Candidate {
   interests: string[];
   photoUrl?: string;
   active: boolean;
+  rejectedReason?: string;
+  tags?: { tag: string; comment?: string }[];
 }
 
 interface FormResponse {
@@ -47,7 +58,7 @@ interface FormResponse {
   submittedAt: string;
 }
 
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = (email: string) => /^[\S]+@[\S]+\.[\S]+$/.test(email);
 
 // Styled Components
 const Container = styled.div`
@@ -98,6 +109,7 @@ const LabelGroup = styled.div`
 const ToggleGroup = styled.div`
   display: flex;
   gap: 8px;
+  align-items: center;
 `;
 
 const Label = styled.span`
@@ -145,6 +157,61 @@ const InterestBadge = styled.div<{ color: string }>`
   gap: 8px;
 `;
 
+const TagsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+`;
+
+const TagBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid var(--border-primary);
+  font-size: 1rem;
+  color: var(--text-primary);
+`;
+
+const TagCommentDisplay = styled.span`
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+`;
+
+const TagCommentInput = styled(TextField)`
+  && {
+    margin-left: 12px;
+    .MuiInputBase-input {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+    .MuiInputLabel-root {
+      font-size: 0.9rem;
+      transform: translate(14px, 8px) scale(1);
+    }
+    .MuiInputLabel-shrink {
+      transform: translate(14px, -7px) scale(0.75);
+    }
+  }
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+const availableTags = [
+  { tag: 'nextSem', label: 'Próximo Cuatri', Icon: NextSemIcon },
+  { tag: 'erasmus', label: 'Erasmus', Icon: ErasmusIcon },
+  { tag: 'friend', label: 'Amigo', Icon: FriendIcon },
+  { tag: 'redFlag', label: 'Red Flag', Icon: RedFlagIcon },
+];
+
 export default function ProfilePage() {
   const params = useParams();
   const id = params && 'id' in params ? (params.id as string) : undefined;
@@ -157,6 +224,9 @@ export default function ProfilePage() {
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [candidateInterests, setCandidateInterests] = useState<Committee[]>([]);
   const [autocompleteInput, setAutocompleteInput] = useState('');
+  const [showRejectedReasonModal, setShowRejectedReasonModal] = useState(false);
+  const [tempRejectedReason, setTempRejectedReason] = useState('');
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const defaultAvatar = '/default-avatar.jpg';
 
@@ -179,7 +249,6 @@ export default function ProfilePage() {
       const data = await res.json();
       setCandidate(data);
 
-      // Map interest ObjectIds to full Committee objects
       if (availableCommittees.length > 0 && data.interests) {
         const interestsWithDetails = data.interests
           .map((interestId: string) =>
@@ -232,7 +301,7 @@ export default function ProfilePage() {
     }
   }, [id, fetchCandidate, fetchUsers, fetchFormResponses]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (candidate) {
       setCandidate({ ...candidate, [e.target.name]: e.target.value });
     }
@@ -271,6 +340,32 @@ export default function ProfilePage() {
     }
   };
 
+  const handleAddTag = (tag: string) => {
+    if (candidate) {
+      const newTags = candidate.tags ? [...candidate.tags] : [];
+      if (!newTags.some(t => t.tag === tag)) {
+        newTags.push({ tag });
+        setCandidate({ ...candidate, tags: newTags });
+      }
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (candidate && candidate.tags) {
+      const newTags = candidate.tags.filter(tag => tag.tag !== tagToRemove);
+      setCandidate({ ...candidate, tags: newTags });
+    }
+  };
+
+  const handleTagCommentChange = (tagToUpdate: string, comment: string) => {
+    if (candidate && candidate.tags) {
+      const newTags = candidate.tags.map(tag =>
+        tag.tag === tagToUpdate ? { ...tag, comment } : tag
+      );
+      setCandidate({ ...candidate, tags: newTags });
+    }
+  };
+
   const handleSave = async () => {
     if (!candidate) return;
     try {
@@ -297,6 +392,8 @@ export default function ProfilePage() {
         tutor: candidate.tutor,
         alternateEmails: cleanedAlternateEmails,
         interests: candidateInterests.map(i => i._id),
+        rejectedReason: candidate.rejectedReason || undefined,
+        tags: candidate.tags || [],
       };
 
       const res = await fetch(`/api/candidates/${candidate._id}`, {
@@ -318,9 +415,44 @@ export default function ProfilePage() {
     if (id) fetchCandidate(id);
   };
 
-  if (!candidate) return <div>Cargando...</div>;
+  const handleActiveSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!candidate) return;
 
-  console.log(formResponses)
+    const newActiveStatus = e.target.checked;
+    if (!newActiveStatus) {
+      setIsDeactivating(true);
+      setTempRejectedReason(candidate.rejectedReason || '');
+      setShowRejectedReasonModal(true);
+    } else {
+      setCandidate({ ...candidate, active: true, rejectedReason: undefined });
+    }
+  };
+
+  const handleRejectedReasonSave = () => {
+    if (candidate) {
+      setCandidate({ ...candidate, active: false, rejectedReason: tempRejectedReason });
+      setShowRejectedReasonModal(false);
+      setIsDeactivating(false);
+    }
+  };
+
+  const handleRejectedReasonCancel = () => {
+    if (isDeactivating && candidate) {
+      setCandidate({ ...candidate, active: true });
+    }
+    setShowRejectedReasonModal(false);
+    setIsDeactivating(false);
+  };
+
+  const handleInfoButtonClick = () => {
+    if (candidate) {
+      setTempRejectedReason(candidate.rejectedReason || '');
+      setShowRejectedReasonModal(true);
+      setIsDeactivating(false);
+    }
+  };
+
+  if (!candidate) return <div>Cargando...</div>;
 
   return (
     <Container>
@@ -342,16 +474,21 @@ export default function ProfilePage() {
               <Label style={{ marginBottom: 0, userSelect: 'none' }}>
                 Activo:
               </Label>
-              <div style={{ marginTop: -2 }}>
+              <div style={{ marginTop: -2, display: 'flex', alignItems: 'center' }}>
                 <Switch
                   id="status-toggle"
                   checked={candidate.active ?? true}
                   disabled={!isEditing}
-                  onChange={(e) => {
-                    if (candidate) setCandidate({ ...candidate, active: e.target.checked });
-                  }}
+                  onChange={handleActiveSwitchChange}
                   size="small"
                 /> 
+                {!candidate.active && (
+                  <InfoButton
+                    onClick={handleInfoButtonClick}
+                    iconSize={20}
+                    style={{ marginLeft: 5 }}
+                  />
+                )}
               </div>
             </ToggleGroup>
           </InfoGroup>
@@ -406,6 +543,67 @@ export default function ProfilePage() {
           disabled={!isEditing}
         />
       </TwoColumn>
+
+      {/* Tags Section */}
+      <Section>
+        <SubTitle>Etiquetas</SubTitle>
+        <TagsContainer>
+          {availableTags.map((tagInfo) => {
+            const currentTag = candidate.tags?.find(t => t.tag === tagInfo.tag);
+            const isRedFlag = tagInfo.tag === 'redFlag';
+            const hasNoComment = tagInfo.tag === 'erasmus' || tagInfo.tag === 'nextSem';
+            const TagIconComponent = tagInfo.Icon;
+
+            // Conditional rendering for Red Flag when editing
+            if (isEditing && isRedFlag && !currentTag) {
+              return null;
+            }
+
+            // Conditional rendering for tags when not editing
+            if (!isEditing && !currentTag) {
+              return null;
+            }
+
+            return (
+              <TagBadge key={tagInfo.tag}>
+                <TagIconComponent iconSize={24} />
+                <span>{tagInfo.label + (!isEditing && currentTag && currentTag.comment ? ":" : "")}</span>
+                {isEditing && !isRedFlag && (
+                  <Switch
+                    checked={!!currentTag}
+                    onChange={() => {
+                      if (currentTag) {
+                        handleRemoveTag(tagInfo.tag);
+                      } else {
+                        handleAddTag(tagInfo.tag);
+                      }
+                    }}
+                    size="small"
+                  />
+                )}
+                {isEditing && currentTag && !hasNoComment && (
+                  <TagCommentInput
+                    label="Comentario"
+                    value={currentTag.comment || ''}
+                    onChange={(e) => handleTagCommentChange(tagInfo.tag, e.target.value)}
+                    disabled={!isEditing || isRedFlag}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+                {!isEditing && currentTag && currentTag.comment && !hasNoComment && (
+                  <TagCommentDisplay>
+                    {currentTag.comment}
+                  </TagCommentDisplay>
+                )}
+              </TagBadge>
+            );
+          })}
+          {!isEditing && (!candidate.tags || candidate.tags.length === 0) && (
+            <p>No hay etiquetas para mostrar.</p>
+          )}
+        </TagsContainer>
+      </Section>
 
       {/* Emails | Interests */}
       <TwoColumn>
@@ -504,6 +702,31 @@ export default function ProfilePage() {
         <SubTitle>Feedback</SubTitle>
         <FeedbackForCandidate candidateId={candidate._id}></FeedbackForCandidate>
       </Section>
+
+      {/* Rejected Reason Modal */}
+      <Modal
+        isOpen={showRejectedReasonModal}
+        title="Razón de Rechazo"
+        onClose={!isEditing ? handleRejectedReasonCancel : undefined}
+      >
+        <TextField
+          label="Razón de Rechazo"
+          value={tempRejectedReason}
+          onChange={(e) => setTempRejectedReason(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          placeholder="Motivo por el cual el candidato fue rechazado..."
+          variant="outlined"
+          disabled={!isEditing}
+        />
+        {isEditing && (
+          <ModalButtons>
+        <CancelButton onClick={handleRejectedReasonCancel} />
+        <AcceptButton onClick={handleRejectedReasonSave} />
+          </ModalButtons>
+        )}
+      </Modal>
     </Container>
   );
 }

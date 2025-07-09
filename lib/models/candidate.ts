@@ -6,11 +6,18 @@ export interface ICandidate extends Document {
     email: string;
     alternateEmails: string[];
     photoUrl?: string;
+    rejectedReason?: string; // Added field
+    tags: { tag: string; comment?: string }[]; // Added field
     active: boolean;
     appliedAt: Date;
     tutor?: string;
     interests: Schema.Types.ObjectId[];
 }
+
+const tagSchema = new Schema({
+    tag: { type: String, required: true },
+    comment: { type: String }
+}, { _id: false }); // _id: false to prevent Mongoose from creating default _id for subdocuments
 
 const candidateSchema = new Schema({
     recruitmentId: { type: String, required: true },
@@ -27,6 +34,8 @@ const candidateSchema = new Schema({
         }
     ],
     photoUrl: String,
+    rejectedReason: String, // Added field
+    tags: [tagSchema], // Added field
     active: { type: Boolean, default: true },
     appliedAt: { type: Date, default: Date.now },
     tutor: { type: String },

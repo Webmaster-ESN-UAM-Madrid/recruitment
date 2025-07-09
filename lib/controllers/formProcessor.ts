@@ -1,7 +1,7 @@
 import Form, { IForm } from "@/lib/models/form";
 import FormResponse, { IFormResponse } from "@/lib/models/formResponse";
 import Incident, { IIncident } from "@/lib/models/incident";
-import Candidate from "@/lib/models/candidate";
+import Candidate, { ICandidate } from "@/lib/models/candidate"; // Import ICandidate
 import { validateCandidateCreation, validateAssociatedUser } from "@/lib/validation/formRules";
 import { createIncident } from "@/lib/controllers/incidentController";
 import dbConnect from "@/lib/mongodb";
@@ -68,7 +68,8 @@ export async function processFormResponse(formResponseId: string) {
                     $or: [{ email: { $in: allEmails } }, { alternateEmails: { $in: allEmails } }]
                 });
 
-                let candidateInstance;
+                let candidateInstance: ICandidate;
+
                 if (existingCandidate) {
                     // Update existing candidate
                     const newEmails = allEmails.filter((e) => e !== existingCandidate.email && !existingCandidate.alternateEmails.includes(e));
@@ -86,10 +87,52 @@ export async function processFormResponse(formResponseId: string) {
                         recruitmentId: form.recruitmentProcessId,
                         name,
                         email: primaryEmail,
-                        alternateEmails
+                        alternateEmails,
+                        tags: []
                     });
                     console.log(`Successfully created candidate from response ${response._id}`);
                 }
+
+                // Check for redFlag tag
+                const rejectedCandidates = await Candidate.find({
+                    recruitmentId: { $ne: form.recruitmentProcessId },
+                    active: false,
+                    $or: [
+                        { email: { $in: allEmails } },
+                        { alternateEmails: { $in: allEmails } },
+                        { name: name }
+                    ]
+                });
+
+                for (const rejected of rejectedCandidates) {
+                    let comment = "";
+                    const emailMatch = allEmails.some(email => rejected.email === email || rejected.alternateEmails.includes(email));
+                    const nameMatch = rejected.name === name;
+
+                    if (emailMatch) {
+                        comment = `Rechazado en ${rejected.recruitmentId}: ${rejected.rejectedReason || 'Sin razón especificada'}`;
+                    } else if (nameMatch) {
+                        comment = `[Coincidencia parcial, podría ser una persona diferente] Rechazado en ${rejected.recruitmentId}: ${rejected.rejectedReason || 'Sin razón especificada'}`;
+                    }
+
+                    if (comment) {
+                        if (!candidateInstance.tags) {
+                            candidateInstance.tags = [];
+                        }
+                        // Prevent duplicate redFlag tags for the same recruitment process
+                        const existingRedFlag = candidateInstance.tags.find(
+                            tag => tag.tag === 'redFlag' && tag.comment?.includes(`Rechazado en ${rejected.recruitmentId}`)
+                        );
+                        if (!existingRedFlag) {
+                            candidateInstance.tags.push({ tag: "redFlag", comment });
+                        }
+                    }
+                }
+                // Save candidateInstance if tags were updated
+                if (candidateInstance.isModified('tags')) {
+                    await candidateInstance.save();
+                }
+
                 response.candidateId = candidateInstance._id;
             }
         }

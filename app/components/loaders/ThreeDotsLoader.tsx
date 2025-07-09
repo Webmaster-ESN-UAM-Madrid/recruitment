@@ -16,7 +16,7 @@ const ThreeDotsContainer = styled.div`
 const Dot = styled.div`
   width: 8px;
   height: 8px;
-  background-color: var(--main-color);
+  background-color: var(--brand-primary);
   border-radius: 50%;
   margin: 0 2px;
   animation: ${bounce} 1.4s infinite ease-in-out both;

@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
+import Tooltip from '@mui/material/Tooltip';
+
+import { NextSemIcon } from '../../../app/components/icons/tags/NextSemIcon';
+import { ErasmusIcon } from '../../../app/components/icons/tags/ErasmusIcon';
+import { FriendIcon } from '../../../app/components/icons/tags/FriendIcon';
+import { RedFlagIcon } from '../../../app/components/icons/tags/RedFlagIcon';
+
+const availableTags = [
+  { tag: 'nextSem', label: 'Próximo Cuatri', Icon: NextSemIcon },
+  { tag: 'erasmus', label: 'Erasmus', Icon: ErasmusIcon },
+  { tag: 'friend', label: 'Amigo', Icon: FriendIcon },
+  { tag: 'redFlag', label: 'Red Flag', Icon: RedFlagIcon },
+];
 
 import { AddButton } from '@/app/components/buttons/AddButton';
 import { HideButton } from '@/app/components/buttons/HideButton';
@@ -96,6 +109,18 @@ const ItemCard = styled.div`
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
+const TagIconsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, min-content);
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-left: -10px;
+  width: 35px;
+  height: 35px;
+  color: var(--brand-primary-dark);
+`;
+
 interface Candidate {
   _id: string;
   name: string;
@@ -105,7 +130,8 @@ interface Candidate {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formResponses?: any[]; // Add formResponses property
+  formResponses?: any[];
+  tags?: { tag: string; comment?: string }[];
 }
 
 interface FormQuestion {
@@ -206,7 +232,42 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
             <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns} $inactive={!candidate.active}>
               {visibleColumns.map(column => (
                 <DataCell key={column.key}>
-                  {column.key === 'tags' && <div />}
+                  {column.key === 'tags' && (
+                    <TagIconsContainer>
+                      {availableTags.map((tagInfo, idx) => {
+                        const currentTag = candidate.tags?.find(t => t.tag === tagInfo.tag);
+                        if (currentTag) {
+                          const TagIconComponent = tagInfo.Icon;
+                          const tooltipTitle = (
+                            <>
+                              <strong>{tagInfo.label}</strong>
+                              {currentTag.comment && `: ${currentTag.comment}`}
+                            </>
+                          );
+                          return (
+                            <Tooltip
+                              key={tagInfo.tag}
+                              title={tooltipTitle}
+                              arrow
+                              placement={idx < 2 ? "top" : "bottom"}
+                              slotProps={{
+                                tooltip: {
+                                  sx: {
+                                    fontSize: '1rem',
+                                  },
+                                },
+                              }}
+                            >
+                              <div style={{ height: 18 }}>
+                                <TagIconComponent iconSize={18} />
+                              </div>
+                            </Tooltip>
+                          );
+                        }
+                        return null;
+                      })}
+                    </TagIconsContainer>
+                  )}
                   {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
                   {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
                   {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && (
@@ -250,7 +311,7 @@ const DashboardPage: React.FC = () => {
   const [formStructure, setFormStructure] = useState<FormSection[]>([]);
 
   const allColumns: Column[] = [
-    { key: 'tags', header: '', fixed: true, width: '30px' },
+    { key: 'tags', header: '', fixed: true, width: '40px' },
     { key: 'avatar', header: 'Foto', fixed: true, width: '60px' },
     { key: 'name', header: 'Nombre', fixed: true, width: '200px' },
     { key: 'email', header: 'Correo Electrónico', fixed: false, width: '1fr' },
