@@ -13,6 +13,18 @@ export const getInterviewById = async (id: string): Promise<IInterview | null> =
     }
 };
 
+export const getInterviewsByCandidate = async (candidateId: string): Promise<IInterview[]> => {
+    await dbConnect();
+    try {
+        const interviews = await Interview.find({ candidates: candidateId });
+        return interviews;
+    } catch (error) {
+        console.error(`Error fetching interviews for candidate ${candidateId}:`, error);
+        return [];
+    }
+
+}
+
 export const updateInterview = async (id: string, updates: Partial<IInterview>): Promise<IInterview | null> => {
     await dbConnect();
     try {

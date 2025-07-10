@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useParams } from 'next/navigation';
-import { TextField, Autocomplete, Switch } from '@mui/material'; // Removed Button import
+import { TextField, Autocomplete, Switch } from '@mui/material';
 
 import { AddButton } from '../../../app/components/buttons/AddButton';
 import { SaveButton } from '../../../app/components/buttons/SaveButton';
@@ -17,6 +17,7 @@ import FeedbackForCandidate from '@/app/components/FeedbackForCandidate';
 import Modal from '../../../app/components/modals/Modal';
 import { InfoButton } from '../../../app/components/buttons/InfoButton';
 import { AcceptButton } from '@/app/components/buttons/AcceptButton';
+import { IInterview } from '@/lib/models/interview';
 
 // Import tag icons
 import { NextSemIcon } from '../../../app/components/icons/tags/NextSemIcon';
@@ -25,9 +26,10 @@ import { FriendIcon } from '../../../app/components/icons/tags/FriendIcon';
 import { RedFlagIcon } from '../../../app/components/icons/tags/RedFlagIcon';
 
 interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
+  image?: string;
 }
 
 interface Committee {
@@ -205,6 +207,44 @@ const ModalButtons = styled.div`
   margin-top: 20px;
 `;
 
+const InterviewCommentItem = styled.div`
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-md);
+  padding: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const InterviewerAvatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+`;
+
+const InterviewCommentContent = styled.div`
+  flex-grow: 1;
+`;
+
+const InterviewerName = styled.p`
+  font-weight: bold;
+  color: var(--brand-primary);
+  margin-bottom: 5px;
+`;
+
+const InterviewCommentText = styled.p`
+  margin: 0;
+  white-space: pre-wrap;
+`;
+
 const availableTags = [
   { tag: 'nextSem', label: 'Próximo Cuatri', Icon: NextSemIcon },
   { tag: 'erasmus', label: 'Erasmus', Icon: ErasmusIcon },
@@ -220,6 +260,7 @@ export default function ProfilePage() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
+  const [interviewComments, setInterviewComments] = useState<{ interviewer: User; opinion: string }[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [candidateInterests, setCandidateInterests] = useState<Committee[]>([]);
@@ -289,6 +330,35 @@ export default function ProfilePage() {
     }
   }, [id]);
 
+  const fetchInterviewComments = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/interviews/candidate/${id}`);
+      if (!res.ok) throw new Error();
+      const interviews: IInterview[] = await res.json();
+
+      const comments: { interviewer: User; opinion: string }[] = [];
+      interviews.forEach(interview => {
+        if (interview.opinions && interview.opinions[id!]) {
+          const candidateOpinion = interview.opinions[id!];
+          for (const interviewerId in candidateOpinion.interviewers) {
+            const interviewer = users.find(u => u._id === interviewerId);
+            if (interviewer) {
+              comments.push({
+                interviewer: interviewer,
+                opinion: candidateOpinion.interviewers[interviewerId].opinion,
+              });
+            }
+          }
+        }
+      });
+      setInterviewComments(comments);
+    } catch (err) {
+      console.error('Error al obtener comentarios de entrevistas', err);
+      addToast('Error al cargar comentarios de entrevistas.', 'error');
+    }
+  }, [id, users, addToast]);
+
   useEffect(() => {
     fetchCommittees();
   }, [fetchCommittees]);
@@ -300,6 +370,12 @@ export default function ProfilePage() {
       fetchFormResponses();
     }
   }, [id, fetchCandidate, fetchUsers, fetchFormResponses]);
+
+  useEffect(() => {
+    if (id && users.length > 0) { // Ensure users are loaded before fetching comments
+      fetchInterviewComments();
+    }
+  }, [id, users, fetchInterviewComments]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (candidate) {
@@ -679,6 +755,24 @@ export default function ProfilePage() {
           </ChipContainer>
         </div>
       </TwoColumn>
+
+      {/* Interview Comments */}
+      <Section>
+        <SubTitle>Comentarios de Entrevistas</SubTitle>
+        {interviewComments.length > 0 ? (
+          interviewComments.map((comment, index) => (
+            <InterviewCommentItem key={index}>
+              <InterviewerAvatar src={comment.interviewer.image || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
+              <InterviewCommentContent>
+                <InterviewerName>{comment.interviewer.name}</InterviewerName>
+                <InterviewCommentText>{comment.opinion}</InterviewCommentText>
+              </InterviewCommentContent>
+            </InterviewCommentItem>
+          ))
+        ) : (
+          <p>No hay comentarios de entrevistas para este candidato.</p>
+        )}
+      </Section>
 
       {/* Form Responses */}
       <Section>

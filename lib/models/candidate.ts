@@ -1,6 +1,7 @@
 import { Schema, model, models, Document } from "mongoose";
 
 export interface ICandidate extends Document {
+    _id: string;
     recruitmentId: string;
     name: string;
     email: string;

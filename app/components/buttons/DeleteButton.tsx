@@ -7,6 +7,7 @@ interface DeleteButtonProps {
   disabled?: boolean;
   isLoading?: boolean;
   showSpinner?: boolean;
+  needsConfirmation?: boolean;
   className?: string;
   iconSize?: number;
   style?: React.CSSProperties;
@@ -18,6 +19,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
   disabled = false,
   isLoading = false,
   showSpinner = true,
+  needsConfirmation = true,
   className,
   iconSize = 24,
   style,
@@ -31,6 +33,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
       disabled={disabled}
       isLoading={isLoading}
       showSpinner={showSpinner}
+      needsConfirmation={needsConfirmation}
       className={className}
       iconSize={iconSize}
       style={style}

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
 import { getInterviews, createInterview } from "@/lib/controllers/interviewController";
+import { Types } from "mongoose";
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -33,7 +34,13 @@ export async function POST(req: NextRequest) {
     if (isRecruiter) {
         try {
             const body = await req.json();
-            const newInterview = await createInterview(body);
+            const newInterviewData = {
+                ...body,
+                candidates: body.candidates.map((id: string) => new Types.ObjectId(id)),
+                interviewers: body.interviewers.map((id: string) => new Types.ObjectId(id)),
+                // opinions field is already in the correct format from the frontend
+            };
+            const newInterview = await createInterview(newInterviewData);
             return NextResponse.json(newInterview, { status: 201 });
         } catch (error) {
             console.error("Error creating interview:", error);

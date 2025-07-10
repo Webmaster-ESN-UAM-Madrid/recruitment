@@ -1,22 +1,22 @@
 import { Schema, model, models, Document } from "mongoose";
 
 export interface IInterview extends Document {
-  recruitmentId: string;
-  interviewers: Schema.Types.ObjectId[];
-  candidates: Schema.Types.ObjectId[];
-  date: Date;
+    _id: string;
+    recruitmentId: string;
+    interviewers: string[];
+    candidates: string[];
+    date: Date;
     opinions: {
-    [candidateId: string]: {
-      interviewers: {
-        [interviewerId: string]: {
-          opinion: string;
+        [candidateId: string]: {
+            interviewers: {
+                [interviewerId: string]: {
+                    opinion: string;
+                };
+            };
+            status: "unset" | "present" | "delayed" | "absent" | "cancelled";
         };
-      };
-      status: "unset" | "present" | "delayed" | "absent" | "cancelled";
     };
-  };
 }
-  
 
 const interviewSchema = new Schema<IInterview>({
     recruitmentId: { type: String, required: true },
@@ -26,21 +26,21 @@ const interviewSchema = new Schema<IInterview>({
     opinions: {
         type: Map,
         of: new Schema({
-        interviewers: {
-            type: Map,
-            of: new Schema({
-            opinion: { type: String, required: true }
-            }),
-            default: {}
-        },
-        status: {
-            type: String,
-            enum: ["unset", "present", "delayed", "absent", "cancelled"],
-            default: "unset"
-        }
+            interviewers: {
+                type: Map,
+                of: new Schema({
+                    opinion: { type: String, required: true }
+                }),
+                default: {}
+            },
+            status: {
+                type: String,
+                enum: ["unset", "present", "delayed", "absent", "cancelled"],
+                default: "unset"
+            }
         }),
         default: {}
     }
 });
 
-export default models.Account || model<IInterview>("Interview", interviewSchema);
+export default models.Interview || model<IInterview>("Interview", interviewSchema);

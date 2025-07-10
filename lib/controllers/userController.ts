@@ -4,7 +4,7 @@ import dbConnect from "@/lib/mongodb";
 export const getUsers = async () => {
     await dbConnect();
     try {
-        const users = await User.find({}, "name email");
+        const users = await User.find({});
         return users;
     } catch (error) {
         console.error("Error fetching users:", error);

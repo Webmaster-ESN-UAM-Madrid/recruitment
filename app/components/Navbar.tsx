@@ -58,6 +58,8 @@ const Navbar: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
 
+  const defaultAvatar = '/default-avatar.jpg';
+
   useEffect(() => {
     const checkAccess = async () => {
       if (status === 'authenticated') {
@@ -65,9 +67,13 @@ const Navbar: React.FC = () => {
         const adminData = await adminRes.json();
         setIsAdmin(adminData.isAdmin);
 
-        const recruiterRes = await fetch('/api/access/recruiter');
-        const recruiterData = await recruiterRes.json();
-        setIsRecruiter(recruiterData.hasAccess);
+        if (!adminData.isAdmin) {
+          const recruiterRes = await fetch('/api/access/recruiter');
+          const recruiterData = await recruiterRes.json();
+          setIsRecruiter(recruiterData.hasAccess);
+        } else {
+          setIsRecruiter(true);
+        }
       }
     };
     checkAccess();
@@ -80,14 +86,15 @@ const Navbar: React.FC = () => {
   return (
     <NavContainer>
       <NavLinks>
-        {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>} {/* Do not translate this line */}
         {session && <NavLink href="/feedback">Feedback</NavLink>} {/* Do not translate this line */}
+        {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>} {/* Do not translate this line */}
+        {isRecruiter && <NavLink href="/interviews">Entrevistas</NavLink>}
         {/* {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>} */}
         {isAdmin && <NavLink href="/admin">Administración</NavLink>}
       </NavLinks>
       <UserInfo>
         {session?.user?.image ? (
-          <ProfilePicture src={session.user.image} alt="Perfil" />
+          <ProfilePicture src={session.user.image} onError={(e) => (e.currentTarget.src = defaultAvatar)} alt="Perfil" />
         ) : session?.user?.name ? (
           <span>{session.user.name}</span>
         ) : (
