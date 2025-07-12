@@ -1,0 +1,422 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import styled from 'styled-components';
+import Link from 'next/link';
+import Tooltip from '@mui/material/Tooltip';
+import { useSession } from 'next-auth/react';
+import { NextSemIcon } from '../../../app/components/icons/tags/NextSemIcon';
+import { ErasmusIcon } from '../../../app/components/icons/tags/ErasmusIcon';
+import { FriendIcon } from '../../../app/components/icons/tags/FriendIcon';
+import { RedFlagIcon } from '../../../app/components/icons/tags/RedFlagIcon';
+import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
+import { AcceptButton } from '@/app/components/buttons/AcceptButton';
+import { useToast } from '@/app/components/toasts/ToastContext';
+import { IInterview } from '@/lib/models/interview';
+import { ICandidate } from '@/lib/models/candidate';
+import { IUser } from '@/lib/models/user';
+import Modal from '@/app/components/modals/Modal';
+import InterviewModal from '@/app/components/modals/InterviewModal';
+import { EditButton } from '@/app/components/buttons/EditButton';
+
+const availableTags = [
+    { tag: 'nextSem', label: 'Próximo Cuatri', Icon: NextSemIcon },
+    { tag: 'erasmus', label: 'Erasmus', Icon: ErasmusIcon },
+    { tag: 'friend', label: 'Amigo', Icon: FriendIcon },
+    { tag: 'redFlag', label: 'Red Flag', Icon: RedFlagIcon },
+];
+
+const PageContainer = styled.div`
+  padding: 20px;
+`;
+
+const MainContent = styled.div`
+    max-width: 1000px;
+    margin: 0 auto;
+`;
+
+const Section = styled.section`
+  margin-bottom: 40px;
+`;
+
+const SectionTitle = styled.h2`
+  border-bottom: 2px solid var(--border-secondary);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+`;
+
+const CandidateTableContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-primary);
+  border-radius: 5px;
+  overflow-x: auto;
+`;
+
+const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
+  display: grid;
+  grid-template-columns: ${props => props.gridtemplatecolumns};
+  padding: 10px 15px;
+  background-color: var(--table-header-bg);
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-primary);
+  align-items: center;
+`;
+
+const TableRow = styled.div<{ gridtemplatecolumns: string }>`
+  display: grid;
+  grid-template-columns: ${props => props.gridtemplatecolumns};
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--border-secondary);
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    background-color: var(--table-row-hover-bg);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const Avatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const CandidateName = styled(Link)`
+  font-weight: bold;
+  color: var(--link-color);
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const DataCell = styled.div`
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0; /* Allow content to shrink */
+  flex-shrink: 1;
+`;
+
+const ItemCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const TagIconsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, min-content);
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-left: -10px;
+  margin-right: -10px;
+  width: 40px;
+  height: 40px;
+  color: var(--brand-primary-dark);
+`;
+
+const CandidateCardContainer = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+`;
+
+const CandidateCard = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    background-color: var(--bg-primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+    width: fit-content;
+
+    &:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+`;
+
+const TasksPage: React.FC = () => {
+    const { data: session } = useSession();
+    const [candidates, setCandidates] = useState<ICandidate[]>([]);
+    const [interviews, setInterviews] = useState<IInterview[]>([]);
+    const [users, setUsers] = useState<IUser[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { addToast } = useToast();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingInterview, setEditingInterview] = useState<IInterview | null>(null);
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [candidatesRes, interviewsRes, usersRes] = await Promise.all([
+                fetch('/api/candidates'),
+                fetch('/api/interviews/past'),
+                fetch('/api/users'),
+            ]);
+
+            if (candidatesRes.ok) {
+                const data = await candidatesRes.json();
+                setCandidates(data);
+            } else {
+                console.error("Failed to fetch candidates");
+                addToast("Error al cargar los candidatos", "error");
+            }
+
+            if (interviewsRes.ok) {
+                const data = await interviewsRes.json();
+                setInterviews(data);
+            } else {
+                console.error("Failed to fetch interviews");
+                addToast("Error al cargar las entrevistas", "error");
+            }
+
+            if (usersRes.ok) {
+                const data = await usersRes.json();
+                setUsers(data);
+            } else {
+                console.error("Failed to fetch users");
+                addToast("Error al cargar los usuarios", "error");
+            }
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+            addToast("Error al cargar los datos", "error");
+        } finally {
+            setLoading(false);
+        }
+    }, [addToast]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const openModal = (interview: IInterview | null = null) => {
+        setEditingInterview(interview);
+        setIsModalOpen(true);
+    };
+    const closeModal = () => {
+        setEditingInterview(null);
+        setIsModalOpen(false)
+    };
+
+    const handleSave = async (interviewData: Partial<IInterview>, events: Record<string, ICandidate['events']>) => {
+        const isEditing = !!editingInterview;
+        const url = isEditing ? `/api/interviews/${editingInterview?._id}` : '/api/interviews';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ interviewData, events }),
+            });
+
+            if (res.ok) {
+                addToast(`Entrevista ${isEditing ? 'actualizada' : 'creada'} correctamente`, 'success');
+                closeModal();
+                fetchData();
+            } else {
+                addToast("Error al guardar la entrevista", "error");
+            }
+        } catch (error) {
+            console.error("Error al guardar la entrevista:", error);
+            addToast("Error al guardar la entrevista", "error");
+        }
+    };
+
+    const handleMarkAsSent = async (candidateIds: string[]) => {
+        try {
+            const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ candidateIds }),
+            });
+
+            if (res.ok) {
+                addToast("Emails marcados como enviados", "success");
+                fetchData();
+            } else {
+                addToast("Error al marcar los emails como enviados", "error");
+            }
+        } catch (error) {
+            console.error("Error marking emails as sent:", error);
+            addToast("Error al marcar los emails como enviados", "error");
+        }
+    };
+
+    const activeCandidatesWithPendingEmails = candidates.filter(c => c.active && !c.emailSent);
+    const inactiveCandidatesWithPendingEmails = candidates.filter(c => !c.active && !c.emailSent);
+    const activeEmails = activeCandidatesWithPendingEmails.map(c => c.email).join(', ');
+
+    const interviewsWithPendingFeedback = interviews.filter(interview => {
+        if (!session?.user?.id || !interview.interviewers.includes(session.user.id)) {
+            return false;
+        }
+        for (const candidateId of interview.candidates) {
+            if (!interview.opinions[candidateId]?.interviewers[session.user.id]?.opinion) {
+                return true;
+            }
+        }
+        return false;
+    });
+
+    const scheduledCandidateIds = new Set(interviews.flatMap(i => i.candidates));
+    const unscheduledCandidates = candidates.filter(c => c.active && !scheduledCandidateIds.has(c._id));
+
+    const gridtemplatecolumns = '40px 60px 300px 1fr 85px';
+    const defaultAvatar = '/default-avatar.jpg';
+
+    return (
+        <PageContainer>
+            <h1>Tareas</h1>
+            <MainContent>
+                <Section>
+                    <SectionTitle>Mis Tareas</SectionTitle>
+                    {interviewsWithPendingFeedback.length > 0 ? (
+                        interviewsWithPendingFeedback.map(interview => (
+                            <ItemCard key={interview._id}>
+                                <p>Tienes feedback pendiente para la entrevista del {new Date(interview.date).toLocaleString()}</p>
+                                <EditButton onClick={() => openModal(interview)} />
+                            </ItemCard>
+                        ))
+                    ) : (
+                        <p>No tienes tareas pendientes.</p>
+                    )}
+                </Section>
+
+                <Section>
+                    <SectionTitle>Emails Pendientes</SectionTitle>
+                    <h3>Activos</h3>
+                    <ItemCard>
+                        <p>{activeEmails || "No hay emails pendientes."}</p>
+                        {activeEmails && (
+                            <AcceptButton 
+                                onClick={() => handleMarkAsSent(activeCandidatesWithPendingEmails.map(c => c._id))} 
+                                needsConfirmation={true}
+                                confirmationDuration={3000}
+                                showSpinner={true}
+                            />
+                        )}
+                    </ItemCard>
+                    <h3>Inactivos</h3>
+                    <CandidateTableContainer>
+                        <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
+                            <DataCell></DataCell>
+                            <DataCell>Foto</DataCell>
+                            <DataCell>Nombre</DataCell>
+                            <DataCell>Motivo de Rechazo</DataCell>
+                            <DataCell>Acciones</DataCell>
+                        </TableHeader>
+                        {loading ? (
+                            <LoadingSpinner />
+                        ) : inactiveCandidatesWithPendingEmails.length > 0 ? (
+                            inactiveCandidatesWithPendingEmails.map(candidate => (
+                                <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns}>
+                                    <DataCell>
+                                        <TagIconsContainer>
+                                            {availableTags.map((tagInfo, idx) => {
+                                                const currentTag = candidate.tags?.find(t => t.tag === tagInfo.tag);
+                                                if (currentTag) {
+                                                    const TagIconComponent = tagInfo.Icon;
+                                                    const tooltipTitle = (
+                                                        <>
+                                                            <strong>{tagInfo.label}</strong>
+                                                            {currentTag.comment && `: ${currentTag.comment}`}
+                                                        </>
+                                                    );
+                                                    return (
+                                                        <Tooltip
+                                                            key={tagInfo.tag}
+                                                            title={tooltipTitle}
+                                                            arrow
+                                                            placement={idx < 2 ? "top" : "bottom"}
+                                                            slotProps={{
+                                                                tooltip: {
+                                                                    sx: {
+                                                                        fontSize: '1rem',
+                                                                    },
+                                                                },
+                                                            }}
+                                                        >
+                                                            <div style={{ height: 18 }}>
+                                                                <TagIconComponent iconSize={18} />
+                                                            </div>
+                                                        </Tooltip>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                        </TagIconsContainer>
+                                    </DataCell>
+                                    <DataCell><Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} /></DataCell>
+                                    <DataCell><CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName></DataCell>
+                                    <DataCell>{candidate.rejectedReason}</DataCell>
+                                    <DataCell>
+                                        <AcceptButton
+                                            onClick={() => handleMarkAsSent([candidate._id])}
+                                            needsConfirmation={true}
+                                            showSpinner={true}
+                                        />
+                                    </DataCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <ItemCard style={{ border: 'none', marginBottom: 0 }}>No hay candidatos para mostrar.</ItemCard>
+                        )}
+                    </CandidateTableContainer>
+                </Section>
+
+                <Section>
+                    <SectionTitle>Entrevistas por Calendarizar</SectionTitle>
+                    {loading ? (
+                        <LoadingSpinner />
+                    ) : unscheduledCandidates.length > 0 ? (
+                        <CandidateCardContainer>
+                            {unscheduledCandidates.map(candidate => (
+                                <CandidateCard key={candidate._id}>
+                                    <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
+                                    <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>
+                                </CandidateCard>
+                            ))}
+                        </CandidateCardContainer>
+                    ) : (
+                        <p>No hay candidatos por agendar.</p>
+                    )}
+                </Section>
+
+                <Modal isOpen={isModalOpen} title={editingInterview ? "Editar Entrevista" : "Añadir Entrevista"}>
+                    <InterviewModal
+                        users={users}
+                        candidates={candidates}
+                        interview={editingInterview}
+                        onClose={closeModal}
+                        onSave={handleSave}
+                    />
+                </Modal>
+            </MainContent>
+        </PageContainer>
+    );
+};
+
+export default TasksPage;

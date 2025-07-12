@@ -4,6 +4,8 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
+import { IInterview } from '@/lib/models/interview';
+import { ICandidate } from '@/lib/models/candidate';
 
 const NavContainer = styled.nav`
   background-color: var(--navbar-bg);
@@ -23,6 +25,12 @@ const NavLinks = styled.div`
   justify-content: center;
   align-items: center;
   gap: 20px;
+`;
+
+const NavLinkContainer = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between link and dot */
 `;
 
 const NavLink = styled(Link)`
@@ -53,10 +61,25 @@ const ProfilePicture = styled.img`
   border: 2px solid var(--border-primary);
 `;
 
+const NotificationDot = styled.div`
+    background-color: var(--brand-primary);
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    font-weight: bold;
+`;
+
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
+  const [personalTasks, setPersonalTasks] = useState(0);
+  const [hasGlobalTasks, setHasGlobalTasks] = useState(false);
 
   const defaultAvatar = '/default-avatar.jpg';
 
@@ -79,6 +102,40 @@ const Navbar: React.FC = () => {
     checkAccess();
   }, [session, status]);
 
+  useEffect(() => {
+    const fetchTasks = async () => {
+        if (isRecruiter) {
+            const [interviewsRes, candidatesRes] = await Promise.all([
+                fetch('/api/interviews/new'),
+                fetch('/api/candidates'),
+            ]);
+
+            if (interviewsRes.ok) {
+                const interviews: IInterview[] = await interviewsRes.json();
+                const pendingFeedback = interviews.filter(interview => {
+                    if (!session?.user?.id || !interview.interviewers.includes(session.user.id)) {
+                        return false;
+                    }
+                    for (const candidateId of interview.candidates) {
+                        if (!interview.opinions[candidateId]?.interviewers[session.user.id]?.opinion) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                setPersonalTasks(pendingFeedback.length);
+            }
+
+            if (candidatesRes.ok) {
+                const candidates: ICandidate[] = await candidatesRes.json();
+                const pendingEmails = candidates.some(c => !c.emailSent);
+                setHasGlobalTasks(pendingEmails);
+            }
+        }
+    };
+    fetchTasks();
+  }, [isRecruiter, session]);
+
   if (status === 'loading') {
     return null; // Or a loading spinner for the navbar
   }
@@ -89,6 +146,14 @@ const Navbar: React.FC = () => {
         {session && <NavLink href="/feedback">Feedback</NavLink>} {/* Do not translate this line */}
         {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>} {/* Do not translate this line */}
         {isRecruiter && <NavLink href="/interviews">Entrevistas</NavLink>}
+        {isRecruiter && (
+            <NavLinkContainer>
+                <NavLink href="/tasks">Tareas</NavLink>
+                {(personalTasks > 0 || hasGlobalTasks) && (
+                    <NotificationDot>{personalTasks > 0 ? personalTasks : '·'}</NotificationDot>
+                )}
+            </NavLinkContainer>
+        )}
         {/* {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>} */}
         {isAdmin && <NavLink href="/admin">Administración</NavLink>}
       </NavLinks>

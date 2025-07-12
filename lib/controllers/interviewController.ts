@@ -22,8 +22,7 @@ export const getInterviewsByCandidate = async (candidateId: string): Promise<IIn
         console.error(`Error fetching interviews for candidate ${candidateId}:`, error);
         return [];
     }
-
-}
+};
 
 export const updateInterview = async (id: string, updates: Partial<IInterview>): Promise<IInterview | null> => {
     await dbConnect();
@@ -65,7 +64,7 @@ export const createInterview = async (interviewData: Partial<IInterview>): Promi
     }
 };
 
-export const getInterviews = async (active: boolean = false): Promise<IInterview[]> => {
+export const getInterviews = async (active: boolean = false, past: boolean = false): Promise<IInterview[]> => {
     await dbConnect();
     try {
         const recruitmentDetails = await getCurrentRecruitmentDetails();
@@ -79,6 +78,9 @@ export const getInterviews = async (active: boolean = false): Promise<IInterview
         const query: any = { recruitmentId: currentRecruitmentId };
         if (active) {
             query.active = true;
+        }
+        if (past) {
+            query.date = { $lt: new Date() };
         }
         const interviews = await Interview.find(query);
         return interviews;

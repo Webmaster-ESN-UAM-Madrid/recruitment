@@ -78,7 +78,7 @@ const InterviewsPage = () => {
     setIsModalOpen(false)
   };
 
-  const handleSave = async (interviewData: Partial<IInterview>) => {
+  const handleSave = async (interviewData: Partial<IInterview>, events: Record<string, ICandidate["events"]>) => {
     const isEditing = !!editingInterview;
     const url = isEditing ? `/api/interviews/${editingInterview?._id}` : '/api/interviews';
     const method = isEditing ? 'PUT' : 'POST';
@@ -89,7 +89,7 @@ const InterviewsPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(interviewData),
+        body: JSON.stringify({ interviewData, events }),
       });
 
       if (res.ok) {

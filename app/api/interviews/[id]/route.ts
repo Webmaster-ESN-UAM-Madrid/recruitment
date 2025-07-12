@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getInterviewById, updateInterview, deleteInterview } from "@/lib/controllers/interviewController";
+import { updateCandidate } from "@/lib/controllers/candidateController";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
@@ -24,17 +25,21 @@ export async function PUT(req: NextRequest, context: any) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
     const params = await context.params;
-    const body = await req.json();
+    const { interviewData, events } = await req.json();
     const updatedInterviewData = {
-        ...body,
-        candidates: body.candidates.map((id: string) => new Types.ObjectId(id)),
-        interviewers: body.interviewers.map((id: string) => new Types.ObjectId(id)),
-        // opinions field is already in the correct format from the frontend
+        ...interviewData,
+        candidates: interviewData.candidates.map((id: string) => new Types.ObjectId(id)),
+        interviewers: interviewData.interviewers.map((id: string) => new Types.ObjectId(id)),
     };
     const updatedInterview = await updateInterview(params.id, updatedInterviewData);
     if (!updatedInterview) {
         return NextResponse.json({ message: "Failed to update interview" }, { status: 500 });
     }
+
+    for (const candidateId in events) {
+        await updateCandidate(candidateId, { events: events[candidateId] });
+    }
+
     return NextResponse.json(updatedInterview);
 }
 

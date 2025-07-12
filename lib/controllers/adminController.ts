@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/mongodb";
 import Config from "@/lib/models/config";
 import User from "@/lib/models/user";
+import Candidate from "@/lib/models/candidate";
 
 const defaultImage = "https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3383.jpg?semt=ais_items_boosted&w=500";
 
@@ -47,6 +48,20 @@ export const updateRecruitmentDetails = async (currentRecruitment: string, recru
         const globalConfig = await Config.findById("globalConfig");
         if (!globalConfig) {
             return { status: 404, message: "Global config not found" };
+        }
+
+        const oldRecruitmentPhase = globalConfig.recruitmentPhase;
+
+        if (oldRecruitmentPhase !== recruitmentPhase) {
+            await Candidate.updateMany(
+                { recruitmentPhase: oldRecruitmentPhase },
+                { $set: { emailSent: false } }
+            );
+
+            await Candidate.updateMany(
+                { active: true },
+                { $set: { recruitmentPhase: recruitmentPhase } }
+            );
         }
 
         globalConfig.currentRecruitment = currentRecruitment;

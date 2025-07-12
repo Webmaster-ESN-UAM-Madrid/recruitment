@@ -13,6 +13,14 @@ export interface ICandidate extends Document {
     appliedAt: Date;
     tutor?: string;
     interests: Schema.Types.ObjectId[];
+    events: {
+        "Welcome Meeting": boolean;
+        "Welcome Days": boolean;
+        "Integration Weekend": boolean;
+        "Plataforma Local": boolean;
+    };
+    recruitmentPhase: string;
+    emailSent: boolean;
 }
 
 const tagSchema = new Schema({
@@ -40,7 +48,15 @@ const candidateSchema = new Schema({
     active: { type: Boolean, default: true },
     appliedAt: { type: Date, default: Date.now },
     tutor: { type: String },
-    interests: [{ type: Schema.Types.ObjectId, ref: "Committee" }]
+    interests: [{ type: Schema.Types.ObjectId, ref: "Committee" }],
+    events: {
+        "Welcome Meeting": { type: Boolean, default: false },
+        "Welcome Days": { type: Boolean, default: false },
+        "Integration Weekend": { type: Boolean, default: false },
+        "Plataforma Local": { type: Boolean, default: false }
+    },
+    recruitmentPhase: { type: String },
+    emailSent: { type: Boolean, default: true }
 });
 
 export default models.Candidate || model<ICandidate>("Candidate", candidateSchema);

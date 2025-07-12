@@ -44,8 +44,13 @@ export const createCandidate = async (candidateData: Partial<ICandidate>): Promi
             return null;
         }
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+        const currentRecruitmentPhase = recruitmentDetails.recruitmentPhase;
 
-        const candidate = await Candidate.create({ ...candidateData, recruitmentId: currentRecruitmentId });
+        const candidate = await Candidate.create({ 
+            ...candidateData, 
+            recruitmentId: currentRecruitmentId,
+            recruitmentPhase: currentRecruitmentPhase 
+        });
         return candidate;
     } catch (error) {
         console.error("Error creating candidate:", error);
@@ -62,6 +67,20 @@ export const getCandidates = async (active: boolean = false): Promise<ICandidate
             return [];
         }
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+        const currentRecruitmentPhase = recruitmentDetails.recruitmentPhase;
+
+        await Candidate.updateMany(
+            { 
+                recruitmentId: currentRecruitmentId,
+                recruitmentPhase: { $exists: false } 
+            },
+            { 
+                $set: { 
+                    recruitmentPhase: currentRecruitmentPhase,
+                    emailSent: true
+                }
+            }
+        );
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const query: any = { recruitmentId: currentRecruitmentId };

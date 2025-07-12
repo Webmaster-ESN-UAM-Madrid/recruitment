@@ -101,6 +101,7 @@ interface IconButtonProps {
   isLoading?: boolean;
   showSpinner?: boolean;
   needsConfirmation?: boolean;
+  confirmationDuration?: number;
   className?: string;
   iconSize?: number;
   style?: React.CSSProperties;
@@ -139,6 +140,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   isLoading = false,
   showSpinner = false,
   needsConfirmation = false,
+  confirmationDuration = 750,
   className,
   iconSize = 24,
   style,
@@ -151,8 +153,6 @@ export const IconButton: React.FC<IconButtonProps> = ({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { disableAll, setDisableAll } = useButtonContext();
-
-  const confirmationDuration = 750;
 
   const endHold = useCallback(() => {
     setIsHolding(false);
@@ -214,7 +214,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         executeClick();
       }
     }, confirmationDuration);
-  }, [disabled, loading, disableAll, needsConfirmation, isHolding, executeClick]);
+  }, [disabled, loading, disableAll, needsConfirmation, confirmationDuration, isHolding, executeClick]);
 
   const handlePress = () => {
     if (!needsConfirmation) {

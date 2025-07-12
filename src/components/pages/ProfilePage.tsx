@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useParams } from 'next/navigation';
-import { TextField, Autocomplete, Switch } from '@mui/material';
+import { TextField, Autocomplete, Switch, Checkbox, FormControlLabel, FormGroup } from '@mui/material';
 
 import { AddButton } from '../../../app/components/buttons/AddButton';
 import { SaveButton } from '../../../app/components/buttons/SaveButton';
@@ -49,6 +49,12 @@ interface Candidate {
   active: boolean;
   rejectedReason?: string;
   tags?: { tag: string; comment?: string }[];
+  events: {
+    "Welcome Meeting": boolean;
+    "Welcome Days": boolean;
+    "Integration Weekend": boolean;
+    "Plataforma Local": boolean;
+  };
 }
 
 interface FormResponse {
@@ -268,6 +274,12 @@ export default function ProfilePage() {
   const [showRejectedReasonModal, setShowRejectedReasonModal] = useState(false);
   const [tempRejectedReason, setTempRejectedReason] = useState('');
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [events, setEvents] = useState<Candidate['events']>({ 
+    "Welcome Meeting": false,
+    "Welcome Days": false,
+    "Integration Weekend": false,
+    "Plataforma Local": false,
+  });
 
   const defaultAvatar = '/default-avatar.jpg';
 
@@ -289,6 +301,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error();
       const data = await res.json();
       setCandidate(data);
+      setEvents(data.events);
 
       if (availableCommittees.length > 0 && data.interests) {
         const interestsWithDetails = data.interests
@@ -442,6 +455,13 @@ export default function ProfilePage() {
     }
   };
 
+  const handleEventChange = (eventName: keyof Candidate['events']) => {
+    setEvents(prevEvents => ({
+      ...prevEvents,
+      [eventName]: !prevEvents[eventName],
+    }));
+  };
+
   const handleSave = async () => {
     if (!candidate) return;
     try {
@@ -470,6 +490,7 @@ export default function ProfilePage() {
         interests: candidateInterests.map(i => i._id),
         rejectedReason: candidate.rejectedReason || undefined,
         tags: candidate.tags || [],
+        events: events,
       };
 
       const res = await fetch(`/api/candidates/${candidate._id}`, {
@@ -748,6 +769,7 @@ export default function ProfilePage() {
                   <DeleteButton
                     onClick={() => handleRemoveInterest(interest._id)}
                     iconSize={16}
+                    needsConfirmation={false}
                   />
                 )}
               </InterestBadge>
@@ -755,6 +777,29 @@ export default function ProfilePage() {
           </ChipContainer>
         </div>
       </TwoColumn>
+
+      {/* Events Section */}
+      <Section>
+        <SubTitle>Asistencia a Eventos</SubTitle>
+        <FormGroup row>
+          <FormControlLabel
+            control={<Checkbox checked={events["Welcome Meeting"]} onChange={() => handleEventChange("Welcome Meeting")} disabled={!isEditing} />}
+            label="Welcome Meeting"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={events["Welcome Days"]} onChange={() => handleEventChange("Welcome Days")} disabled={!isEditing} />}
+            label="Welcome Days"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={events["Integration Weekend"]} onChange={() => handleEventChange("Integration Weekend")} disabled={!isEditing} />}
+            label="Integration Weekend"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={events["Plataforma Local"]} onChange={() => handleEventChange("Plataforma Local")} disabled={!isEditing} />}
+            label="Plataforma Local"
+          />
+        </FormGroup>
+      </Section>
 
       {/* Interview Comments */}
       <Section>

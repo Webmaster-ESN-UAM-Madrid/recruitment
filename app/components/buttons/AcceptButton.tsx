@@ -10,6 +10,8 @@ interface AcceptButtonProps {
   className?: string;
   iconSize?: number;
   style?: React.CSSProperties;
+  needsConfirmation?: boolean;
+  confirmationDuration?: number;
 }
 
 export const AcceptButton: React.FC<AcceptButtonProps> = ({
@@ -20,6 +22,8 @@ export const AcceptButton: React.FC<AcceptButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
+  needsConfirmation = false,
+  confirmationDuration,
   style,
 }) => {
   return (
@@ -33,6 +37,8 @@ export const AcceptButton: React.FC<AcceptButtonProps> = ({
       showSpinner={showSpinner}
       className={className}
       iconSize={iconSize}
+      needsConfirmation={needsConfirmation}
+      confirmationDuration={confirmationDuration}
       style={style}
     />
   );

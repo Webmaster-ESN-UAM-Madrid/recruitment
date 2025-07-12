@@ -6,7 +6,7 @@ import { ICandidate } from '@/lib/models/candidate';
 import { SaveButton } from '../buttons/SaveButton';
 import { CancelButton } from '../buttons/CancelButton';
 import { useToast } from '../toasts/ToastContext';
-import { TextField, Autocomplete, Chip, FormControl, RadioGroup, FormControlLabel, Radio } from '@mui/material';
+import { TextField, Autocomplete, Chip, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -15,7 +15,7 @@ interface InterviewModalProps {
   users: IUser[];
   candidates: ICandidate[];
   onClose: () => void;
-  onSave: (interview: Partial<IInterview>) => void;
+  onSave: (interview: Partial<IInterview>, events: Record<string, ICandidate['events']>) => void;
 }
 
 const Form = styled.div`
@@ -48,18 +48,32 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const [selectedCandidates, setSelectedCandidates] = useState<ICandidate[]>([]);
   const [selectedInterviewers, setSelectedInterviewers] = useState<IUser[]>([]);
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
+  const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
 
   useEffect(() => {
     if (interview) {
-      setDate(new Date(interview.date).toISOString().substring(0, 16)); // Format for datetime-local
+      setDate(new Date(interview.date).toISOString().substring(0, 16));
       setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
       setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
       setOpinions(interview.opinions || {});
+      const initialEvents: Record<string, ICandidate['events']> = {};
+      candidates.forEach(candidate => {
+        if (interview.candidates.includes(candidate._id)) {
+          initialEvents[candidate._id] = candidate.events || {
+            "Welcome Meeting": false,
+            "Welcome Days": false,
+            "Integration Weekend": false,
+            "Plataforma Local": false,
+          };
+        }
+      });
+      setEvents(initialEvents);
     } else {
       setDate('');
       setSelectedCandidates([]);
       setSelectedInterviewers([]);
       setOpinions({});
+      setEvents({});
     }
   }, [interview, users, candidates]);
 
@@ -76,7 +90,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       opinions: opinions,
     };
 
-    await onSave(interviewData);
+    await onSave(interviewData, events);
   };
 
   const handleOpinionChange = (candidateId: string, interviewerId: string, opinion: string) => {
@@ -98,6 +112,16 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       [candidateId]: {
         ...(prevOpinions[candidateId] || {}),
         status: status,
+      },
+    }));
+  };
+
+  const handleEventChange = (candidateId: string, eventName: keyof ICandidate['events']) => {
+    setEvents(prevEvents => ({
+      ...prevEvents,
+      [candidateId]: {
+        ...(prevEvents[candidateId] || {}),
+        [eventName]: !prevEvents[candidateId]?.[eventName],
       },
     }));
   };
@@ -177,6 +201,26 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
                   <FormControlLabel value="absent" control={<Radio />} label="Ausente" />
                   <FormControlLabel value="cancelled" control={<Radio />} label="Cancelado" />
                 </RadioGroup>
+              </FormControl>
+              <FormControl component="fieldset" fullWidth margin="normal">
+                <FormGroup row>
+                  <FormControlLabel
+                    control={<Checkbox checked={events[candidate._id]?.['Welcome Meeting'] || false} onChange={() => handleEventChange(candidate._id, 'Welcome Meeting')} />}
+                    label="Welcome Meeting"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={events[candidate._id]?.['Welcome Days'] || false} onChange={() => handleEventChange(candidate._id, 'Welcome Days')} />}
+                    label="Welcome Days"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={events[candidate._id]?.['Integration Weekend'] || false} onChange={() => handleEventChange(candidate._id, 'Integration Weekend')} />}
+                    label="Integration Weekend"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={events[candidate._id]?.['Plataforma Local'] || false} onChange={() => handleEventChange(candidate._id, 'Plataforma Local')} />}
+                    label="Plataforma Local"
+                  />
+                </FormGroup>
               </FormControl>
               {selectedInterviewers.map(interviewer => (
                 <FormField key={interviewer._id}>
