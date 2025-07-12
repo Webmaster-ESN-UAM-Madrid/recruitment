@@ -106,7 +106,7 @@ const Navbar: React.FC = () => {
     const fetchTasks = async () => {
         if (isRecruiter) {
             const [interviewsRes, candidatesRes] = await Promise.all([
-                fetch('/api/interviews/new'),
+                fetch('/api/interviews/past'),
                 fetch('/api/candidates'),
             ]);
 
