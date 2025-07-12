@@ -11,9 +11,7 @@ function getEmailFromResponse(response: IFormResponse, form: IForm): string | un
         return undefined;
     }
 
-    console.log(emailKey);
-
-    return response.responses.get(emailKey) as string | undefined;
+    return (response.responses.get(emailKey) as unknown as string).toLowerCase() || undefined;
 }
 
 // Rule for forms that create candidates
@@ -21,7 +19,7 @@ export async function validateCandidateCreation(response: IFormResponse, form: I
     const incidents: Partial<IIncident>[] = [];
 
     const formEmail = getEmailFromResponse(response, form);
-    const respondentEmail = response.respondentEmail;
+    const respondentEmail = response.respondentEmail?.toLowerCase();
 
     const emailsToCheck = [...new Set([formEmail, respondentEmail].filter(Boolean))];
 

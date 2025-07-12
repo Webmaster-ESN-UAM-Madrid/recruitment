@@ -15,8 +15,8 @@ interface FormResponseItem {
     value: unknown;
 }
 
-function getMappingFromResponse(response: IFormResponse, form: IForm): string | undefined {
-    const key = Array.from(form.fieldMappings.entries()).find(([, value]) => value === "user.name")?.[0];
+function getMappingFromResponse(response: IFormResponse, form: IForm, field: string): string | undefined {
+    const key = Array.from(form.fieldMappings.entries()).find(([, value]) => value === field)?.[0];
 
     if (!key) {
         return undefined;
@@ -67,9 +67,9 @@ export const processFormResponse = async (formResponseId: string) => {
         }
 
         if (form.canCreateUsers) {
-            const name = getMappingFromResponse(response, form);
-            const formEmail = getMappingFromResponse(response, form);
-            const respondentEmail = response.respondentEmail;
+            const name = getMappingFromResponse(response, form, "user.name");
+            const formEmail = getMappingFromResponse(response, form, "user.email")?.toLowerCase();
+            const respondentEmail = response.respondentEmail.toLowerCase();
             const allEmails = [...new Set([formEmail, respondentEmail].filter(Boolean))];
 
             if (name && allEmails.length > 0) {
