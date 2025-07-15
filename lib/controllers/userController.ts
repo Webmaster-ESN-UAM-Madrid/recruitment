@@ -4,10 +4,42 @@ import dbConnect from "@/lib/mongodb";
 export const getUsers = async () => {
     await dbConnect();
     try {
-        const users = await User.find({});
+        const users = await User.find({}).select('-notes');
         return users;
     } catch (error) {
         console.error("Error fetching users:", error);
         return [];
+    }
+};
+
+export const updateUserNote = async (userId: string, candidateId: string, note: string) => {
+    await dbConnect();
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        if (!user.notes) {
+            user.notes = new Map<string, string>();
+        }
+        user.notes.set(candidateId, note);
+        await user.save();
+    } catch (error) {
+        console.error("Error updating user note:", error);
+        throw error;
+    }
+};
+
+export const getUserNotes = async (userId: string) => {
+    await dbConnect();
+    try {
+        const user = await User.findById(userId).select('notes');
+        if (!user) {
+            return new Map();
+        }
+        return user.notes || new Map();
+    } catch (error) {
+        console.error("Error fetching user notes:", error);
+        return new Map();
     }
 };

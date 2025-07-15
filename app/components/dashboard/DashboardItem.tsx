@@ -75,6 +75,10 @@ const Table = styled.table`
   }
 `;
 
+const NoteContainer = styled.p`
+  white-space: pre-wrap;
+`;
+
 interface Candidate {
   _id: string;
   name: string;
@@ -289,7 +293,6 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
   );
 
   if (columnKey === 'feedback') {
-    console.log("candidate", candidate.feedback);
     const hasFeedback = candidate.feedback && (candidate.feedback.recruiters.length > 0 || candidate.feedback.tutor.length > 0 || candidate.feedback.volunteers.length > 0);
     return (
       <ItemContainer $isOverflowing={false}>
@@ -304,6 +307,24 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
               candidateId={candidate._id}
               feedbackData={candidate.feedback}
             />
+            </Modal>
+        )}
+      </ItemContainer>
+    );
+  }
+
+  if (columnKey === 'notes') {
+    const hasNote = !!data;
+    return (
+      <ItemContainer $isOverflowing={false}>
+        <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} disabled={!hasNote} />
+        {hasNote && (
+            <Modal
+            title={`Notas sobre ${candidate?.name || '[Candidato]'}`}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            >
+            <NoteContainer>{data}</NoteContainer>
             </Modal>
         )}
       </ItemContainer>

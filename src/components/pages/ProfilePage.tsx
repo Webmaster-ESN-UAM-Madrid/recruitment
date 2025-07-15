@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { TextField, Autocomplete, Switch, Checkbox, FormControlLabel, FormGroup } from '@mui/material';
 
 import { AddButton } from '../../../app/components/buttons/AddButton';
@@ -262,12 +263,14 @@ export default function ProfilePage() {
   const params = useParams();
   const id = params && 'id' in params ? (params.id as string) : undefined;
   const { addToast } = useToast();
+  const { data: session } = useSession();
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [interviewComments, setInterviewComments] = useState<{ interviewer: User; opinion: string }[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [note, setNote] = useState('');
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [candidateInterests, setCandidateInterests] = useState<Committee[]>([]);
   const [autocompleteInput, setAutocompleteInput] = useState('');
@@ -372,6 +375,18 @@ export default function ProfilePage() {
     }
   }, [id, users, addToast]);
 
+  const fetchNote = useCallback(async () => {
+    if (!session || !candidate) return;
+    try {
+      const res = await fetch('/api/users/notes');
+      if (!res.ok) throw new Error();
+      const notes = await res.json();
+      setNote(notes[candidate._id] || '');
+    } catch (err) {
+      console.error('Error fetching note', err);
+    }
+  }, [session, candidate]);
+
   useEffect(() => {
     fetchCommittees();
   }, [fetchCommittees]);
@@ -389,6 +404,12 @@ export default function ProfilePage() {
       fetchInterviewComments();
     }
   }, [id, users, fetchInterviewComments]);
+
+  useEffect(() => {
+    if (session && candidate) {
+      fetchNote();
+    }
+  }, [session, candidate, fetchNote]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (candidate) {
@@ -504,6 +525,22 @@ export default function ProfilePage() {
       addToast('Perfil actualizado con éxito', 'success');
     } catch {
       addToast('Error al actualizar el perfil', 'error');
+    }
+  };
+
+  const handleSaveNote = async () => {
+    if (!session || !session.user || !candidate) return;
+    try {
+        const res = await fetch('/api/users/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ candidateId: candidate._id, note }),
+        });
+
+        if (!res.ok) throw new Error();
+        addToast('Nota guardada con éxito', 'success');
+    } catch {
+        addToast('Error al guardar la nota', 'error');
     }
   };
 
@@ -800,6 +837,23 @@ export default function ProfilePage() {
           />
         </FormGroup>
       </Section>
+
+      {/* Private Notes */}
+        <Section>
+            <SubTitle>Notas Privadas</SubTitle>
+            <TextField
+                label="Tus notas privadas sobre este candidato"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+            />
+            <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                <SaveButton onClick={handleSaveNote} />
+            </div>
+        </Section>
 
       {/* Interview Comments */}
       <Section>

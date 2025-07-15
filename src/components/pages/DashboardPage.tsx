@@ -328,6 +328,7 @@ const DashboardPage: React.FC = () => {
     { key: 'name', header: 'Nombre', fixed: true, width: '200px' },
     { key: 'email', header: 'Correo Electrónico', fixed: false, width: '1fr' },
     { key: 'feedback', header: 'Feedback', fixed: false, width: '130px' },
+    { key: 'notes', header: 'Notas', fixed: false, width: '130px' },
     { key: 'tutor', header: 'Tutor', fixed: false, width: '1fr' },
     { key: 'interests', header: 'Intereses', fixed: false, width: '1fr' },
     ...formStructure.flatMap(section => section.questions.map(question => ({ key: question.id.toString(), header: question.title, fixed: false, width: '1fr' }))),
@@ -340,12 +341,19 @@ const DashboardPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [candidatesRes, formsRes, committeesRes, feedbackRes] = await Promise.all([
+        const [candidatesRes, formsRes, committeesRes, feedbackRes, notesRes] = await Promise.all([
           fetch('/api/candidates'),
           fetch('/api/forms'),
           fetch('/api/committees'),
           fetch('/api/feedback/all'),
+          fetch('/api/users/notes'),
         ]);
+
+        let notesData = new Map();
+        if (notesRes.ok) {
+            const notes = await notesRes.json();
+            notesData = new Map(Object.entries(notes));
+        }
 
         if (candidatesRes.ok) {
           const candidatesData = await candidatesRes.json();
@@ -368,7 +376,8 @@ const DashboardPage: React.FC = () => {
               (response: any) => response.candidateId === candidate._id
             );
             const candidateFeedback = allFeedback[candidate._id] || { recruiters: [], tutor: [], volunteers: [] };
-            return { ...candidate, formResponses: candidateResponses, feedback: candidateFeedback };
+            const note = notesData.get(candidate._id) || '';
+            return { ...candidate, formResponses: candidateResponses, feedback: candidateFeedback, notes: note };
           });
 
           setCandidates(candidatesWithData);
