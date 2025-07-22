@@ -50,6 +50,10 @@ const Container = styled.div`
   padding: 32px;
   margin: 20px auto;
   max-width: 1000px;
+
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
 `;
 
 const Title = styled.h2`
@@ -70,9 +74,14 @@ const ButtonContainer = styled.div`
   gap: 10px;
 `;
 
-const TableHeader = styled.div`
+const TableWrapper = styled.div`
+  overflow-x: auto;
+  width: 100%;
+`;
+
+const TableHeader = styled.div<{ columns: string }>`
   display: grid;
-  grid-template-columns: 50px 1fr 1.5fr 80px;
+  grid-template-columns: ${props => props.columns};
   gap: 10px;
   align-items: center;
   padding: 10px 0;
@@ -80,9 +89,9 @@ const TableHeader = styled.div`
   border-bottom: 2px solid #ccc;
 `;
 
-const TableRow = styled.div`
+const TableRow = styled.div<{ columns: string }>`
   display: grid;
-  grid-template-columns: 50px 1fr 1.5fr 80px;
+  grid-template-columns: ${props => props.columns};
   gap: 10px;
   align-items: center;
   padding: 5px 0;
@@ -94,6 +103,18 @@ const RecruiterInputContainer = styled.div`
   align-items: center;
   gap: 10px;
   margin-top: -10px;
+
+  // @media (max-width: 768px) {
+  //   flex-direction: column;
+  //   align-items: flex-start;
+  //   gap: 5px;
+  // }
+`;
+
+const DataCell = styled.div`
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const GlobalConfigManager = () => {
@@ -365,26 +386,26 @@ const GlobalConfigManager = () => {
         />
       </RecruiterInputContainer>
 
-      <div style={{ marginTop: '20px' }}>
-        <TableHeader>
+      <TableWrapper>
+        <TableHeader columns="50px 1fr 1.5fr 80px">
           <div /> {/* For avatar */}
-          <div>Nombre</div>
-          <div>Correo</div>
-          <div>Acciones</div>
+          <DataCell>Nombre</DataCell>
+          <DataCell>Correo</DataCell>
+          <DataCell>Acciones</DataCell>
         </TableHeader>
         {recruiters.map((recruiter) => (
-          <TableRow key={recruiter._id}>
+          <TableRow key={recruiter._id} columns="50px 1fr 1.5fr 80px">
             <div>
               <Image src={recruiter.image} alt="Profile" width="40" height="40" style={{ borderRadius: "100%" }} />
             </div>
-            <div>{recruiter.name}</div>
-            <div>{recruiter.email}</div>
-            <div>
+            <DataCell>{recruiter.name}</DataCell>
+            <DataCell>{recruiter.email}</DataCell>
+            <DataCell>
               <DeleteButton onClick={() => handleRemoveRecruiter(recruiter.email)} />
-            </div>
+            </DataCell>
           </TableRow>
         ))}
-      </div>
+      </TableWrapper>
 
       <Subtitle>Comités</Subtitle>
       <ButtonContainer>
@@ -396,37 +417,37 @@ const GlobalConfigManager = () => {
         }} />
       </ButtonContainer>
 
-      <div style={{ marginTop: '20px' }}>
-        <TableHeader style={{ gridTemplateColumns: '1fr 150px 120px' }}>
-          <div>Nombre</div>
-          <div>Color</div>
-          <div>Acciones</div>
+      <TableWrapper>
+        <TableHeader columns="1fr 150px 120px">
+          <DataCell>Nombre</DataCell>
+          <DataCell>Color</DataCell>
+          <DataCell>Acciones</DataCell>
         </TableHeader>
         {committees.map((committee) => (
-          <TableRow key={committee._id} style={{ gridTemplateColumns: '1fr 150px 120px' }}>
-            <div>{committee.name}</div>
-            <div style={{ backgroundColor: committee.color, width: '30px', height: '30px', borderRadius: '50%' }} />
+          <TableRow key={committee._id} columns="1fr 150px 120px">
+            <DataCell>{committee.name}</DataCell>
+            <DataCell style={{ backgroundColor: committee.color, width: '30px', height: '30px', borderRadius: '50%' }} />
             <ButtonContainer>
               <EditButton onClick={() => handleEditCommittee(committee)} />
               <DeleteButton onClick={() => handleDeleteCommittee(committee._id)} />
             </ButtonContainer>
           </TableRow>
         ))}
-      </div>
+      </TableWrapper>
 
       <Subtitle>Formularios Conectados</Subtitle>
       <AddButton onClick={() => setIsFormOnboardingModalOpen(true)} />
 
-      <div style={{ marginTop: '20px' }}>
-        <TableHeader style={{ gridTemplateColumns: '1fr 150px 120px' }}>
-          <div>Identificador</div>
-          <div>Crear Usuarios</div>
-          <div>Acciones</div>
+      <TableWrapper>
+        <TableHeader columns="minmax(150px, 1fr) 150px 120px">
+          <DataCell>Identificador</DataCell>
+          <DataCell>Crear Usuarios</DataCell>
+          <DataCell>Acciones</DataCell>
         </TableHeader>
         {connectedForms.map((form) => (
-          <TableRow key={form._id} style={{ gridTemplateColumns: '1fr 150px 120px' }}>
-            <div>{form.formIdentifier}</div>
-            <div>{form.canCreateUsers ? 'Sí' : 'No'}</div>
+          <TableRow key={form._id} columns="minmax(150px, 1fr) 150px 120px">
+            <DataCell>{form.formIdentifier}</DataCell>
+            <DataCell>{form.canCreateUsers ? 'Sí' : 'No'}</DataCell>
             <ButtonContainer>
               <EditButton onClick={() => {
                 setSelectedFormForPreview(form);
@@ -436,7 +457,7 @@ const GlobalConfigManager = () => {
             </ButtonContainer>
           </TableRow>
         ))}
-      </div>
+      </TableWrapper>
 
       <Modal
         isOpen={isCommitteeModalOpen}

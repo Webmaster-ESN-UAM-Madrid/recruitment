@@ -46,7 +46,7 @@ const CandidateTableContainer = styled.div`
   overflow-x: auto;
 `;
 
-const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
+const TableHeader = styled.div<{ gridtemplatecolumns: string; isMobile: boolean }>`
   display: grid;
   grid-template-columns: ${props => props.gridtemplatecolumns};
   padding: 10px 15px;
@@ -56,7 +56,7 @@ const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
   align-items: center;
 `;
 
-const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string }>`
+const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string; isMobile: boolean }>`
   display: grid;
   grid-template-columns: ${props => props.gridtemplatecolumns};
   align-items: center;
@@ -177,6 +177,7 @@ interface SelectableTableProps {
   loading: boolean;
   maxSelectableColumns: number;
   isInactiveTable: boolean;
+  isMobile: boolean; // Added isMobile prop
 }
 
 const SelectableTable: React.FC<SelectableTableProps> = ({
@@ -190,6 +191,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
   loading,
   maxSelectableColumns,
   isInactiveTable,
+  isMobile, // Destructure isMobile
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
@@ -197,13 +199,19 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
   let fixedColumns = allColumns.filter(c => c.fixed);
   const dynamicColumns = allColumns.filter(c => !c.fixed && visibleColumnIds.includes(c.key));
 
-  if (isInactiveTable) {
-    fixedColumns = [...fixedColumns, { key: 'rejectedReason', header: 'Motivo de Rechazo', fixed: true, width: '1fr' }];
+  let currentVisibleColumns: Column[];
+  let currentGridTemplateColumns: string;
+
+  if (isMobile) {
+    currentVisibleColumns = allColumns.filter(c => ['tags', 'avatar', 'name'].includes(c.key));
+    currentGridTemplateColumns = '40px 60px 1fr';
+  } else {
+    if (isInactiveTable) {
+      fixedColumns = [...fixedColumns, { key: 'rejectedReason', header: 'Motivo de Rechazo', fixed: true, width: '1fr' }];
+    }
+    currentVisibleColumns = [...fixedColumns, ...dynamicColumns];
+    currentGridTemplateColumns = currentVisibleColumns.map(c => c.width || '1fr').join(' ') + (dynamicColumns.length > 0 ? " 30px" : " 1fr 30px");
   }
-
-  const visibleColumns = [...fixedColumns, ...dynamicColumns];
-
-  const gridtemplatecolumns = visibleColumns.map(c => c.width || '1fr').join(' ') + (dynamicColumns.length > 0 ? " 30px" : " 1fr 30px");
 
   return (
     <Section>
@@ -222,26 +230,28 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
         />
       </Modal>
       <CandidateTableContainer>
-        <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
-          {visibleColumns.map(column => (
+        <TableHeader gridtemplatecolumns={currentGridTemplateColumns} isMobile={isMobile}>
+          {currentVisibleColumns.map(column => (
             <DataCell key={column.key}>
               {column.header}
-              {!column.fixed && (
+              {!column.fixed && !isMobile && ( // Hide column toggle on mobile
                 <HideButton onClick={() => onColumnToggle(column.key)} iconSize={12} />
               )}
             </DataCell>
           ))}
-          {dynamicColumns.length === 0 && <div />}
-          <DataCell key={"add-btn"}>
-            <AddButton onClick={() => setIsModalOpen(true)} iconSize={12} />
-          </DataCell>
+          {!isMobile && dynamicColumns.length === 0 && <div />}
+          {!isMobile && ( // Hide add button on mobile
+            <DataCell key={"add-btn"}>
+              <AddButton onClick={() => setIsModalOpen(true)} iconSize={12} />
+            </DataCell>
+          )}
         </TableHeader>
         {loading ? (
           <LoadingSpinner />
         ) : candidates.length > 0 ? (
           candidates.map(candidate => (
-            <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns} $inactive={!candidate.active}>
-              {visibleColumns.map(column => (
+            <TableRow key={candidate._id} gridtemplatecolumns={currentGridTemplateColumns} $inactive={!candidate.active} isMobile={isMobile}>
+              {currentVisibleColumns.map(column => (
                 <DataCell key={column.key}>
                   {column.key === 'tags' && (
                     <TagIconsContainer>
@@ -281,14 +291,14 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
                   )}
                   {column.key === 'avatar' && <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />}
                   {column.key === 'name' && <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>}
-                  {column.key === 'rejectedReason' && candidate.rejectedReason}
-                  {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && column.key !== 'rejectedReason' && (
+                  {column.key === 'rejectedReason' && !isMobile && candidate.rejectedReason} {/* Hide rejectedReason on mobile */}
+                  {column.key !== 'tags' && column.key !== 'avatar' && column.key !== 'name' && column.key !== 'rejectedReason' && !isMobile && (
                     <DashboardItem
                       candidate={candidate}
                       data={candidate[column.key]}
                       columnKey={column.key}
                       formResponses={candidate.formResponses}
-                      gridTemplateColumns={gridtemplatecolumns}
+                      gridTemplateColumns={currentGridTemplateColumns}
                       question={(() => {
                         if (!isNaN(Number(column.key))) {
                           for (const section of formStructure) {
@@ -321,6 +331,20 @@ const DashboardPage: React.FC = () => {
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [loading, setLoading] = useState(true);
   const [formStructure, setFormStructure] = useState<FormSection[]>([]);
+  const [isMobile, setIsMobile] = useState(false); // Add isMobile state
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const allColumns: Column[] = [
     { key: 'tags', header: '', fixed: true, width: '40px' },
@@ -513,6 +537,7 @@ const DashboardPage: React.FC = () => {
         loading={loading}
         maxSelectableColumns={MAX_SELECTED_COLUMNS}
         isInactiveTable={false}
+        isMobile={isMobile} // Pass isMobile prop
       />
       <SelectableTable
         title="Candidatos Inactivos"
@@ -526,6 +551,7 @@ const DashboardPage: React.FC = () => {
         loading={loading}
         maxSelectableColumns={MAX_SELECTED_COLUMNS - 1}
         isInactiveTable={true}
+        isMobile={isMobile} // Pass isMobile prop
       />
     </PageContainer>
   );

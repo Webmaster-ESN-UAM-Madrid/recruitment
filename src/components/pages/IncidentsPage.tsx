@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -25,6 +24,10 @@ const Container = styled.div`
   padding: 32px;
   max-width: 1000px;
   width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -43,15 +46,21 @@ const IncidentCard = styled.div`
 `;
 
 const IncidentHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto; /* One column for info, auto for actions */
+  gap: 10px; /* Space between columns */
   align-items: center;
   margin-bottom: 10px;
 `;
 
 const IncidentInfo = styled.div`
   display: flex;
-  gap: 10px;
+  flex-direction: column; /* Stack date and email vertically */
+  gap: 5px; /* Smaller gap between date and email */
+
+  span {
+    white-space: normal; /* Allow text to wrap */
+  }
 `;
 
 const IncidentActions = styled.div`
@@ -147,7 +156,7 @@ const IncidentsPage: React.FC = () => {
         addToast('Respuesta eliminada correctamente', 'success');
         fetchUnprocessedResponses();
       } else {
-        addToast('Error al eliminar la respuesta', 'error');
+        addToast('No se pudo eliminar la respuesta', 'error');
       }
     } catch (error) {
       console.error('Failed to delete form response:', error);

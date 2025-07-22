@@ -128,7 +128,7 @@ const InterviewsPage = () => {
   return (
     <PageContainer>
       <Header>
-        <h1>Entrevistas</h1>
+        <h1 style={{ marginBottom: 0 }}>Entrevistas</h1>
         <AddButton onClick={() => openModal()} iconSize={20} />
       </Header>
 

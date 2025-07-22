@@ -18,6 +18,13 @@ const NavContainer = styled.nav`
   border-bottom: 1px solid var(--navbar-border);
   border-radius: var(--border-radius-md);
   min-height: 50px;
+
+  @media (max-width: 768px) {
+    flex-direction: row; /* Keep row for main container on mobile */
+    justify-content: space-between; /* Space out logo/title and menu button */
+    padding: 10px;
+    min-height: auto;
+  }
 `;
 
 const NavLinks = styled.div`
@@ -26,12 +33,17 @@ const NavLinks = styled.div`
   align-items: center;
   gap: 20px;
   width: 100%;
+
+  @media (max-width: 768px) {
+    display: none; /* Hide on mobile in main navbar */
+  }
 `;
 
 const NavLinkContainer = styled.div`
     display: flex;
     align-items: center;
-    gap: 5px; /* Space between link and dot */
+    gap: 5px;
+    justify-content: center;
 `;
 
 const NavLink = styled(Link)`
@@ -49,8 +61,11 @@ const UserInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
   flex-shrink: 0;
+
+  @media (min-width: 769px) {
+    margin-left: auto; /* Push to right on desktop */
+  }
 `;
 
 const ProfilePicture = styled.img`
@@ -75,12 +90,79 @@ const NotificationDot = styled.div`
     font-weight: bold;
 `;
 
+const MenuButton = styled.button`
+  display: none; /* Hidden on desktop */
+  background: none;
+  border: none;
+  color: var(--navbar-text);
+  font-size: 24px;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    display: block; /* Show on mobile */
+  }
+`;
+
+const SidePanel = styled.div<{ isOpen: boolean }>`
+  display: flex;
+  flex-direction: column;
+  background-color: var(--navbar-bg);
+  position: fixed;
+  top: 0;
+  left: ${({ isOpen }) => (isOpen ? '0' : '-100%')}; /* Slide in from left */
+  width: 250px;
+  height: 100%;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Adjust shadow for left slide */
+  transition: left 0.3s ease-in-out;
+  z-index: 1000; /* Ensure panel is above overlay */
+
+  @media (min-width: 769px) {
+    display: none; /* Hidden on desktop */
+  }
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: var(--navbar-text);
+  font-size: 24px;
+  cursor: pointer;
+  align-self: flex-end;
+  margin-bottom: 20px;
+`;
+
+const MobileNavLinks = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+`;
+
+const Overlay = styled.div<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+  z-index: 999; /* Below the side panel, above other content */
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
+  pointer-events: ${({ isOpen }) => (isOpen ? 'auto' : 'none')};
+  transition: opacity 0.3s ease-in-out;
+
+  @media (min-width: 769px) {
+    display: none; /* Hidden on desktop */
+  }
+`;
+
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [personalTasks, setPersonalTasks] = useState(0);
   const [hasGlobalTasks, setHasGlobalTasks] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const defaultAvatar = '/default-avatar.jpg';
 
@@ -142,33 +224,68 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <NavContainer>
-      <NavLinks>
-        {session && <NavLink href="/feedback">Feedback</NavLink>} {/* Do not translate this line */}
-        {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>} {/* Do not translate this line */}
-        {isRecruiter && <NavLink href="/interviews">Entrevistas</NavLink>}
-        {isRecruiter && (
-            <NavLinkContainer>
-                <NavLink href="/tasks">Tareas</NavLink>
-                {(personalTasks > 0 || hasGlobalTasks) && (
-                    <NotificationDot>{personalTasks > 0 ? personalTasks : '·'}</NotificationDot>
-                )}
-            </NavLinkContainer>
-        )}
-        {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>}
-        {isAdmin && <NavLink href="/admin">Administración</NavLink>}
-      </NavLinks>
-      <UserInfo>
-        {session?.user?.image ? (
-          <ProfilePicture src={session.user.image} onError={(e) => (e.currentTarget.src = defaultAvatar)} alt="Perfil" />
-        ) : session?.user?.name ? (
-          <span>{session.user.name}</span>
-        ) : (
-          <NavLink href="/auth/signin">Iniciar Sesión</NavLink>
-        )}
-        {session && <NavLink href="/auth/signout">Cerrar Sesión</NavLink>}
-      </UserInfo>
-    </NavContainer>
+    <>
+      <NavContainer>
+        {/* Mobile Menu Button (visible on mobile, hidden on desktop) */}
+        <MenuButton onClick={() => setIsPanelOpen(true)}>
+          ☰
+        </MenuButton>
+
+        {/* Desktop NavLinks (hidden on mobile) */}
+        <NavLinks className="desktop-nav-links">
+          {session && <NavLink href="/feedback">Feedback</NavLink>}
+          {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>}
+          {isRecruiter && <NavLink href="/interviews">Entrevistas</NavLink>}
+          {isRecruiter && (
+              <NavLinkContainer>
+                  <NavLink href="/tasks">Tareas</NavLink>
+                  {(personalTasks > 0 || hasGlobalTasks) && (
+                      <NotificationDot>{personalTasks > 0 ? personalTasks : '·'}</NotificationDot>
+                  )}
+              </NavLinkContainer>
+          )}
+          {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>}
+          {isAdmin && <NavLink href="/admin">Administración</NavLink>}
+        </NavLinks>
+
+        {/* UserInfo (visible on both desktop and mobile, styled via media queries) */}
+        <UserInfo>
+          {session?.user?.image ? (
+            <ProfilePicture src={session.user.image} onError={(e) => (e.currentTarget.src = defaultAvatar)} alt="Perfil" />
+          ) : session?.user?.name ? (
+            <span>{session.user.name}</span>
+          ) : (
+            <NavLink href="/auth/signin">Iniciar Sesión</NavLink>
+          )}
+          {session && <NavLink href="/auth/signout">Cerrar Sesión</NavLink>}
+        </UserInfo>
+      </NavContainer>
+
+      {/* Side Panel for Mobile */}
+      <SidePanel isOpen={isPanelOpen}>
+        <CloseButton onClick={() => setIsPanelOpen(false)}>
+          &times;
+        </CloseButton>
+        <MobileNavLinks>
+          {session && <NavLink href="/feedback" onClick={() => setIsPanelOpen(false)}>Feedback</NavLink>}
+          {isRecruiter && <NavLink href="/dashboard" onClick={() => setIsPanelOpen(false)}>Dashboard</NavLink>}
+          {isRecruiter && <NavLink href="/interviews" onClick={() => setIsPanelOpen(false)}>Entrevistas</NavLink>}
+          {isRecruiter && (
+              <NavLinkContainer>
+                  <NavLink href="/tasks" onClick={() => setIsPanelOpen(false)}>Tareas</NavLink>
+                  {(personalTasks > 0 || hasGlobalTasks) && (
+                      <NotificationDot>{personalTasks > 0 ? personalTasks : '·'}</NotificationDot>
+                  )}
+              </NavLinkContainer>
+          )}
+          {isRecruiter && <NavLink href="/incidents" onClick={() => setIsPanelOpen(false)}>Incidencias</NavLink>}
+          {isAdmin && <NavLink href="/admin" onClick={() => setIsPanelOpen(false)}>Administración</NavLink>}
+        </MobileNavLinks>
+      </SidePanel>
+
+      {/* Overlay for Side Panel */}
+      <Overlay isOpen={isPanelOpen} onClick={() => setIsPanelOpen(false)} />
+    </>
   );
 };
 

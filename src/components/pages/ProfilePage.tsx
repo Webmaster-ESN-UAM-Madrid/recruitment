@@ -74,6 +74,10 @@ const Container = styled.div`
   padding: 32px;
   max-width: 1000px;
   margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
 `;
 
 const Header = styled.div`
@@ -81,11 +85,22 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+  }
 `;
 
 const Title = styled.h1`
   font-size: 2rem;
   font-weight: bold;
+
+  @media (max-width: 768px) {
+    font-size: 1.75rem;
+    margin-bottom: 15px;
+  }
 `;
 
 const ProfileCard = styled.div`
@@ -93,6 +108,12 @@ const ProfileCard = styled.div`
   align-items: center;
   gap: 24px;
   margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
 `;
 
 const Avatar = styled.img`
@@ -108,17 +129,31 @@ const InfoGroup = styled.div`
   flex-direction: column;
   gap: 6px;
   font-size: 0.95rem;
+
+  @media (max-width: 768px) {
+    align-items: center;
+    text-align: center;
+  }
 `;
 
 const LabelGroup = styled.div`
   display: flex;
   gap: 8px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 2px;
+  }
 `;
 
 const ToggleGroup = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
 `;
 
 const Label = styled.span`
@@ -130,6 +165,12 @@ const TwoColumn = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
 `;
 
 const EmailRow = styled.div`
@@ -137,6 +178,12 @@ const EmailRow = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
 `;
 
 const ChipContainer = styled.div`
@@ -147,12 +194,21 @@ const ChipContainer = styled.div`
 
 const Section = styled.div`
   margin-bottom: 40px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 25px;
+  }
 `;
 
 const SubTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 16px;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
 `;
 
 const InterestBadge = styled.div<{ color: string }>`
@@ -183,6 +239,11 @@ const TagBadge = styled.div`
   border: 1px solid var(--border-primary);
   font-size: 1rem;
   color: var(--text-primary);
+
+  @media (max-width: 768px) {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
 `;
 
 const TagCommentDisplay = styled.span`
@@ -283,8 +344,22 @@ export default function ProfilePage() {
     "Integration Weekend": false,
     "Plataforma Local": false,
   });
+  const [isMobile, setIsMobile] = useState(false);
 
   const defaultAvatar = '/default-avatar.jpg';
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const fetchCommittees = useCallback(async () => {
     try {
@@ -376,7 +451,7 @@ export default function ProfilePage() {
   }, [id, users, addToast]);
 
   const fetchNote = useCallback(async () => {
-    if (!session || !candidate) return;
+    if (!session || !session.user || !candidate) return;
     try {
       const res = await fetch('/api/users/notes');
       if (!res.ok) throw new Error();
@@ -648,7 +723,7 @@ export default function ProfilePage() {
         onChange={handleInputChange}
         disabled={!isEditing}
         fullWidth
-        style={{ marginBottom: 32 }}
+        style={{ marginBottom: isMobile ? 20 : 32 }}
       />
 
       {/* Name | Tutor */}
@@ -672,7 +747,7 @@ export default function ProfilePage() {
             setCandidate({ ...candidate, tutor: newInput })
           }
           renderInput={(params) => (
-            <TextField {...params} label="Padrino" disabled={!isEditing} />
+            <TextField {...params} label="Padrino" disabled={!isEditing} fullWidth={isMobile} />
           )}
           disabled={!isEditing}
         />
@@ -723,6 +798,7 @@ export default function ProfilePage() {
                     disabled={!isEditing || isRedFlag}
                     size="small"
                     variant="outlined"
+                    fullWidth={isMobile} // Make input full width on mobile
                   />
                 )}
                 {!isEditing && currentTag && currentTag.comment && !hasNoComment && (
@@ -818,7 +894,7 @@ export default function ProfilePage() {
       {/* Events Section */}
       <Section>
         <SubTitle>Asistencia a Eventos</SubTitle>
-        <FormGroup row>
+        <FormGroup row={!isMobile}> {/* Use row prop conditionally */}
           <FormControlLabel
             control={<Checkbox checked={events["Welcome Meeting"]} onChange={() => handleEventChange("Welcome Meeting")} disabled={!isEditing} />}
             label="Welcome Meeting"

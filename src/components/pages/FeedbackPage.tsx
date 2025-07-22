@@ -27,19 +27,19 @@ const CandidateTable = styled.div`
   margin: 0 auto;
 `;
 
-const TableHeader = styled.div`
+const TableHeader = styled.div<{ isMobile: boolean }>`
   display: grid;
-  grid-template-columns: 60px 1fr 150px 120px;
+  grid-template-columns: 60px 1fr ${({ isMobile }) => (isMobile ? '120px' : '150px 120px')};
   padding: 10px 15px;
   background-color: var(--table-header-bg);
   font-weight: bold;
   border-bottom: 1px solid var(--border-primary);
 `;
 
-const TableRow = styled.div<{ isTutor?: boolean }>`
+const TableRow = styled.div<{ isTutor?: boolean; isMobile: boolean }>`
   background-color: ${({ isTutor }) => (isTutor ? 'var(--tutor-row-bg)' : 'var(--bg-primary)')};
   display: grid;
-  grid-template-columns: 60px 1fr 150px 120px;
+  grid-template-columns: 60px 1fr ${({ isMobile }) => (isMobile ? '120px' : '150px 120px')};
   align-items: center;
   padding: 10px 15px;
   border-top: 2px solid var(--border-secondary);
@@ -70,6 +70,7 @@ const DataCell = styled.div`
 `;
 
 const ActionsCell = styled.div`
+  padding: 0 10px;
   display: flex;
   gap: 10px;
   justify-content: flex-end;
@@ -85,6 +86,10 @@ const AccordionContent = styled.div<{ expanded: boolean; hasFeedback: boolean }>
     overflow: hidden;
     padding-left: 20px;
     position: relative;
+
+    @media (max-width: 768px) {
+      margin-left: -20px; /* Move content 20px to the left */
+    }
   }
 
   & > div::before {
@@ -98,7 +103,7 @@ const AccordionContent = styled.div<{ expanded: boolean; hasFeedback: boolean }>
   }
 `;
 
-const FeedbackItem = styled.div`
+const FeedbackItem = styled.div<{ isMobile: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -129,11 +134,22 @@ const FeedbackItem = styled.div`
   &:last-child {
     border-bottom: none;
   }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const FeedbackContent = styled.div`
   flex-grow: 1;
   margin-right: 10px;
+
+  @media (max-width: 768px) {
+    width: 100%; /* Take full width on mobile */
+    margin-right: 0;
+    margin-bottom: 5px; /* Add some space below content */
+  }
 `;
 
 const FeedbackActions = styled.div`
@@ -145,6 +161,10 @@ const FeedbackDates = styled.small`
   font-size: 0.75em;
   color: var(--text-secondary);
   white-space: nowrap;
+
+  @media (max-width: 768px) {
+    white-space: normal; /* Allow text to wrap on mobile */
+  }
 `;
 
 const Textarea = styled.textarea`
@@ -190,7 +210,21 @@ const FeedbackPage: React.FC = () => {
   const [editingFeedback, setEditingFeedback] = useState<Feedback | null>(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -317,10 +351,10 @@ const FeedbackPage: React.FC = () => {
     <PageContainer>
       <h1>Feedback</h1>
       <CandidateTable>
-        <TableHeader>
+        <TableHeader isMobile={isMobile}>
           <DataCell>Foto</DataCell>
           <DataCell>Nombre</DataCell>
-          <DataCell>Comentarios Añadidos</DataCell>
+          {!isMobile && <DataCell>Comentarios Añadidos</DataCell>}
           <DataCell>Acciones</DataCell>
         </TableHeader>
         {loading ? (
@@ -336,6 +370,7 @@ const FeedbackPage: React.FC = () => {
                 <TableRow
                   onClick={() => handleRowClick(candidate._id)}
                   isTutor={candidate.tutor === session?.user?.email}
+                  isMobile={isMobile}
                 >
                   <DataCell>
                     <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
@@ -343,7 +378,7 @@ const FeedbackPage: React.FC = () => {
                   <DataCell>
                     <CandidateName>{candidate.name}</CandidateName>
                   </DataCell>
-                  <DataCell>{candidateFeedback.length}</DataCell>
+                  {!isMobile && <DataCell>{candidateFeedback.length}</DataCell>}
                   <ActionsCell>
                     {isExpanded ? (
                       <HideButton
@@ -371,7 +406,7 @@ const FeedbackPage: React.FC = () => {
                   <div>
                     {hasFeedback ? (
                       candidateFeedback.map(f => (
-                        <FeedbackItem key={f._id}>
+                        <FeedbackItem key={f._id} isMobile={isMobile}>
                           <FeedbackContent>
                             {f.content.split('\n').map((line, idx) => (
                               <p key={idx}>{line}‎ </p>

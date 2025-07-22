@@ -61,6 +61,7 @@ const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
   font-weight: bold;
   border-bottom: 1px solid var(--border-primary);
   align-items: center;
+  min-width: max-content;
 `;
 
 const TableRow = styled.div<{ gridtemplatecolumns: string }>`
