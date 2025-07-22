@@ -140,7 +140,7 @@ const IncidentsPage: React.FC = () => {
 
   const handleDeleteFormResponse = async (responseId: string) => {
     try {
-      const res = await fetch(`/api/forms/delete-response?id=${responseId}`, {
+      const res = await fetch(`/api/forms/delete-response/${responseId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

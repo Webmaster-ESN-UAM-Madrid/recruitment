@@ -9,9 +9,9 @@ export async function DELETE(request: Request, context: any) {
     if (!session || !(await checkRecruiterAccess(session.user?.email))) {
         return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
-    const { id } = await context.params;
+    const { formResponseId } = await context.params;
     try {
-        await deleteFormResponse(id);
+        await deleteFormResponse(formResponseId);
         return NextResponse.json({ message: "Form response deleted successfully" });
     } catch (error) {
         console.error("Error deleting form response:", error);
