@@ -1,5 +1,4 @@
-import Candidate from "@/lib/models/candidate";
-import User from "@/lib/models/user";
+import Candidate, { ICandidate } from "@/lib/models/candidate";
 import { IFormResponse } from "@/lib/models/formResponse";
 import { IForm } from "@/lib/models/form";
 import { IIncident } from "@/lib/models/incident";
@@ -33,10 +32,10 @@ export async function validateCandidateCreation(response: IFormResponse, form: I
         $or: [{ email: { $in: emailsToCheck } }, { alternateEmails: { $in: emailsToCheck } }]
     }).distinct("_id");
 
-    if (distinctCandidates.length > 1) {
+    if (distinctCandidates.length > 0) {
         incidents.push({
             type: "WARNING",
-            details: `The emails ${emailsToCheck.join(", ")} are associated with different candidates.`
+            details: `At least one of the emails ${emailsToCheck.join(", ")} is associated with an existing candidate.`
         });
     }
 
@@ -44,23 +43,35 @@ export async function validateCandidateCreation(response: IFormResponse, form: I
 }
 
 // Rule for forms that do not create candidates
-export async function validateAssociatedUser(response: IFormResponse, form: IForm): Promise<Partial<IIncident>[]> {
+export async function validateAssociatedUser(response: IFormResponse, form: IForm): Promise<{ incidents: Partial<IIncident>[]; candidate: ICandidate | null }> {
     const incidents: Partial<IIncident>[] = [];
-    const email = getEmailFromResponse(response, form);
 
-    if (!email) {
-        incidents.push({ type: "WARNING", details: "Email is missing from the form response." });
-        return incidents;
+    const formEmail = getEmailFromResponse(response, form);
+    const respondentEmail = response.respondentEmail?.toLowerCase();
+
+    const emailsToCheck = [...new Set([formEmail, respondentEmail].filter(Boolean))];
+
+    if (emailsToCheck.length === 0) {
+        incidents.push({ type: "ERROR", details: "No email found in form response or metadata." });
+        return { incidents, candidate: null };
     }
 
-    const existingUser = await User.findOne({ email });
+    // Find how many unique candidates are associated with the found emails
+    const candidates = await Candidate.find({
+        $or: [{ email: { $in: emailsToCheck } }, { alternateEmails: { $in: emailsToCheck } }]
+    });
 
-    if (!existingUser) {
+    if (candidates.length > 1) {
         incidents.push({
             type: "WARNING",
-            details: `No user found for email ${email}.`
+            details: `The emails ${emailsToCheck.join(", ")} are associated with different candidates.`
+        });
+    } else if (candidates.length === 0) {
+        incidents.push({
+            type: "WARNING",
+            details: `No candidates found for the emails ${emailsToCheck.join(", ")}.`
         });
     }
 
-    return incidents;
+    return { incidents, candidate: candidates[0] || null };
 }

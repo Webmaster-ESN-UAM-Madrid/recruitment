@@ -2,7 +2,7 @@ import dbConnect from "@/lib/mongodb";
 import Form, { IForm } from "@/lib/models/form";
 import FormResponse, { IFormResponse } from "@/lib/models/formResponse";
 import FormConnection from "@/lib/models/formConnection";
-import Candidate from "@/lib/models/candidate";
+import Candidate, { ICandidate } from "@/lib/models/candidate";
 import Config from "@/lib/models/config";
 import Incident, { IIncident } from "@/lib/models/incident";
 import { randomBytes } from "crypto";
@@ -47,11 +47,12 @@ export const processFormResponse = async (formResponseId: string) => {
         }
 
         let incidents: Partial<IIncident>[] = [];
+        let candidate: ICandidate | null = null;
 
         if (form.canCreateUsers) {
             incidents = await validateCandidateCreation(response, form);
         } else {
-            incidents = await validateAssociatedUser(response, form);
+            ({ incidents, candidate } = await validateAssociatedUser(response, form));
         }
 
         if (incidents.length > 0) {
@@ -101,6 +102,8 @@ export const processFormResponse = async (formResponseId: string) => {
                 }
                 response.candidateId = candidateInstance._id;
             }
+        } else {
+            response.candidateId = candidate?._id;
         }
 
         response.processed = true;
@@ -330,8 +333,8 @@ export const handleFormResponse = async (respondentEmail: string, responses: For
 
         // Attempt to process the form response instantly
         try {
+            console.log(`Attempting instant processing for form response ${newFormResponse._id}`);
             await processFormResponse(newFormResponse._id);
-            console.log(`Attempted instant processing for form response ${newFormResponse._id}`);
         } catch (processingError) {
             console.error(`Error during instant processing of form response ${newFormResponse._id}:`, processingError);
             // The main request should still succeed even if instant processing fails
@@ -406,7 +409,10 @@ export const getUnprocessedFormResponses = async () => {
         }
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
-        const unprocessedResponses = await FormResponse.find({ processed: false }).populate({
+        const unprocessedResponses = await FormResponse.find({
+            processed: false,
+            submittedAt: { $gte: new Date("2025-07-15T00:00:00.000Z") }
+        }).populate({
             path: "formId",
             match: { recruitmentProcessId: currentRecruitmentId }
         });
