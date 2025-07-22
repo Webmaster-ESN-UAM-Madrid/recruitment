@@ -9,7 +9,7 @@ export interface IIncident extends Document {
 }
 
 const IncidentSchema: Schema = new Schema({
-    type: { type: String, enum: ["ERROR", "WARNING"], default: "OPEN" },
+    type: { type: String, enum: ["ERROR", "WARNING"], default: "WARNING" },
     details: { type: String, required: true },
     status: { type: String, enum: ["OPEN", "RESOLVED"], default: "OPEN" },
     createdAt: { type: Date, default: Date.now },

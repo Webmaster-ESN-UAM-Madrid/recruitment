@@ -1,30 +1,21 @@
+
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
+import { IFormResponse } from '@/lib/models/formResponse';
+import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
+import FormPreview from '@/app/components/FormPreview';
+import AttachToCandidateModal from '@/app/components/modals/AttachToCandidateModal';
+import { EditButton } from '@/app/components/buttons/EditButton';
+import { IForm } from '@/lib/models/form';
+import Modal from '@/app/components/modals/Modal';
+import { AcceptButton } from '@/app/components/buttons/AcceptButton';
+import { useToast } from '@/app/components/toasts/ToastContext';
+import { CancelButton } from '@/app/components/buttons/CancelButton';
 
-// --- Type Definitions ---
-interface Incident {
-  _id: string;
-  type: 'ERROR' | 'WARNING';
-  details: string;
-  status: 'OPEN' | 'RESOLVED';
-  createdAt: string;
-  resolvedAt?: string;
-}
-
-interface UnprocessedResponse {
-  _id: string;
-  submittedAt: string;
-  // Add other response fields as necessary
-}
-
-// --- Styled Components ---
 const PageContainer = styled.div`
   padding: 20px;
-`;
-
-const Section = styled.section`
-  margin-bottom: 40px;
 `;
 
 const SectionTitle = styled.h2`
@@ -33,194 +24,184 @@ const SectionTitle = styled.h2`
   margin-bottom: 20px;
 `;
 
-const ItemCard = styled.div`
+const IncidentCard = styled.div`
   background-color: var(--bg-primary);
   border: 1px solid var(--border-primary);
-  border-radius: var(--border-radius-md);
+  border-radius: 5px;
   padding: 15px;
   margin-bottom: 10px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 `;
 
-const StyledButton = styled.button`
-  background-color: var(--button-primary-bg);
-  color: var(--button-primary-text);
-  border: none;
-  padding: 8px 15px;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  &:hover {
-    background-color: var(--button-primary-hover-bg);
-  }
+const IncidentHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 `;
 
-const CancelButton = styled(StyledButton)`
-  background-color: var(--button-default-bg);
-
-  &:hover {
-    background-color: var(--button-default-hover-bg);
-  }
+const IncidentInfo = styled.div`
+  display: flex;
+  gap: 10px;
 `;
 
-// --- Component ---
+const IncidentActions = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const IncidentCardTitle = styled.h3`
+  margin: 0;
+  font-size: 1.1em;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
 const IncidentsPage: React.FC = () => {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [unprocessed, setUnprocessed] = useState<UnprocessedResponse[]>([]);
-  const [loadingIncidents, setLoadingIncidents] = useState(true);
-  const [loadingUnprocessed, setLoadingUnprocessed] = useState(true);
+  const [unprocessedResponses, setUnprocessedResponses] = useState<IFormResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedResponse, setSelectedResponse] = useState<string | null>(null);
+  const [emailConfirmation, setEmailConfirmation] = useState<{ candidateId: string; email: string } | null>(null);
+  const { addToast } = useToast();
 
-  const fetchIncidents = async () => {
-    setLoadingIncidents(true);
-    try {
-      const res = await fetch('/api/incidents');
-      const data = await res.json();
-      setIncidents(data);
-    } catch (error) {
-      console.error("Failed to fetch incidents:", error);
-    } finally {
-      setLoadingIncidents(false);
-    }
-  };
-
-  const fetchUnprocessed = async () => {
-    setLoadingUnprocessed(true);
-    try {
-      const res = await fetch('/api/forms/unprocessed');
-      const data = await res.json();
-      setUnprocessed(data);
-    } catch (error) {
-      console.error("Failed to fetch unprocessed forms:", error);
-    } finally {
-      setLoadingUnprocessed(false);
-    }
-  };
+  const fetchUnprocessedResponses = () => {
+    setLoading(true);
+    fetch('/api/forms/unprocessed')
+      .then(res => res.json())
+      .then(data => {
+        setUnprocessedResponses(data);
+        setLoading(false);
+      });
+  }
 
   useEffect(() => {
-    fetchIncidents();
-    fetchUnprocessed();
+    fetchUnprocessedResponses();
   }, []);
 
-  const handleResolveIncident = async (incidentId: string) => {
-    const res = await fetch(`/api/incidents/${incidentId}`, {
-      method: 'PATCH',
-    });
+  const handleAttach = async (candidateId: string) => {
+    if (selectedResponse) {
+      const res = await fetch('/api/forms/attach',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ responseId: selectedResponse, candidateId })
+        });
 
-    if (res.ok) {
-      fetchIncidents(); // Refresh incidents after resolving
-    } else {
-      const data = await res.json();
-      alert(`Resolving incident failed: ${data.message}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.needsEmailConfirmation) {
+          setEmailConfirmation({ candidateId, email: data.respondentEmail });
+        } else {
+          addToast('Respuesta vinculada correctamente', 'success');
+          fetchUnprocessedResponses();
+        }
+      } else {
+        addToast('Error al vincular la respuesta', 'error');
+      }
+      setSelectedResponse(null);
     }
   };
 
-  const handleDiscardIncident = async (incidentId: string) => {
-    const res = await fetch(`/api/incidents/${incidentId}`, {
-      method: 'DELETE',
-    });
+  const handleEmailConfirmation = async (addEmail: boolean) => {
+    if (emailConfirmation && addEmail) {
+      const res = await fetch(`/api/candidates/${emailConfirmation.candidateId}/add-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: emailConfirmation.email })
+        });
 
-    if (res.ok) {
-      fetchIncidents(); // Refresh incidents after discarding
-    } else {
-      const data = await res.json();
-      alert(`Discarding incident failed: ${data.message}`);
+      if (res.ok) {
+        addToast('Email añadido correctamente', 'success');
+      } else {
+        addToast('Error al añadir el email', 'error');
+      }
     }
+    setEmailConfirmation(null);
+    fetchUnprocessedResponses();
   };
 
-  const handleProcessClick = async (responseId: string) => {
-    const res = await fetch(`/api/forms/process/${responseId}`, {
-      method: 'POST',
-    });
-
-    if (res.ok) {
-      // Refresh both lists after processing
-      fetchIncidents();
-      fetchUnprocessed();
-    } else {
-      const data = await res.json();
-      alert(`Processing failed: ${data.message}`);
-    }
-  };
-
-  const openErrorIncidents = incidents.filter(inc => inc.type === 'ERROR' && inc.status === 'OPEN');
-  const openWarningIncidents = incidents.filter(inc => inc.type === 'WARNING' && inc.status === 'OPEN');
-  const resolvedIncidents = incidents.filter(inc => inc.status === 'RESOLVED');
+  const openErrors = unprocessedResponses.filter(response => (response.formId as IForm).canCreateUsers);
+  const openWarnings = unprocessedResponses.filter(response => !(response.formId as IForm).canCreateUsers);
 
   return (
     <PageContainer>
-      <h1>Incidencias y Procesamiento</h1>
-      
-      <Section>
-        <SectionTitle>Errores Abiertos</SectionTitle>
-        {loadingIncidents ? (
-          <LoadingSpinner />
-        ) : openErrorIncidents.length > 0 ? (
-          openErrorIncidents.map(inc => (
-            <ItemCard key={inc._id}>
-              <p><strong>Detalles:</strong> {inc.details}</p>
-              <p><strong>Creado el:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <StyledButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolver</StyledButton>
-              <CancelButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px' }}>Descartar</CancelButton>
-            </ItemCard>
-          ))
-        ) : (
-          <p>No hay errores abiertos para mostrar.</p>
-        )}
-      </Section>
+      <SectionTitle>Open Errors</SectionTitle>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        openErrors.map(response => (
+          <IncidentCard key={response._id as string}>
+            <IncidentHeader>
+              <IncidentInfo>
+                <span><strong>Fecha:</strong> {new Date(response.submittedAt).toLocaleString()}</span>
+                {response.respondentEmail && <span><strong>Email:</strong> {response.respondentEmail}</span>}
+              </IncidentInfo>
+              <IncidentActions>
+                <EditButton onClick={() => setSelectedResponse(response._id as string)} />
+              </IncidentActions>
+            </IncidentHeader>
+            <FormPreview
+              formStructure={(response.formId as IForm).structure}
+              responses={new Map(Object.entries(response.responses))}
+              isAccordion={true}
+              startsExpanded={false}
+            />
+          </IncidentCard>
+        ))
+      )}
 
-      <Section>
-        <SectionTitle>Advertencias Abiertas</SectionTitle>
-        {loadingIncidents ? (
-          <LoadingSpinner />
-        ) : openWarningIncidents.length > 0 ? (
-          openWarningIncidents.map(inc => (
-            <ItemCard key={inc._id}>
-              <p><strong>Detalles:</strong> {inc.details}</p>
-              <p><strong>Creado el:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <StyledButton onClick={() => handleResolveIncident(inc._id)} disabled>Resolver</StyledButton>
-              <CancelButton onClick={() => handleDiscardIncident(inc._id)} style={{ marginLeft: '10px' }}>Descartar</CancelButton>
-            </ItemCard>
-          ))
-        ) : (
-          <p>No hay advertencias abiertas para mostrar.</p>
-        )}
-        </Section>
+      <SectionTitle>Open Warnings</SectionTitle>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        openWarnings.map(response => (
+          <IncidentCard key={response._id as string}>
+            <IncidentCardTitle>Email Sin Procesar</IncidentCardTitle>
+            <IncidentHeader>
+              <IncidentInfo>
+                <span><strong>Fecha:</strong> {new Date(response.submittedAt).toLocaleString()}</span>
+                {response.respondentEmail && <span><strong>Email:</strong> {response.respondentEmail}</span>}
+              </IncidentInfo>
+              <IncidentActions>
+                <EditButton onClick={() => setSelectedResponse(response._id as string)} />
+              </IncidentActions>
+            </IncidentHeader>
+            <FormPreview
+              formStructure={(response.formId as IForm).structure}
+              responses={new Map(Object.entries(response.responses))}
+              isAccordion={true}
+              startsExpanded={false}
+            />
+          </IncidentCard>
+        ))
+      )}
 
-      <Section>
-        <SectionTitle>Incidencias Resueltas</SectionTitle>
-        {loadingIncidents ? (
-          <LoadingSpinner />
-        ) : resolvedIncidents.length > 0 ? (
-          resolvedIncidents.map(inc => (
-            <ItemCard key={inc._id}>
-              <p><strong>Detalles:</strong> {inc.details}</p>
-              <p><strong>Creado el:</strong> {new Date(inc.createdAt).toLocaleString()}</p>
-              <p><strong>Resuelto el:</strong> {inc.resolvedAt ? new Date(inc.resolvedAt).toLocaleString() : 'N/A'}</p>
-            </ItemCard>
-          ))
-        ) : (
-          <p>No hay incidencias resueltas para mostrar.</p>
-        )}
-      </Section>
+      {selectedResponse && (
+        <AttachToCandidateModal
+          isOpen={!!selectedResponse}
+          onClose={() => setSelectedResponse(null)}
+          onAttach={handleAttach}
+        />
+      )}
 
-      <Section>
-        <SectionTitle>Formularios Sin Procesar</SectionTitle>
-        {loadingUnprocessed ? (
-          <LoadingSpinner />
-        ) : unprocessed.length > 0 ? (
-          unprocessed.map(res => (
-            <ItemCard key={res._id}>
-              <p>ID de Respuesta: {res._id}</p>
-              <p>Enviado el: {new Date(res.submittedAt).toLocaleString()}</p>
-              <StyledButton onClick={() => handleProcessClick(res._id)}>
-                Procesar
-              </StyledButton>
-            </ItemCard>
-          ))
-        ) : (
-          <p>No hay formularios sin procesar.</p>
-        )}
-      </Section>
-
+      {emailConfirmation && (
+        <Modal isOpen={!!emailConfirmation} title="Añadir Email Alternativo">
+          <p>¿Quieres añadir {emailConfirmation.email} a los correos electrónicos alternativos del candidato?</p>
+          <ButtonContainer>
+            <AcceptButton onClick={() => handleEmailConfirmation(true)} showSpinner={true}></AcceptButton>
+            <CancelButton onClick={() => handleEmailConfirmation(false)}></CancelButton>
+          </ButtonContainer>
+        </Modal>
+      )}
     </PageContainer>
   );
 };

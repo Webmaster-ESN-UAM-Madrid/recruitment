@@ -388,11 +388,15 @@ const DashboardPage: React.FC = () => {
         if (formsRes.ok) {
           const formsData = await formsRes.json();
           if (formsData.length > 0) {
-            const structure = JSON.parse(formsData[0].structure).map(([title, questions]: [string, FormQuestion[]]) => ({
-              title,
-              questions,
-            }));
-            setFormStructure(structure);
+            const allSections: FormSection[] = [];
+            formsData.forEach((form: { formIdentifier: string; structure: string }) => {
+              const sections = JSON.parse(form.structure).map(([title, questions]: [string, FormQuestion[]]) => ({
+                title: `${form.formIdentifier}: ${title}`,
+                questions,
+              }));
+              allSections.push(...sections);
+            });
+            setFormStructure(allSections);
 
             const savedActiveColumns = localStorage.getItem('dashboardActiveVisibleColumns');
             if (savedActiveColumns) {

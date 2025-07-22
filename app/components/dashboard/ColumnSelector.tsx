@@ -111,6 +111,17 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     (c) => !c.fixed && isNaN(Number(c.key))
   );
 
+  const groupedByForm = formStructure.reduce((acc, section) => {
+    const [formName, sectionTitle] = section.title.split(': ', 2);
+
+    if (!acc[formName]) {
+      acc[formName] = [];
+    }
+
+    acc[formName].push({ ...section, title: sectionTitle });
+    return acc;
+  }, {} as Record<string, FormSection[]>);
+
   return (
     <ColumnList>
       <ColumnSection>
@@ -138,30 +149,35 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
       <ColumnSection>
         <SectionHeader>Respuestas de Formulario</SectionHeader>
-        {formStructure.map((section, sectionIndex) => (
-          <div key={sectionIndex}>
-            <h4>{section.title}</h4>
-            {section.questions.map((question) => {
-              const questionKey = question.id.toString();
-              const isChecked = visibleColumnIds.includes(questionKey);
-              const isDisabled =
-                !isChecked && visibleColumnIds.length >= maxColumns;
-              const inputId = `question-${question.id}`;
+        {Object.entries(groupedByForm).map(([formName, sections]) => (
+          <div key={formName}>
+            <h4 style={{ marginTop: 16 }}>Respuestas al formulario &quot;{formName}&quot;</h4>
+            {sections.map((section, sectionIndex) => (
+              <div key={sectionIndex}>
+                <h5>{section.title}</h5>
+                {section.questions.map((question) => {
+                  const questionKey = question.id.toString();
+                  const isChecked = visibleColumnIds.includes(questionKey);
+                  const isDisabled =
+                    !isChecked && visibleColumnIds.length >= maxColumns;
+                  const inputId = `question-${question.id}`;
 
-              return (
-                <CustomCheckWrapper key={question.id} htmlFor={inputId}>
-                  <HiddenInput
-                    id={inputId}
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => handleToggle(questionKey)}
-                    disabled={isDisabled}
-                  />
-                  <CustomCheckbox checked={isChecked} />
-                  <CustomLabel>{question.title}</CustomLabel>
-                </CustomCheckWrapper>
-              );
-            })}
+                  return (
+                    <CustomCheckWrapper key={question.id} htmlFor={inputId}>
+                      <HiddenInput
+                        id={inputId}
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggle(questionKey)}
+                        disabled={isDisabled}
+                      />
+                      <CustomCheckbox checked={isChecked} />
+                      <CustomLabel>{question.title}</CustomLabel>
+                    </CustomCheckWrapper>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         ))}
       </ColumnSection>

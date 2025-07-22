@@ -25,6 +25,7 @@ const NavLinks = styled.div`
   justify-content: center;
   align-items: center;
   gap: 20px;
+  width: 100%;
 `;
 
 const NavLinkContainer = styled.div`
@@ -48,8 +49,8 @@ const UserInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  position: absolute;
-  right: 20px;
+  margin-left: auto;
+  flex-shrink: 0;
 `;
 
 const ProfilePicture = styled.img`
@@ -154,7 +155,7 @@ const Navbar: React.FC = () => {
                 )}
             </NavLinkContainer>
         )}
-        {/* {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>} */}
+        {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>}
         {isAdmin && <NavLink href="/admin">Administración</NavLink>}
       </NavLinks>
       <UserInfo>

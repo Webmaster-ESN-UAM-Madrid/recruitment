@@ -67,7 +67,7 @@ export const getIncidents = async (): Promise<IIncident[]> => {
         }
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
-        const incidents = await Incident.find({})
+        const incidents = await Incident.find({ createdAt: { $gte: new Date('2025-07-15') } })
             .populate({
                 path: "form",
                 match: { recruitmentProcessId: currentRecruitmentId }

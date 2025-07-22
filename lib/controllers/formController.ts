@@ -439,3 +439,36 @@ export const processSingleFormResponse = async (responseId: string) => {
         return { status: 500, message: "Internal server error" };
     }
 };
+
+export const attachResponseToCandidate = async (responseId: string, candidateId: string) => {
+    await dbConnect();
+    try {
+        const response = await FormResponse.findById(responseId);
+        if (!response) {
+            return { status: 404, message: "FormResponse not found" };
+        }
+
+        const candidate = await Candidate.findById(candidateId);
+        if (!candidate) {
+            return { status: 404, message: "Candidate not found" };
+        }
+
+        response.candidateId = candidate._id;
+        response.processed = true;
+        await response.save();
+
+        const respondentEmail = response.respondentEmail.toLowerCase();
+        const isNewEmail = respondentEmail !== candidate.email.toLowerCase() && !candidate.alternateEmails.map((e: string) => e.toLowerCase()).includes(respondentEmail);
+
+        return {
+            status: 200,
+            data: {
+                needsEmailConfirmation: isNewEmail,
+                respondentEmail: respondentEmail
+            }
+        };
+    } catch (error) {
+        console.error(`Error attaching response ${responseId} to candidate ${candidateId}:`, error);
+        return { status: 500, message: "Internal server error" };
+    }
+};

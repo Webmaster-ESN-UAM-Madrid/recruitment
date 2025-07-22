@@ -1,8 +1,9 @@
 import mongoose, { Schema, Document, Mixed } from "mongoose";
-import '@/lib/models/form'; // Ensure Form model is loaded
+import "@/lib/models/form"; // Ensure Form model is loaded
+import { IForm } from "@/lib/models/form";
 
 export interface IFormResponse extends Document {
-    formId: mongoose.Types.ObjectId; // Reference to the Form model
+    formId: mongoose.Types.ObjectId | IForm; // Reference to the Form model
     respondentEmail?: string;
     responses: Map<string, Mixed>;
     processed: boolean;

@@ -1,3 +1,4 @@
+
 import Candidate, { ICandidate } from "@/lib/models/candidate";
 import dbConnect from "@/lib/mongodb";
 import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
@@ -92,5 +93,20 @@ export const getCandidates = async (active: boolean = false): Promise<ICandidate
     } catch (error) {
         console.error("Error fetching candidates:", error);
         return [];
+    }
+};
+
+export const addAlternateEmail = async (id: string, email: string): Promise<ICandidate | null> => {
+    await dbConnect();
+    try {
+        const candidate = await Candidate.findById(id);
+        if (candidate) {
+            candidate.alternateEmails.push(email);
+            await candidate.save();
+        }
+        return candidate;
+    } catch (error) {
+        console.error(`Error adding alternate email to candidate ${id}:`, error);
+        return null;
     }
 };
