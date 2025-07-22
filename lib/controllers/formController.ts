@@ -446,6 +446,20 @@ export const processSingleFormResponse = async (responseId: string) => {
     }
 };
 
+export const deleteFormResponse = async (responseId: string) => {
+    await dbConnect();
+    try {
+        const deletedResponse = await FormResponse.findByIdAndDelete(responseId);
+        if (!deletedResponse) {
+            return { status: 404, message: "FormResponse not found" };
+        }
+        return { status: 200, message: "Form response deleted successfully" };
+    } catch (error) {
+        console.error(`Error deleting form response ${responseId}:`, error);
+        return { status: 500, message: "Internal server error" };
+    }
+};
+
 export const attachResponseToCandidate = async (responseId: string, candidateId: string) => {
     await dbConnect();
     try {

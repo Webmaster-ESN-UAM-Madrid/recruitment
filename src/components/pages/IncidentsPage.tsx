@@ -8,6 +8,7 @@ import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
 import FormPreview from '@/app/components/FormPreview';
 import AttachToCandidateModal from '@/app/components/modals/AttachToCandidateModal';
 import { EditButton } from '@/app/components/buttons/EditButton';
+import { DeleteButton } from '@/app/components/buttons/DeleteButton';
 import { IForm } from '@/lib/models/form';
 import Modal from '@/app/components/modals/Modal';
 import { AcceptButton } from '@/app/components/buttons/AcceptButton';
@@ -15,7 +16,15 @@ import { useToast } from '@/app/components/toasts/ToastContext';
 import { CancelButton } from '@/app/components/buttons/CancelButton';
 
 const PageContainer = styled.div`
-  padding: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+`;
+
+const Container = styled.div`
+  padding: 32px;
+  max-width: 1000px;
+  width: 100%;
 `;
 
 const SectionTitle = styled.h2`
@@ -129,17 +138,36 @@ const IncidentsPage: React.FC = () => {
     fetchUnprocessedResponses();
   };
 
+  const handleDeleteFormResponse = async (responseId: string) => {
+    try {
+      const res = await fetch(`/api/forms/delete-response?id=${responseId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        addToast('Respuesta eliminada correctamente', 'success');
+        fetchUnprocessedResponses();
+      } else {
+        addToast('Error al eliminar la respuesta', 'error');
+      }
+    } catch (error) {
+      console.error('Failed to delete form response:', error);
+      addToast('Error al eliminar la respuesta', 'error');
+    }
+  };
+
   const openErrors = unprocessedResponses.filter(response => (response.formId as IForm).canCreateUsers);
   const openWarnings = unprocessedResponses.filter(response => !(response.formId as IForm).canCreateUsers);
 
   return (
     <PageContainer>
-      <SectionTitle>Open Errors</SectionTitle>
+      <Container>
+        <SectionTitle>Open Errors</SectionTitle>
       {loading ? (
         <LoadingSpinner />
       ) : (
         openErrors.map(response => (
           <IncidentCard key={response._id as string}>
+            <IncidentCardTitle>Form Sin Procesar</IncidentCardTitle>
             <IncidentHeader>
               <IncidentInfo>
                 <span><strong>Fecha:</strong> {new Date(response.submittedAt).toLocaleString()}</span>
@@ -147,6 +175,12 @@ const IncidentsPage: React.FC = () => {
               </IncidentInfo>
               <IncidentActions>
                 <EditButton onClick={() => setSelectedResponse(response._id as string)} />
+                <DeleteButton
+                  onClick={() => handleDeleteFormResponse(response._id as string)}
+                  showSpinner={true}
+                  needsConfirmation={true}
+                  confirmationDuration={2000}
+                />
               </IncidentActions>
             </IncidentHeader>
             <FormPreview
@@ -165,14 +199,20 @@ const IncidentsPage: React.FC = () => {
       ) : (
         openWarnings.map(response => (
           <IncidentCard key={response._id as string}>
-            <IncidentCardTitle>Email Sin Procesar</IncidentCardTitle>
+            <IncidentCardTitle>Form Sin Procesar</IncidentCardTitle>
             <IncidentHeader>
               <IncidentInfo>
                 <span><strong>Fecha:</strong> {new Date(response.submittedAt).toLocaleString()}</span>
                 {response.respondentEmail && <span><strong>Email:</strong> {response.respondentEmail}</span>}
               </IncidentInfo>
               <IncidentActions>
-                <EditButton onClick={() => setSelectedResponse(response._id as string)} />
+                <EditButton onClick={() => setSelectedResponse(response._id as string)}  />
+                <DeleteButton
+                  onClick={() => handleDeleteFormResponse(response._id as string)}
+                  showSpinner={true}
+                  needsConfirmation={true}
+                  confirmationDuration={2000}
+                />
               </IncidentActions>
             </IncidentHeader>
             <FormPreview
@@ -202,6 +242,7 @@ const IncidentsPage: React.FC = () => {
           </ButtonContainer>
         </Modal>
       )}
+      </Container>
     </PageContainer>
   );
 };
