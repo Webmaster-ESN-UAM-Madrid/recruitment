@@ -331,17 +331,21 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
     );
   }
 
-  if (showModalButton) {
+  if (showModalButton || (isFormQuestion && ["MULTIPLE_CHOICE", "CHECKBOX", "GRID", "CHECKBOX_GRID"].includes(question?.type || "") && displayValue === "")) {
+    // Show disabled button if always-overflowing column is empty
+    const isDisabled = !showModalButton;
     return (
       <ItemContainer $isOverflowing={false}>
-        <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} />
-        <Modal
-          title={`Detalles de la respuesta`}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        >
-          {modalContent}
-        </Modal>
+        <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} disabled={isDisabled} />
+        {showModalButton && (
+          <Modal
+            title={`Detalles de la respuesta`}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+          >
+            {modalContent}
+          </Modal>
+        )}
       </ItemContainer>
     );
   }
