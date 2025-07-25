@@ -22,16 +22,21 @@ const Form = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 800px;
+  box-sizing: border-box;
 `;
 
 const FormField = styled.div`
   display: flex;
   flex-direction: column;
+  width: 100%;
 `;
 
 const SectionTitle = styled.h3`
-  margin-top: 20px;
-  margin-bottom: 10px;
+  margin: 20px 0 10px;
+  font-size: 1.1rem;
 `;
 
 const ModalActions = styled.div`
@@ -39,17 +44,28 @@ const ModalActions = styled.div`
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+  flex-wrap: wrap;
 `;
 
 const FormRow = styled.div`
   display: flex;
   gap: 48px;
   align-items: flex-start;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+  }
 `;
 
 const DateField = styled(FormField)`
   flex: 1;
   max-width: 300px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
 `;
 
 const FormatField = styled(FormField)`
@@ -69,7 +85,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const [date, setDate] = useState('');
   const [selectedCandidates, setSelectedCandidates] = useState<ICandidate[]>([]);
   const [selectedInterviewers, setSelectedInterviewers] = useState<IUser[]>([]);
-  const [format, setFormat] = useState<"online" | "presencial">("presencial");
+  const [online, setOnline] = useState(false);
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
   const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
 
@@ -78,16 +94,16 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setDate(new Date(interview.date).toISOString().substring(0, 16));
       setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
       setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
-      setFormat(interview.format || "presencial");
+      setOnline(interview.online ?? false);
       setOpinions(interview.opinions || {});
       const initialEvents: Record<string, ICandidate['events']> = {};
       candidates.forEach(candidate => {
         if (interview.candidates.includes(candidate._id)) {
           initialEvents[candidate._id] = candidate.events || {
-            "Welcome Meeting": false,
-            "Welcome Days": false,
-            "Integration Weekend": false,
-            "Plataforma Local": false,
+            'Welcome Meeting': false,
+            'Welcome Days': false,
+            'Integration Weekend': false,
+            'Plataforma Local': false,
           };
         }
       });
@@ -96,7 +112,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setDate('');
       setSelectedCandidates([]);
       setSelectedInterviewers([]);
-      setFormat("presencial");
+      setOnline(false);
       setOpinions({});
       setEvents({});
     }
@@ -112,7 +128,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       date: new Date(date),
       candidates: selectedCandidates.map(c => c._id),
       interviewers: selectedInterviewers.map(u => u._id),
-      format: format,
+      online: online,
       opinions: opinions,
     };
 
@@ -120,173 +136,142 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   };
 
   const handleOpinionChange = (candidateId: string, interviewerId: string, opinion: string) => {
-    setOpinions(prevOpinions => ({
-      ...prevOpinions,
+    setOpinions(prev => ({
+      ...prev,
       [candidateId]: {
-        ...(prevOpinions[candidateId] || {}),
+        ...(prev[candidateId] || {}),
         interviewers: {
-          ...(prevOpinions[candidateId]?.interviewers || {}),
+          ...(prev[candidateId]?.interviewers || {}),
           [interviewerId]: { opinion },
         },
       },
     }));
   };
 
-  const handleStatusChange = (candidateId: string, status: "unset" | "present" | "delayed" | "absent" | "cancelled") => {
-    setOpinions(prevOpinions => ({
-      ...prevOpinions,
+  const handleStatusChange = (candidateId: string, status: 'unset' | 'present' | 'delayed' | 'absent' | 'cancelled') => {
+    setOpinions(prev => ({
+      ...prev,
       [candidateId]: {
-        ...(prevOpinions[candidateId] || {}),
-        status: status,
+        ...(prev[candidateId] || {}),
+        status,
       },
     }));
   };
 
   const handleEventChange = (candidateId: string, eventName: keyof ICandidate['events']) => {
-    setEvents(prevEvents => ({
-      ...prevEvents,
+    setEvents(prev => ({
+      ...prev,
       [candidateId]: {
-        ...(prevEvents[candidateId] || {}),
-        [eventName]: !prevEvents[candidateId]?.[eventName],
+        ...(prev[candidateId] || {}),
+        [eventName]: !prev[candidateId]?.[eventName],
       },
     }));
   };
 
   return (
-    <Form>
-      <FormRow>
-        <DateField>
-          <TextField
-            label="Fecha y Hora"
-            type="datetime-local"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
+      <Form>
+        <FormRow>
+          <DateField>
+            <TextField
+                label="Fecha y Hora"
+                type="datetime-local"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+            />
+          </DateField>
+          <FormatField>
+            <FieldTitle>Formato</FieldTitle>
+            <FormControl component="fieldset">
+              <RadioGroup row value={online ? "online" : "presencial"}
+                          onChange={e => setOnline(e.target.value === "online")}>
+                <FormControlLabel value="presencial" control={<Radio />} label="Presencial" />
+                <FormControlLabel value="online" control={<Radio />} label="Online" />
+              </RadioGroup>
+            </FormControl>
+          </FormatField>
+        </FormRow>
+
+        <FormField>
+          <Autocomplete
+              multiple
+              options={candidates}
+              getOptionLabel={o => o.name}
+              value={selectedCandidates}
+              onChange={(_, v) => setSelectedCandidates(v)}
+              renderInput={params => <TextField {...params} label="Candidatos" placeholder="Selecciona candidatos" />}
           />
-        </DateField>
-        <FormatField>
-          <FieldTitle>Formato</FieldTitle>
-          <FormControl component="fieldset">
-            <RadioGroup
-              row
-              value={format}
-              onChange={(e) => setFormat(e.target.value as "online" | "presencial")}
-            >
-              <FormControlLabel value="presencial" control={<Radio />} label="Presencial" />
-              <FormControlLabel value="online" control={<Radio />} label="Online" />
-            </RadioGroup>
-          </FormControl>
-        </FormatField>
-      </FormRow>
-      <FormField>
-        <Autocomplete
-          multiple
-          options={candidates}
-          getOptionLabel={(option) => option.name}
-          value={selectedCandidates}
-          onChange={(_, newValue) => setSelectedCandidates(newValue)}
-          renderInput={(params) => <TextField {...params} label="Candidatos" placeholder="Selecciona candidatos" />}
-          renderValue={(selected) => (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {selected.map((option) => (
-                <Chip
-                  key={option._id}
-                  label={option.name}
-                  onDelete={() =>
-                    setSelectedCandidates(selectedCandidates.filter(c => c._id !== option._id))
-                  }
-                />
-              ))}
-            </div>
-          )}
-        />
-      </FormField>
-      <FormField>
-        <Autocomplete
-          multiple
-          options={users}
-          getOptionLabel={(option) => option.name}
-          value={selectedInterviewers}
-          onChange={(_, newValue) => setSelectedInterviewers(newValue)}
-          renderInput={(params) => <TextField {...params} label="Entrevistadores" placeholder="Selecciona entrevistadores" />}
-          renderValue={(selected) => (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {selected.map((option) => (
-                <Chip
-                  key={option._id}
-                  label={option.name}
-                  onDelete={() =>
-                    setSelectedCandidates(selectedCandidates.filter(c => c._id !== option._id))
-                  }
-                />
-              ))}
-            </div>
-          )}
-        />
-      </FormField>
+        </FormField>
 
-      {selectedCandidates.length > 0 && selectedInterviewers.length > 0 && (
-        <div>
-          {selectedCandidates.map(candidate => (
-            <div key={candidate._id}>
-              <SectionTitle>Feedback para <Link href={`/profile/${candidate._id}`}>{candidate.name}</Link></SectionTitle>
-              <FormControl component="fieldset" fullWidth margin="normal">
-                <RadioGroup
-                  row
-                  value={opinions[candidate._id]?.status || "unset"}
-                  onChange={e => handleStatusChange(candidate._id, e.target.value as "unset" | "present" | "delayed" | "absent" | "cancelled")}
-                >
-                  <FormControlLabel value="present" control={<Radio />} label="Presente" />
-                  <FormControlLabel value="delayed" control={<Radio />} label="Retrasado" />
-                  <FormControlLabel value="absent" control={<Radio />} label="Ausente" />
-                  <FormControlLabel value="cancelled" control={<Radio />} label="Cancelado" />
-                </RadioGroup>
-              </FormControl>
-              <FormControl component="fieldset" fullWidth margin="normal">
-                <FormGroup row>
-                  <FormControlLabel
-                    control={<Checkbox checked={events[candidate._id]?.['Welcome Meeting'] || false} onChange={() => handleEventChange(candidate._id, 'Welcome Meeting')} />}
-                    label="Welcome Meeting"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox checked={events[candidate._id]?.['Welcome Days'] || false} onChange={() => handleEventChange(candidate._id, 'Welcome Days')} />}
-                    label="Welcome Days"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox checked={events[candidate._id]?.['Integration Weekend'] || false} onChange={() => handleEventChange(candidate._id, 'Integration Weekend')} />}
-                    label="Integration Weekend"
-                  />
-                  <FormControlLabel
-                    control={<Checkbox checked={events[candidate._id]?.['Plataforma Local'] || false} onChange={() => handleEventChange(candidate._id, 'Plataforma Local')} />}
-                    label="Plataforma Local"
-                  />
-                </FormGroup>
-              </FormControl>
-              {selectedInterviewers.map(interviewer => (
-                <FormField key={interviewer._id}>
-                  <TextField
-                    label={`Opinión de ${interviewer.name}`}
-                    multiline
-                    rows={3}
-                    value={opinions[candidate._id]?.interviewers?.[interviewer._id]?.opinion || ''}
-                    onChange={e => handleOpinionChange(candidate._id, interviewer._id, e.target.value)}
-                    fullWidth
-                    margin="normal"
-                    disabled={session?.user?.id !== interviewer._id} // Disable if not current user
-                  />
-                </FormField>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+        <FormField>
+          <Autocomplete
+              multiple
+              options={users}
+              getOptionLabel={o => o.name}
+              value={selectedInterviewers}
+              onChange={(_, v) => setSelectedInterviewers(v)}
+              renderInput={params => <TextField {...params} label="Entrevistadores" placeholder="Selecciona entrevistadores" />}
+          />
+        </FormField>
 
-      <ModalActions>
-        <CancelButton onClick={onClose} />
-        <SaveButton onClick={handleSave} />
-      </ModalActions>
-    </Form>
+        {selectedCandidates.length > 0 && selectedInterviewers.length > 0 && (
+            <>
+              {selectedCandidates.map(candidate => (
+                  <div key={candidate._id}>
+                    <SectionTitle>
+                      Feedback para <Link href={`/profile/${candidate._id}`}>{candidate.name}</Link>
+                    </SectionTitle>
+                    <FormControl component="fieldset" fullWidth margin="normal">
+                      <RadioGroup
+                          row
+                          value={opinions[candidate._id]?.status || 'unset'}
+                          onChange={e => handleStatusChange(candidate._id, e.target.value as any)}
+                      >
+                        <FormControlLabel value="present" control={<Radio />} label="Presente" />
+                        <FormControlLabel value="delayed" control={<Radio />} label="Retrasado" />
+                        <FormControlLabel value="absent" control={<Radio />} label="Ausente" />
+                        <FormControlLabel value="cancelled" control={<Radio />} label="Cancelado" />
+                      </RadioGroup>
+                    </FormControl>
+                    <FormControl component="fieldset" fullWidth margin="normal">
+                      <FormGroup row>
+                        {['Welcome Meeting', 'Welcome Days', 'Integration Weekend', 'Plataforma Local'].map(ev => (
+                            <FormControlLabel
+                                key={ev}
+                                control={<Checkbox
+                                    checked={events[candidate._id]?.[ev] || false}
+                                    onChange={() => handleEventChange(candidate._id, ev as any)}
+                                />}
+                                label={ev}
+                            />
+                        ))}
+                      </FormGroup>
+                    </FormControl>
+                    {selectedInterviewers.map(interviewer => (
+                        <FormField key={interviewer._id}>
+                          <TextField
+                              label={`Opinión de ${interviewer.name}`}
+                              multiline
+                              rows={3}
+                              value={opinions[candidate._id]?.interviewers?.[interviewer._id]?.opinion || ''}
+                              onChange={e => handleOpinionChange(candidate._id, interviewer._id, e.target.value)}
+                              fullWidth
+                              margin="normal"
+                              disabled={session?.user?.id !== interviewer._id}
+                          />
+                        </FormField>
+                    ))}
+                  </div>
+              ))}
+            </>
+        )}
+
+        <ModalActions>
+          <CancelButton onClick={onClose} />
+          <SaveButton onClick={handleSave} />
+        </ModalActions>
+      </Form>
   );
 };
 
