@@ -6,7 +6,7 @@ import { ICandidate } from '@/lib/models/candidate';
 import { SaveButton } from '../buttons/SaveButton';
 import { CancelButton } from '../buttons/CancelButton';
 import { useToast } from '../toasts/ToastContext';
-import { TextField, Autocomplete, Chip, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
+import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -89,6 +89,18 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
   const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
 
+  const eventNames = [
+    'Welcome Meeting',
+    'Welcome Days',
+    'Integration Weekend',
+    'Plataforma Local',
+  ] as const;
+
+  type EventName = typeof eventNames[number];
+
+  type Status = 'unset' | 'present' | 'delayed' | 'absent' | 'cancelled';
+
+
   useEffect(() => {
     if (interview) {
       setDate(new Date(interview.date).toISOString().substring(0, 16));
@@ -148,7 +160,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
     }));
   };
 
-  const handleStatusChange = (candidateId: string, status: 'unset' | 'present' | 'delayed' | 'absent' | 'cancelled') => {
+  const handleStatusChange = (candidateId: string, status: Status) => {
     setOpinions(prev => ({
       ...prev,
       [candidateId]: {
@@ -226,7 +238,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
                       <RadioGroup
                           row
                           value={opinions[candidate._id]?.status || 'unset'}
-                          onChange={e => handleStatusChange(candidate._id, e.target.value as any)}
+                          onChange={e => handleStatusChange(candidate._id, e.target.value as Status)}
                       >
                         <FormControlLabel value="present" control={<Radio />} label="Presente" />
                         <FormControlLabel value="delayed" control={<Radio />} label="Retrasado" />
@@ -236,18 +248,21 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
                     </FormControl>
                     <FormControl component="fieldset" fullWidth margin="normal">
                       <FormGroup row>
-                        {['Welcome Meeting', 'Welcome Days', 'Integration Weekend', 'Plataforma Local'].map(ev => (
+                        {eventNames.map((ev: EventName) => (
                             <FormControlLabel
                                 key={ev}
-                                control={<Checkbox
-                                    checked={events[candidate._id]?.[ev] || false}
-                                    onChange={() => handleEventChange(candidate._id, ev as any)}
-                                />}
+                                control={
+                                  <Checkbox
+                                      checked={events[candidate._id]?.[ev] || false}
+                                      onChange={() => handleEventChange(candidate._id, ev)}
+                                  />
+                                }
                                 label={ev}
                             />
                         ))}
                       </FormGroup>
                     </FormControl>
+
                     {selectedInterviewers.map(interviewer => (
                         <FormField key={interviewer._id}>
                           <TextField
