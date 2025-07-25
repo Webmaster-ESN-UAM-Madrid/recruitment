@@ -131,7 +131,11 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   }, [interview, users, candidates]);
 
   const handleSave = async () => {
-    if (!date || selectedCandidates.length === 0 || selectedInterviewers.length === 0) {
+    if (
+        !date ||
+        (selectedCandidates.length === 0 && !Array.isArray(selectedCandidates)) ||
+        (selectedInterviewers.length === 0 && !Array.isArray(selectedInterviewers))
+    ) {
       addToast('Por favor, rellena todos los campos obligatorios', 'error');
       return;
     }
