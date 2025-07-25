@@ -70,7 +70,7 @@ const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, us
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Entrevista {interview.format} del {new Date(interview.date).toLocaleDateString()}</CardTitle>
+        <CardTitle>Entrevista {interview.online ? "online" : "presencial"} del {new Date(interview.date).toLocaleDateString()}</CardTitle>
         <CardActions>
           <EditButton onClick={() => onEdit(interview)} iconSize={20} />
           <DeleteButton onClick={() => onDelete(interview._id)} iconSize={20} />
