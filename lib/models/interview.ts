@@ -6,6 +6,7 @@ export interface IInterview extends Document {
     interviewers: string[];
     candidates: string[];
     date: Date;
+    format: "online" | "presencial";
     opinions: {
         [candidateId: string]: {
             interviewers: {
@@ -23,6 +24,7 @@ const interviewSchema = new Schema<IInterview>({
     interviewers: [{ type: Schema.Types.ObjectId, required: true, ref: "User" }],
     candidates: [{ type: Schema.Types.ObjectId, required: true, ref: "Candidate" }],
     date: { type: Date, required: true },
+    format: { type: String, enum: ["online", "presencial"], required: true, default: "presencial" },
     opinions: {
         type: Map,
         of: new Schema({

@@ -15,7 +15,6 @@ interface InterviewCardProps {
 }
 
 const Card = styled.div`
-  // background-color: var(--bg-secondary);
   border-radius: var(--border-radius-md);
   border: 2px solid var(--border-primary);
   padding: 15px;
@@ -26,13 +25,21 @@ const Card = styled.div`
 const CardHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 10px;
   width: 100%;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const CardTitle = styled.h4`
   margin: 0;
+  word-break: break-word;
 `;
 
 const CardActions = styled.div`
@@ -42,6 +49,19 @@ const CardActions = styled.div`
 
 const InterviewDetails = styled.div`
   margin-top: auto;
+
+  p {
+    margin: 8px 0;
+    word-break: break-word;
+
+    a {
+      display: inline-block;
+    }
+  }
+
+  @media (max-width: 600px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, users, onEdit, onDelete }) => {
@@ -50,7 +70,7 @@ const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, us
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Entrevista del {new Date(interview.date).toLocaleDateString()}</CardTitle>
+        <CardTitle>Entrevista {interview.format} del {new Date(interview.date).toLocaleDateString()}</CardTitle>
         <CardActions>
           <EditButton onClick={() => onEdit(interview)} iconSize={20} />
           <DeleteButton onClick={() => onDelete(interview._id)} iconSize={20} />

@@ -41,12 +41,35 @@ const ModalActions = styled.div`
   margin-top: 20px;
 `;
 
+const FormRow = styled.div`
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+`;
+
+const DateField = styled(FormField)`
+  flex: 1;
+  max-width: 300px;
+`;
+
+const FormatField = styled(FormField)`
+  flex: 1;
+  margin-top: -7px;
+`;
+
+const FieldTitle = styled.div`
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+`;
+
 const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candidates, onClose, onSave }) => {
   const { addToast } = useToast();
   const { data: session } = useSession();
   const [date, setDate] = useState('');
   const [selectedCandidates, setSelectedCandidates] = useState<ICandidate[]>([]);
   const [selectedInterviewers, setSelectedInterviewers] = useState<IUser[]>([]);
+  const [format, setFormat] = useState<"online" | "presencial">("presencial");
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
   const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
 
@@ -55,6 +78,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setDate(new Date(interview.date).toISOString().substring(0, 16));
       setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
       setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
+      setFormat(interview.format || "presencial");
       setOpinions(interview.opinions || {});
       const initialEvents: Record<string, ICandidate['events']> = {};
       candidates.forEach(candidate => {
@@ -72,6 +96,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setDate('');
       setSelectedCandidates([]);
       setSelectedInterviewers([]);
+      setFormat("presencial");
       setOpinions({});
       setEvents({});
     }
@@ -87,6 +112,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       date: new Date(date),
       candidates: selectedCandidates.map(c => c._id),
       interviewers: selectedInterviewers.map(u => u._id),
+      format: format,
       opinions: opinions,
     };
 
@@ -128,16 +154,31 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
   return (
     <Form>
-      <FormField>
-        <TextField
-          label="Fecha y Hora"
-          type="datetime-local"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          fullWidth
-          InputLabelProps={{ shrink: true }}
-        />
-      </FormField>
+      <FormRow>
+        <DateField>
+          <TextField
+            label="Fecha y Hora"
+            type="datetime-local"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+          />
+        </DateField>
+        <FormatField>
+          <FieldTitle>Formato</FieldTitle>
+          <FormControl component="fieldset">
+            <RadioGroup
+              row
+              value={format}
+              onChange={(e) => setFormat(e.target.value as "online" | "presencial")}
+            >
+              <FormControlLabel value="presencial" control={<Radio />} label="Presencial" />
+              <FormControlLabel value="online" control={<Radio />} label="Online" />
+            </RadioGroup>
+          </FormControl>
+        </FormatField>
+      </FormRow>
       <FormField>
         <Autocomplete
           multiple
