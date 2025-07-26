@@ -8,6 +8,7 @@ import { CancelButton } from '../buttons/CancelButton';
 import { useToast } from '../toasts/ToastContext';
 import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
+
 import Link from 'next/link';
 
 interface InterviewModalProps {
@@ -100,10 +101,19 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
   type Status = 'unset' | 'present' | 'delayed' | 'absent' | 'cancelled';
 
+  const pad2 = (n: number) => (n < 10 ? '0' + n : '' + n);
 
   useEffect(() => {
     if (interview) {
-      setDate(new Date(interview.date).toISOString().substring(0, 16));
+      const date = new Date(interview.date);
+
+      const year = date.getFullYear();
+      const month = pad2(date.getMonth() + 1);
+      const day = pad2(date.getDate());
+      const hours = pad2(date.getHours());
+      const minutes = pad2(date.getMinutes());
+
+      setDate(`${year}-${month}-${day}T${hours}:${minutes}`);
       setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
       setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
       setOnline(interview.online ?? false);
