@@ -170,7 +170,7 @@ const IncidentsPage: React.FC = () => {
   return (
     <PageContainer>
       <Container>
-        <SectionTitle>Open Errors</SectionTitle>
+        <SectionTitle>Errores Abiertos</SectionTitle>
       {loading ? (
         <LoadingSpinner />
       ) : (
@@ -202,7 +202,7 @@ const IncidentsPage: React.FC = () => {
         ))
       )}
 
-      <SectionTitle>Open Warnings</SectionTitle>
+      <SectionTitle>Incidencias Abiertas</SectionTitle>
       {loading ? (
         <LoadingSpinner />
       ) : (
