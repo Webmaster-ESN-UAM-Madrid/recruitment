@@ -102,7 +102,10 @@ export const getIncidentsStatus = async () => {
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
         // Find all formResponses with processed=false and formId matching current recruitment
-        const formResponses = await FormResponse.find({ processed: false }).populate({
+        const formResponses = await FormResponse.find({ 
+            processed: false, 
+            submittedAt: { $gte: new Date("2025-07-15") }
+        }).populate({
             path: "formId",
             match: { recruitmentProcessId: currentRecruitmentId }
         });
