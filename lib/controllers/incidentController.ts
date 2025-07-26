@@ -1,6 +1,7 @@
 import Incident, { IIncident } from "@/lib/models/incident";
 import dbConnect from "@/lib/mongodb";
 import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
+import FormResponse from "@/lib/models/formResponse";
 
 export const getIncidentById = async (id: string): Promise<IIncident | null> => {
     await dbConnect();
@@ -67,7 +68,7 @@ export const getIncidents = async (): Promise<IIncident[]> => {
         }
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
-        const incidents = await Incident.find({ createdAt: { $gte: new Date('2025-07-15') } })
+        const incidents = await Incident.find({ createdAt: { $gte: new Date("2025-07-15") } })
             .populate({
                 path: "form",
                 match: { recruitmentProcessId: currentRecruitmentId }
@@ -87,5 +88,41 @@ export const getIncidents = async (): Promise<IIncident[]> => {
     } catch (error) {
         console.error("Error fetching incidents:", error);
         return [];
+    }
+};
+
+export const getIncidentsStatus = async () => {
+    await dbConnect();
+    try {
+        const recruitmentDetails = await getCurrentRecruitmentDetails();
+        if (!recruitmentDetails.currentRecruitment) {
+            console.error("Could not retrieve current recruitment details.");
+            return { warnings: 0, errors: 0 };
+        }
+        const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+        // Find all formResponses with processed=false and formId matching current recruitment
+        const formResponses = await FormResponse.find({ processed: false }).populate({
+            path: "formId",
+            match: { recruitmentProcessId: currentRecruitmentId }
+        });
+
+        let warnings = 0;
+        let errors = 0;
+
+        for (const response of formResponses) {
+            if (response.formId) {
+                if (response.formId.canCreateUsers) {
+                    errors++;
+                } else {
+                    warnings++;
+                }
+            }
+        }
+
+        return { warnings, errors };
+    } catch (error) {
+        console.error("Error fetching incidents status:", error);
+        return { warnings: 0, errors: 0 };
     }
 };

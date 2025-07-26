@@ -127,13 +127,16 @@ const CustomRadio = styled.span<{ checked: boolean }>`
   display: inline-block;
 `;
 
+const TableContainer = styled.div`
+  overflow-x: auto;
+`;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   margin-top: 10px;
   border-radius: var(--border-radius-md);
-  overflow: hidden;
 
   th,
   td {
@@ -284,40 +287,42 @@ const Question = ({
           : [];
 
         return (
-          <Table>
-            <thead>
-              <tr>
-                <th></th>
-                {question.columns?.map((col) => (
-                  <th key={col}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {question.rows?.map((row, rowIndex) => (
-                <tr key={row}>
-                  <td>{row}</td>
-                  {question.columns?.map((col) => {
-                    const isChecked = currentResponse[rowIndex] === col;
-                    return (
-                      <td key={col}>
-                        <HiddenInput
-                          type={isCheckboxGrid ? 'checkbox' : 'radio'}
-                          checked={isChecked}
-                          disabled
-                        />
-                        {isCheckboxGrid ? (
-                          <CustomCheckbox checked={isChecked} />
-                        ) : (
-                          <CustomRadio checked={isChecked} />
-                        )}
-                      </td>
-                    );
-                  })}
+          <TableContainer>
+            <Table>
+              <thead>
+                <tr>
+                  <th></th>
+                  {question.columns?.map((col) => (
+                    <th key={col}>{col}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {question.rows?.map((row, rowIndex) => (
+                  <tr key={row}>
+                    <td>{row}</td>
+                    {question.columns?.map((col) => {
+                      const isChecked = currentResponse[rowIndex] === col;
+                      return (
+                        <td key={col}>
+                          <HiddenInput
+                            type={isCheckboxGrid ? 'checkbox' : 'radio'}
+                            checked={isChecked}
+                            disabled
+                          />
+                          {isCheckboxGrid ? (
+                            <CustomCheckbox checked={isChecked} />
+                          ) : (
+                            <CustomRadio checked={isChecked} />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableContainer>
         );
       default:
         return <p>Tipo de pregunta no soportado: {question.type}</p>;

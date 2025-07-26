@@ -96,6 +96,7 @@ const InterviewsPage = () => {
         addToast(`Entrevista ${isEditing ? 'actualizada' : 'creada'} correctamente`, 'success');
         closeModal();
         fetchData();
+        window.dispatchEvent(new CustomEvent('updateTasksDot'));
       } else {
         addToast("Error al guardar la entrevista", "error");
       }

@@ -235,6 +235,7 @@ const TasksPage: React.FC = () => {
                 addToast(`Entrevista ${isEditing ? 'actualizada' : 'creada'} correctamente`, 'success');
                 closeModal();
                 fetchData();
+                window.dispatchEvent(new CustomEvent('updateTasksDot'));
             } else {
                 addToast("Error al guardar la entrevista", "error");
             }
@@ -257,6 +258,7 @@ const TasksPage: React.FC = () => {
             if (res.ok) {
                 addToast("Emails marcados como enviados", "success");
                 fetchData();
+                window.dispatchEvent(new CustomEvent('updateTasksDot'));
             } else {
                 addToast("Error al marcar los emails como enviados", "error");
             }

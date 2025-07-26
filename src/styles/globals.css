@@ -24,6 +24,10 @@
     --link-color: var(--brand-primary);
     --link-hover-color: var(--brand-primary);
 
+    /* Incident Colors */
+    --warning-color: #ffb700;
+    --error-color: #ff2a00;
+
     /* Text Colors */
     --text-primary: #333333;
     --text-secondary: #666666;

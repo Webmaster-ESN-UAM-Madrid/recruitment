@@ -204,6 +204,8 @@ const GlobalConfigManager = () => {
       if (response.ok) {
         addToast('Configuración actualizada correctamente', 'success');
         fetchConfig();
+        window.dispatchEvent(new CustomEvent('updateTasksDot'));
+        window.dispatchEvent(new CustomEvent('updateIncidentsDot'));
       } else {
         addToast('No se pudo actualizar la configuración', 'error');
       }

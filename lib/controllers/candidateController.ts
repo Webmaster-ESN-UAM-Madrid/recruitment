@@ -1,7 +1,7 @@
-
 import Candidate, { ICandidate } from "@/lib/models/candidate";
 import dbConnect from "@/lib/mongodb";
 import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
+import Interview from "@/lib/models/interview";
 
 export const getCandidateById = async (id: string): Promise<ICandidate | null> => {
     await dbConnect();
@@ -47,10 +47,10 @@ export const createCandidate = async (candidateData: Partial<ICandidate>): Promi
         const currentRecruitmentId = recruitmentDetails.currentRecruitment;
         const currentRecruitmentPhase = recruitmentDetails.recruitmentPhase;
 
-        const candidate = await Candidate.create({ 
-            ...candidateData, 
+        const candidate = await Candidate.create({
+            ...candidateData,
             recruitmentId: currentRecruitmentId,
-            recruitmentPhase: currentRecruitmentPhase 
+            recruitmentPhase: currentRecruitmentPhase
         });
         return candidate;
     } catch (error) {
@@ -71,12 +71,12 @@ export const getCandidates = async (active: boolean = false): Promise<ICandidate
         const currentRecruitmentPhase = recruitmentDetails.recruitmentPhase;
 
         await Candidate.updateMany(
-            { 
+            {
                 recruitmentId: currentRecruitmentId,
-                recruitmentPhase: { $exists: false } 
+                recruitmentPhase: { $exists: false }
             },
-            { 
-                $set: { 
+            {
+                $set: {
                     recruitmentPhase: currentRecruitmentPhase,
                     emailSent: true
                 }
@@ -108,5 +108,39 @@ export const addAlternateEmail = async (id: string, email: string): Promise<ICan
     } catch (error) {
         console.error(`Error adding alternate email to candidate ${id}:`, error);
         return null;
+    }
+};
+
+export const getTasksStatus = async (userId: string) => {
+    await dbConnect();
+    try {
+        const interviews = await Interview.find({
+            interviewers: userId,
+            opinions: { $exists: true }
+        }).populate("candidates");
+
+        const pendingFeedback = interviews.filter((interview) => {
+            for (const candidate of interview.candidates) {
+                const candidateId = candidate._id.toString();
+                if (!interview.opinions.get(candidateId)?.interviewers.get(userId)?.opinion) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        const candidates = await getCandidates();
+        const pendingEmails = candidates.some((c) => !c.emailSent);
+
+        return {
+            personalTasks: pendingFeedback.length,
+            hasGlobalTasks: pendingEmails
+        };
+    } catch (error) {
+        console.error("Error fetching tasks status:", error);
+        return {
+            personalTasks: 0,
+            hasGlobalTasks: false
+        };
     }
 };

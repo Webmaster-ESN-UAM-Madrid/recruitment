@@ -3,9 +3,7 @@
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import styled from 'styled-components';
-import { useEffect, useState } from 'react';
-import { IInterview } from '@/lib/models/interview';
-import { ICandidate } from '@/lib/models/candidate';
+import { useEffect, useState, useCallback } from 'react';
 
 const NavContainer = styled.nav`
   background-color: var(--navbar-bg);
@@ -90,6 +88,14 @@ const NotificationDot = styled.div`
     font-weight: bold;
 `;
 
+const WarningDot = styled(NotificationDot)`
+    background-color: var(--warning-color);
+`;
+
+const ErrorDot = styled(NotificationDot)`
+    background-color: var(--error-color);
+`;
+
 const MenuButton = styled.button`
   display: none; /* Hidden on desktop */
   background: none;
@@ -162,9 +168,33 @@ const Navbar: React.FC = () => {
   const [isRecruiter, setIsRecruiter] = useState(false);
   const [personalTasks, setPersonalTasks] = useState(0);
   const [hasGlobalTasks, setHasGlobalTasks] = useState(false);
+  const [incidentWarnings, setIncidentWarnings] = useState(0);
+  const [incidentErrors, setIncidentErrors] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const defaultAvatar = '/default-avatar.jpg';
+
+  const fetchTasksStatus = useCallback(async () => {
+    if (isRecruiter) {
+        const res = await fetch('/api/tasks');
+        if (res.ok) {
+            const data = await res.json();
+            setPersonalTasks(data.personalTasks);
+            setHasGlobalTasks(data.hasGlobalTasks);
+        }
+    }
+  }, [isRecruiter]);
+
+  const fetchIncidentsStatus = useCallback(async () => {
+      if (isRecruiter) {
+          const res = await fetch('/api/incidents?status=true');
+          if (res.ok) {
+              const data = await res.json();
+              setIncidentWarnings(data.warnings);
+              setIncidentErrors(data.errors);
+          }
+      }
+  }, [isRecruiter]);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -186,38 +216,17 @@ const Navbar: React.FC = () => {
   }, [session, status]);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-        if (isRecruiter) {
-            const [interviewsRes, candidatesRes] = await Promise.all([
-                fetch('/api/interviews/past'),
-                fetch('/api/candidates'),
-            ]);
+    fetchTasksStatus();
+    fetchIncidentsStatus();
 
-            if (interviewsRes.ok) {
-                const interviews: IInterview[] = await interviewsRes.json();
-                const pendingFeedback = interviews.filter(interview => {
-                    if (!session?.user?.id || !interview.interviewers.includes(session.user.id)) {
-                        return false;
-                    }
-                    for (const candidateId of interview.candidates) {
-                        if (!interview.opinions[candidateId]?.interviewers[session.user.id]?.opinion) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
-                setPersonalTasks(pendingFeedback.length);
-            }
+    window.addEventListener('updateTasksDot', fetchTasksStatus);
+    window.addEventListener('updateIncidentsDot', fetchIncidentsStatus);
 
-            if (candidatesRes.ok) {
-                const candidates: ICandidate[] = await candidatesRes.json();
-                const pendingEmails = candidates.some(c => !c.emailSent);
-                setHasGlobalTasks(pendingEmails);
-            }
-        }
+    return () => {
+        window.removeEventListener('updateTasksDot', fetchTasksStatus);
+        window.removeEventListener('updateIncidentsDot', fetchIncidentsStatus);
     };
-    fetchTasks();
-  }, [isRecruiter, session]);
+  }, [fetchIncidentsStatus, fetchTasksStatus, isRecruiter, session]);
 
   if (status === 'loading') {
     return null; // Or a loading spinner for the navbar
@@ -244,7 +253,13 @@ const Navbar: React.FC = () => {
                   )}
               </NavLinkContainer>
           )}
-          {isRecruiter && <NavLink href="/incidents">Incidencias</NavLink>}
+          {isRecruiter && (
+            <NavLinkContainer>
+                <NavLink href="/incidents">Incidencias</NavLink>
+                {incidentWarnings > 0 && <WarningDot>{incidentWarnings}</WarningDot>}
+                {incidentErrors > 0 && <ErrorDot>{incidentErrors}</ErrorDot>}
+            </NavLinkContainer>
+          )}
           {isAdmin && <NavLink href="/admin">Administración</NavLink>}
         </NavLinks>
 
@@ -278,7 +293,13 @@ const Navbar: React.FC = () => {
                   )}
               </NavLinkContainer>
           )}
-          {isRecruiter && <NavLink href="/incidents" onClick={() => setIsPanelOpen(false)}>Incidencias</NavLink>}
+          {isRecruiter && (
+            <NavLinkContainer>
+                <NavLink href="/incidents" onClick={() => setIsPanelOpen(false)}>Incidencias</NavLink>
+                {incidentWarnings > 0 && <WarningDot>{incidentWarnings}</WarningDot>}
+                {incidentErrors > 0 && <ErrorDot>{incidentErrors}</ErrorDot>}
+            </NavLinkContainer>
+          )}
           {isAdmin && <NavLink href="/admin" onClick={() => setIsPanelOpen(false)}>Administración</NavLink>}
         </MobileNavLinks>
       </SidePanel>

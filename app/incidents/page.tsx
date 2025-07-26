@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSession } from 'next-auth/react';
@@ -31,6 +32,10 @@ export default function Incidents() {
 
     checkAccess();
   }, [session, status, router]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('updateIncidentsDot'));
+  }, []);
 
   if (status === 'loading' || !hasAccess) {
     return <LoadingSpinner />;
