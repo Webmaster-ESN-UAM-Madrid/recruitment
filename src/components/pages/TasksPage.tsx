@@ -313,7 +313,7 @@ const TasksPage: React.FC = () => {
                     <SectionTitle>Emails Pendientes</SectionTitle>
                     <h3>Activos</h3>
                     <ItemCard>
-                        <p>{activeEmails || "No hay emails pendientes."}</p>
+                        <p style={{ overflowWrap: "anywhere" }}>{activeEmails || "No hay emails pendientes."}</p>
                         {activeEmails && (
                             <AcceptButton 
                                 onClick={() => handleMarkAsSent(activeCandidatesWithPendingEmails.map(c => c._id))} 
