@@ -169,7 +169,7 @@ const TasksPage: React.FC = () => {
         try {
             const [candidatesRes, interviewsRes, usersRes] = await Promise.all([
                 fetch('/api/candidates'),
-                fetch('/api/interviews'), // /past removed
+                fetch('/api/interviews'), // /past removed. We have to fetch all interviews to remove candidates from the list
                 fetch('/api/users'),
             ]);
 
@@ -271,7 +271,8 @@ const TasksPage: React.FC = () => {
     const activeEmails = activeCandidatesWithPendingEmails.map(c => c.email).join(', ');
 
     const interviewsWithPendingFeedback = interviews.filter(interview => {
-        if (!session?.user?.id || !interview.interviewers.includes(session.user.id)) {
+        const interviewDate = new Date(interview.date);
+        if (!session?.user?.id || !interview.interviewers.includes(session.user.id) || interviewDate.getTime() > Date.now()) {
             return false;
         }
         for (const candidateId of interview.candidates) {
