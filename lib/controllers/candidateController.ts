@@ -114,9 +114,11 @@ export const addAlternateEmail = async (id: string, email: string): Promise<ICan
 export const getTasksStatus = async (userId: string) => {
     await dbConnect();
     try {
+        const now = new Date();
         const interviews = await Interview.find({
             interviewers: userId,
-            opinions: { $exists: true }
+            opinions: { $exists: true },
+            date: { $lte: now }
         }).populate("candidates");
 
         const pendingFeedback = interviews.filter((interview) => {
