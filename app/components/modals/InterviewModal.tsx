@@ -30,11 +30,6 @@ const Form = styled.div`
   box-sizing: border-box;
 `;
 
-const ModalTitle = styled.h2`
-  margin: 0;
-  font-size: 1.25rem;
-`;
-
 const FormField = styled.div`
   display: flex;
   flex-direction: column;
@@ -257,29 +252,11 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
     }));
   };
 
-  const handleCopyLocation = async () => {
-    try {
-      await navigator.clipboard.writeText(location);
-      addToast('Link copiado al portapapeles', 'success');
-    } catch (err) {
-      addToast('Error al copiar el link', 'error');
-    }
-  };
-
-  const handleCopyEmail = async (email: string) => {
-    try {
-      await navigator.clipboard.writeText(email);
-      addToast('Email copiado al portapapeles', 'success');
-    } catch (err) {
-      addToast('Error al copiar el email', 'error');
-    }
-  };
-
   const isValidUrl = (urlString: string) => {
     try {
       new URL(urlString);
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
