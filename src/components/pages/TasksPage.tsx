@@ -169,7 +169,7 @@ const TasksPage: React.FC = () => {
         try {
             const [candidatesRes, interviewsRes, usersRes] = await Promise.all([
                 fetch('/api/candidates'),
-                fetch('/api/interviews/past'),
+                fetch('/api/interviews'), // /past removed
                 fetch('/api/users'),
             ]);
 
