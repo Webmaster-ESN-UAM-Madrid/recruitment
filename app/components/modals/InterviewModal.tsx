@@ -5,10 +5,11 @@ import { IUser } from '@/lib/models/user';
 import { ICandidate } from '@/lib/models/candidate';
 import { SaveButton } from '../buttons/SaveButton';
 import { CancelButton } from '../buttons/CancelButton';
+import { CopyButton } from '../buttons/CopyButton';
+import { LaunchButton } from '../buttons/LaunchButton';
 import { useToast } from '../toasts/ToastContext';
 import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
-
 import Link from 'next/link';
 
 interface InterviewModalProps {
@@ -29,6 +30,11 @@ const Form = styled.div`
   box-sizing: border-box;
 `;
 
+const ModalTitle = styled.h2`
+  margin: 0;
+  font-size: 1.25rem;
+`;
+
 const FormField = styled.div`
   display: flex;
   flex-direction: column;
@@ -38,6 +44,10 @@ const FormField = styled.div`
 const SectionTitle = styled.h3`
   margin: 20px 0 10px;
   font-size: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 `;
 
 const ModalActions = styled.div`
@@ -80,6 +90,43 @@ const FieldTitle = styled.div`
   margin-bottom: 8px;
 `;
 
+const NotificationsContainer = styled.div`
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-md);
+`;
+
+const NotificationRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0;
+
+  strong {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .MuiFormGroup-root {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 600px) {
+    strong {
+      flex: 0 0 100%;
+      margin-bottom: 4px;
+    }
+    .MuiFormGroup-root {
+      flex: 0 0 100%;
+    }
+  }
+`;
+
 const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candidates, onClose, onSave }) => {
   const { addToast } = useToast();
   const { data: session } = useSession();
@@ -87,6 +134,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const [selectedCandidates, setSelectedCandidates] = useState<ICandidate[]>([]);
   const [selectedInterviewers, setSelectedInterviewers] = useState<IUser[]>([]);
   const [online, setOnline] = useState(false);
+  const [location, setLocation] = useState('');
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
   const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
 
@@ -117,6 +165,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
       setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
       setOnline(interview.online ?? false);
+      setLocation(interview.location || '');
       setOpinions(interview.opinions || {});
       const initialEvents: Record<string, ICandidate['events']> = {};
       candidates.forEach(candidate => {
@@ -135,6 +184,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setSelectedCandidates([]);
       setSelectedInterviewers([]);
       setOnline(false);
+      setLocation('');
       setOpinions({});
       setEvents({});
     }
@@ -155,6 +205,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       candidates: selectedCandidates.map(c => c._id),
       interviewers: selectedInterviewers.map(u => u._id),
       online: online,
+      location,
       opinions: opinions,
     };
 
@@ -170,6 +221,18 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
           ...(prev[candidateId]?.interviewers || {}),
           [interviewerId]: { opinion },
         },
+      },
+    }));
+  };
+
+  const handleNotificationChange = (candidateId: string, field: 'interviewNotified' | 'interviewConfirmed') => {
+    setOpinions(prev => ({
+      ...prev,
+      [candidateId]: {
+        ...(prev[candidateId] || {}),
+        interviewers: prev[candidateId]?.interviewers || {},
+        status: prev[candidateId]?.status || 'unset',
+        [field]: !(prev[candidateId]?.[field] || false),
       },
     }));
   };
@@ -192,6 +255,33 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
         [eventName]: !prev[candidateId]?.[eventName],
       },
     }));
+  };
+
+  const handleCopyLocation = async () => {
+    try {
+      await navigator.clipboard.writeText(location);
+      addToast('Link copiado al portapapeles', 'success');
+    } catch (err) {
+      addToast('Error al copiar el link', 'error');
+    }
+  };
+
+  const handleCopyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      addToast('Email copiado al portapapeles', 'success');
+    } catch (err) {
+      addToast('Error al copiar el email', 'error');
+    }
+  };
+
+  const isValidUrl = (urlString: string) => {
+    try {
+      new URL(urlString);
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
   return (
@@ -220,6 +310,42 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
         </FormRow>
 
         <FormField>
+          {isValidUrl(location) ? (
+            <TextField
+              label="Ubicación"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              fullWidth
+              placeholder={online ? "Link de la reunión" : "Lugar de la entrevista"}
+              InputProps={{
+                endAdornment: (
+                  <>
+                    <CopyButton
+                      content={location}
+                      iconSize={20}
+                      style={{ marginRight: 8 }}
+                    />
+                    <LaunchButton
+                      href={location}
+                      iconSize={20}
+                      style={{ marginRight: 8 }}
+                    />
+                  </>
+                ),
+              }}
+            />
+          ) : (
+            <TextField
+              label="Ubicación"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              fullWidth
+              placeholder={online ? "Link de la reunión" : "Lugar de la entrevista"}
+            />
+          )}
+        </FormField>
+
+        <FormField>
           <Autocomplete
               multiple
               options={candidates}
@@ -243,11 +369,46 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
         {selectedCandidates.length > 0 && selectedInterviewers.length > 0 && (
             <>
+              <NotificationsContainer>
+                <SectionTitle>Notificaciones</SectionTitle>
+                {selectedCandidates.map(candidate => (
+                  <NotificationRow key={candidate._id}>
+                    <strong>{candidate.name}:</strong>
+                    <FormGroup row>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={opinions[candidate._id]?.interviewNotified || false}
+                            onChange={() => handleNotificationChange(candidate._id, 'interviewNotified')}
+                          />
+                        }
+                        label="Entrevista Notificada"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={opinions[candidate._id]?.interviewConfirmed || false}
+                            onChange={() => handleNotificationChange(candidate._id, 'interviewConfirmed')}
+                          />
+                        }
+                        label="Entrevista Confirmada"
+                      />
+                    </FormGroup>
+                  </NotificationRow>
+                ))}
+              </NotificationsContainer>
+
               {selectedCandidates.map(candidate => (
                   <div key={candidate._id}>
                     <SectionTitle>
                       Feedback para <Link href={`/profile/${candidate._id}`}>{candidate.name}</Link>
+                      <CopyButton
+                        content={candidate.email}
+                        iconSize={20}
+                        style={{ marginLeft: 4 }}
+                      />
                     </SectionTitle>
+
                     <FormControl component="fieldset" fullWidth margin="normal">
                       <RadioGroup
                           row

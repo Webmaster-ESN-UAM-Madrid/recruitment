@@ -5,6 +5,7 @@ import { ICandidate } from '@/lib/models/candidate';
 import { IUser } from '@/lib/models/user';
 import { EditButton } from '../buttons/EditButton';
 import { DeleteButton } from '../buttons/DeleteButton';
+import { useToast } from '../toasts/ToastContext';
 
 interface InterviewCardProps {
   interview: IInterview;
@@ -64,8 +65,23 @@ const InterviewDetails = styled.div`
   }
 `;
 
+const ClickableName = styled.span`
+  cursor: pointer;
+  color: var(--text-link);
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, users, onEdit, onDelete }) => {
+  const { addToast } = useToast();
   const getUserName = (id: string) => users.find(u => u._id === id)?.name || 'Unknown';
+
+  const handleCopyEmail = (email: string) => {
+    navigator.clipboard.writeText(email)
+      .then(() => addToast('Email copiado al portapapeles', 'success'))
+      .catch(() => addToast('Error al copiar el email', 'error'));
+  };
 
   return (
     <Card>
@@ -84,7 +100,9 @@ const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, us
             if (!candidate) return 'Unknown';
             return (
               <React.Fragment key={candidate._id}>
-                <a href={`/profile/${candidate._id}`}>{candidate.name}</a>
+                <ClickableName onClick={() => handleCopyEmail(candidate.email)}>
+                  {candidate.name}
+                </ClickableName>
                 {idx < interview.candidates.length - 1 ? ', ' : ''}
               </React.Fragment>
             );

@@ -147,7 +147,11 @@ const InterviewsPage = () => {
           ))}
         </InterviewContainer>
 
-        <Modal isOpen={isModalOpen} title={editingInterview ? "Editar Entrevista" : "Añadir Entrevista"}>
+        <Modal
+          isOpen={isModalOpen}
+          title={editingInterview ? "Editar Entrevista" : "Añadir Entrevista"}
+          onClose={closeModal}
+        >
           <InterviewModal
             users={users}
             candidates={candidates}
