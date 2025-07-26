@@ -17,6 +17,7 @@
     "dotenv": "^16.5.0",
     "express-async-handler": "^1.2.0",
     "express-session": "^1.18.1",
+    "jszip": "^3.10.1",
     "mongodb": "^5.0.0",
     "mongoose": "^8.16.1",
     "next": "15.3.4",
