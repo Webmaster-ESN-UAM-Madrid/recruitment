@@ -420,15 +420,15 @@ const GlobalConfigManager = () => {
       </ButtonContainer>
 
       <TableWrapper>
-        <TableHeader columns="1fr 150px 120px">
-          <DataCell>Nombre</DataCell>
+        <TableHeader columns="50px 1fr 120px">
           <DataCell>Color</DataCell>
+          <DataCell>Nombre</DataCell>
           <DataCell>Acciones</DataCell>
         </TableHeader>
         {committees.map((committee) => (
-          <TableRow key={committee._id} columns="1fr 150px 120px">
-            <DataCell>{committee.name}</DataCell>
+          <TableRow key={committee._id} columns="50px 1fr 120px">
             <DataCell style={{ backgroundColor: committee.color, width: '30px', height: '30px', borderRadius: '50%' }} />
+            <DataCell>{committee.name}</DataCell>
             <ButtonContainer>
               <EditButton onClick={() => handleEditCommittee(committee)} />
               <DeleteButton onClick={() => handleDeleteCommittee(committee._id)} />
@@ -441,7 +441,7 @@ const GlobalConfigManager = () => {
       <AddButton onClick={() => setIsFormOnboardingModalOpen(true)} />
 
       <TableWrapper>
-        <TableHeader columns="minmax(150px, 1fr) 150px 120px">
+        <TableHeader columns="minmax(150px, 1fr) 150px 120px" style={{ minWidth: 'max-content' }}>
           <DataCell>Identificador</DataCell>
           <DataCell>Crear Usuarios</DataCell>
           <DataCell>Acciones</DataCell>
