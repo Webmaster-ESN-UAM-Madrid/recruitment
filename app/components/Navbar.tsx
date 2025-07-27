@@ -109,13 +109,13 @@ const MenuButton = styled.button`
   }
 `;
 
-const SidePanel = styled.div<{ isOpen: boolean }>`
+const SidePanel = styled.div<{ $isOpen: boolean }>`
   display: flex;
   flex-direction: column;
   background-color: var(--navbar-bg);
   position: fixed;
   top: 0;
-  left: ${({ isOpen }) => (isOpen ? '0' : '-100%')}; /* Slide in from left */
+  left: ${({ $isOpen }) => ($isOpen ? '0' : '-100%')}; /* Slide in from left */
   width: 250px;
   height: 100%;
   padding: 20px;
@@ -145,7 +145,7 @@ const MobileNavLinks = styled.div`
   width: 100%;
 `;
 
-const Overlay = styled.div<{ isOpen: boolean }>`
+const Overlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -153,8 +153,8 @@ const Overlay = styled.div<{ isOpen: boolean }>`
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
   z-index: 999; /* Below the side panel, above other content */
-  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
-  pointer-events: ${({ isOpen }) => (isOpen ? 'auto' : 'none')};
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
   transition: opacity 0.3s ease-in-out;
 
   @media (min-width: 769px) {
@@ -277,7 +277,7 @@ const Navbar: React.FC = () => {
       </NavContainer>
 
       {/* Side Panel for Mobile */}
-      <SidePanel isOpen={isPanelOpen}>
+      <SidePanel $isOpen={isPanelOpen}>
         <CloseButton onClick={() => setIsPanelOpen(false)}>
           &times;
         </CloseButton>
@@ -305,7 +305,7 @@ const Navbar: React.FC = () => {
       </SidePanel>
 
       {/* Overlay for Side Panel */}
-      <Overlay isOpen={isPanelOpen} onClick={() => setIsPanelOpen(false)} />
+      <Overlay $isOpen={isPanelOpen} onClick={() => setIsPanelOpen(false)} />
     </>
   );
 };

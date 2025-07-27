@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
 import LoadingSpinner from '../../../app/components/loaders/LoadingSpinner';
-import { ButtonProvider } from '../../../app/components/buttons/IconButton';
 import { DeleteButton } from '../../../app/components/buttons/DeleteButton';
 import { EditButton } from '../../../app/components/buttons/EditButton';
 import { AddButton } from '../../../app/components/buttons/AddButton';
@@ -27,26 +26,26 @@ const CandidateTable = styled.div`
   margin: 0 auto;
 `;
 
-const TableHeader = styled.div<{ isMobile: boolean }>`
+const TableHeader = styled.div<{ $isMobile: boolean }>`
   display: grid;
-  grid-template-columns: 60px 1fr ${({ isMobile }) => (isMobile ? '120px' : '150px 120px')};
+  grid-template-columns: 60px 1fr ${({ $isMobile }) => ($isMobile ? '120px' : '150px 120px')};
   padding: 10px 15px;
   background-color: var(--table-header-bg);
   font-weight: bold;
   border-bottom: 1px solid var(--border-primary);
 `;
 
-const TableRow = styled.div<{ isTutor?: boolean; isMobile: boolean }>`
-  background-color: ${({ isTutor }) => (isTutor ? 'var(--tutor-row-bg)' : 'var(--bg-primary)')};
+const TableRow = styled.div<{ $isTutor?: boolean; $isMobile: boolean }>`
+  background-color: ${({ $isTutor }) => ($isTutor ? 'var(--tutor-row-bg)' : 'var(--bg-primary)')};
   display: grid;
-  grid-template-columns: 60px 1fr ${({ isMobile }) => (isMobile ? '120px' : '150px 120px')};
+  grid-template-columns: 60px 1fr ${({ $isMobile }) => ($isMobile ? '120px' : '150px 120px')};
   align-items: center;
   padding: 10px 15px;
   border-top: 2px solid var(--border-secondary);
   cursor: pointer;
 
   &:hover {
-    background-color: ${({ isTutor }) => (isTutor ? 'var(--tutor-row-hover-bg)' : 'var(--table-row-hover-bg)')};
+    background-color: ${({ $isTutor }) => ($isTutor ? 'var(--tutor-row-hover-bg)' : 'var(--table-row-hover-bg)')};
   }
 
   &:last-child {
@@ -76,9 +75,9 @@ const ActionsCell = styled.div`
   justify-content: flex-end;
 `;
 
-const AccordionContent = styled.div<{ expanded: boolean; hasFeedback: boolean }>`
+const AccordionContent = styled.div<{ $expanded: boolean; $hasFeedback: boolean }>`
   display: grid;
-  grid-template-rows: ${({ expanded }) => (expanded ? '1fr' : '0fr')};
+  grid-template-rows: ${({ $expanded }) => ($expanded ? '1fr' : '0fr')};
   transition: grid-template-rows 0.25s ease-in-out;
   overflow: hidden;
 
@@ -103,7 +102,7 @@ const AccordionContent = styled.div<{ expanded: boolean; hasFeedback: boolean }>
   }
 `;
 
-const FeedbackItem = styled.div<{ isMobile: boolean }>`
+const FeedbackItem = styled.div<{ $isMobile: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -249,7 +248,7 @@ const FeedbackPage: React.FC = () => {
           addToast('Error al obtener el feedback', 'error');
         }
       } catch {
-        addToast('Error al obtener los datos', 'error');
+        addToast('Ocurrió un error', 'error');
       } finally {
         setLoading(false);
       }
@@ -351,7 +350,7 @@ const FeedbackPage: React.FC = () => {
     <PageContainer>
       <h1>Feedback</h1>
       <CandidateTable>
-        <TableHeader isMobile={isMobile}>
+        <TableHeader $isMobile={isMobile}>
           <DataCell>Foto</DataCell>
           <DataCell>Nombre</DataCell>
           {!isMobile && <DataCell>Comentarios Añadidos</DataCell>}
@@ -369,8 +368,8 @@ const FeedbackPage: React.FC = () => {
               <div key={candidate._id}>
                 <TableRow
                   onClick={() => handleRowClick(candidate._id)}
-                  isTutor={candidate.tutor === session?.user?.email}
-                  isMobile={isMobile}
+                  $isTutor={candidate.tutor === session?.user?.email}
+                  $isMobile={isMobile}
                 >
                   <DataCell>
                     <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
@@ -402,11 +401,11 @@ const FeedbackPage: React.FC = () => {
                     />
                   </ActionsCell>
                 </TableRow>
-                <AccordionContent expanded={isExpanded} hasFeedback={hasFeedback}>
+                <AccordionContent $expanded={isExpanded} $hasFeedback={hasFeedback}>
                   <div>
                     {hasFeedback ? (
                       candidateFeedback.map(f => (
-                        <FeedbackItem key={f._id} isMobile={isMobile}>
+                        <FeedbackItem key={f._id} $isMobile={isMobile}>
                           <FeedbackContent>
                             {f.content.split('\n').map((line, idx) => (
                               <p key={idx}>{line}‎ </p>
@@ -419,12 +418,10 @@ const FeedbackPage: React.FC = () => {
                             </FeedbackDates>
                           </FeedbackContent>
                           {f.givenBy === session?.user?.id && (
-                            <ButtonProvider>
-                              <FeedbackActions>
-                                <EditButton onClick={() => openModal(candidate, f)} iconSize={20} />
-                                <DeleteButton onClick={() => handleDeleteFeedback(f._id)} iconSize={20} />
-                              </FeedbackActions>
-                            </ButtonProvider>
+                            <FeedbackActions>
+                              <EditButton onClick={() => openModal(candidate, f)} iconSize={20} />
+                              <DeleteButton onClick={() => handleDeleteFeedback(f._id)} iconSize={20} />
+                            </FeedbackActions>
                           )}
                         </FeedbackItem>
                       ))

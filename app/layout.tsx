@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import Navbar from "./components/Navbar";
 import { ButtonProvider } from "./components/buttons/IconButton";
 import { ToastProvider } from "./components/toasts/ToastProvider";
+import StyledComponentsRegistry from "../lib/registry";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,14 +18,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.png" />
       </head>
       <body>
-        <SessionProvider>
-          <ToastProvider>
-            <ButtonProvider>
+        <StyledComponentsRegistry>
+          <SessionProvider>
+            <ToastProvider>
               <Navbar />
-              {children}
-            </ButtonProvider>
-          </ToastProvider>
-        </SessionProvider>
+              <ButtonProvider>
+                {children}
+              </ButtonProvider>
+            </ToastProvider>
+          </SessionProvider>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

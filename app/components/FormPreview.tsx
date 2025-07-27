@@ -3,7 +3,6 @@
 import Question from "./Question";
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
-import { ButtonProvider } from './buttons/IconButton';
 import { SaveButton } from './buttons/SaveButton';
 import { CancelButton } from './buttons/CancelButton';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
@@ -182,12 +181,10 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
             );
           })}
           {isEditing && (
-            <ButtonProvider>
-              <ButtonWrapper>
-                <SaveButton isLoading={isSaving} onClick={handleSave} />
-                <CancelButton isLoading={isSaving} onClick={handleCancel} />
-              </ButtonWrapper>
-            </ButtonProvider>
+            <ButtonWrapper>
+              <SaveButton isLoading={isSaving} onClick={handleSave} />
+              <CancelButton isLoading={isSaving} onClick={handleCancel} />
+            </ButtonWrapper>
           )}
         </div>
       </AccordionContent>

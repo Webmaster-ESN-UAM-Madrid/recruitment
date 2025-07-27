@@ -46,7 +46,7 @@ const CandidateTableContainer = styled.div`
   overflow-x: auto;
 `;
 
-const TableHeader = styled.div<{ gridtemplatecolumns: string; isMobile: boolean }>`
+const TableHeader = styled.div<{ gridtemplatecolumns: string; $isMobile: boolean }>`
   display: grid;
   grid-template-columns: ${props => props.gridtemplatecolumns};
   padding: 10px 15px;
@@ -56,7 +56,7 @@ const TableHeader = styled.div<{ gridtemplatecolumns: string; isMobile: boolean 
   align-items: center;
 `;
 
-const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string; isMobile: boolean }>`
+const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string; $isMobile: boolean }>`
   display: grid;
   grid-template-columns: ${props => props.gridtemplatecolumns};
   align-items: center;
@@ -230,7 +230,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
         />
       </Modal>
       <CandidateTableContainer>
-        <TableHeader gridtemplatecolumns={currentGridTemplateColumns} isMobile={isMobile}>
+        <TableHeader gridtemplatecolumns={currentGridTemplateColumns} $isMobile={isMobile}>
           {currentVisibleColumns.map(column => (
             <DataCell key={column.key}>
               {column.header}
@@ -250,7 +250,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
           <LoadingSpinner />
         ) : candidates.length > 0 ? (
           candidates.map(candidate => (
-            <TableRow key={candidate._id} gridtemplatecolumns={currentGridTemplateColumns} $inactive={!candidate.active} isMobile={isMobile}>
+            <TableRow key={candidate._id} gridtemplatecolumns={currentGridTemplateColumns} $inactive={!candidate.active} $isMobile={isMobile}>
               {currentVisibleColumns.map(column => (
                 <DataCell key={column.key}>
                   {column.key === 'tags' && (

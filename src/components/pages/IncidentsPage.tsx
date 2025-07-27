@@ -183,8 +183,9 @@ const IncidentsPage: React.FC = () => {
                 {response.respondentEmail && <span><strong>Email:</strong> {response.respondentEmail}</span>}
               </IncidentInfo>
               <IncidentActions>
-                <EditButton onClick={() => setSelectedResponse(response._id as string)} />
+                <EditButton key={`edit-${response._id}`} onClick={() => setSelectedResponse(response._id as string)} />
                 <DeleteButton
+                  key={`delete-${response._id}`}
                   onClick={() => handleDeleteFormResponse(response._id as string)}
                   showSpinner={true}
                   needsConfirmation={true}
