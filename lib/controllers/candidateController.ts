@@ -115,13 +115,18 @@ export const getTasksStatus = async (userId: string) => {
     await dbConnect();
     try {
         const now = new Date();
-        const interviews = await Interview.find({
-            interviewers: userId,
-            opinions: { $exists: true },
-            date: { $lte: now }
+        // Single query to get all interviews
+        const allInterviews = await Interview.find({
+            opinions: { $exists: true }
         }).populate("candidates");
 
-        const pendingFeedback = interviews.filter((interview) => {
+        // Filter for pending feedback (personal tasks)
+        const pendingFeedback = allInterviews.filter((interview) => {
+            const isInterviewer = interview.interviewers.includes(userId);
+            const isPastInterview = new Date(interview.date) <= now;
+
+            if (!isInterviewer || !isPastInterview) return false;
+
             for (const candidate of interview.candidates) {
                 const candidateId = candidate._id.toString();
                 if (!interview.opinions.get(candidateId)?.interviewers.get(userId)?.opinion) {
@@ -134,9 +139,14 @@ export const getTasksStatus = async (userId: string) => {
         const candidates = await getCandidates();
         const pendingEmails = candidates.some((c) => !c.emailSent);
 
+        // Check for unnotified interviews from the same allInterviews array
+        const unnotifiedInterviews = allInterviews.some((interview) =>
+            interview.candidates.some((candidate: ICandidate) => !interview.opinions.get(candidate._id.toString())?.interviewNotified)
+        );
+
         return {
             personalTasks: pendingFeedback.length,
-            hasGlobalTasks: pendingEmails
+            hasGlobalTasks: pendingEmails || unnotifiedInterviews
         };
     } catch (error) {
         console.error("Error fetching tasks status:", error);

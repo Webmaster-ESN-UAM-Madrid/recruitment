@@ -150,7 +150,6 @@ const InterviewsPage = () => {
         <Modal
           isOpen={isModalOpen}
           title={editingInterview ? "Editar Entrevista" : "Añadir Entrevista"}
-          onClose={closeModal}
         >
           <InterviewModal
             users={users}

@@ -288,6 +288,15 @@ const TasksPage: React.FC = () => {
     const scheduledCandidateIds = new Set(interviews.flatMap(i => i.candidates));
     const unscheduledCandidates = candidates.filter(c => c.active && !scheduledCandidateIds.has(c._id));
 
+    const interviewsWithUnnotifiedCandidates = interviews.filter(interview => {
+        for (const candidateId of interview.candidates) {
+            if (!interview.opinions[candidateId]?.interviewNotified) {
+                return true;
+            }
+        }
+        return false;
+    });
+
     const gridtemplatecolumns = '40px 60px 300px 1fr 85px';
     const defaultAvatar = '/default-avatar.jpg';
 
@@ -406,6 +415,65 @@ const TasksPage: React.FC = () => {
                         </CandidateCardContainer>
                     ) : (
                         <p>No hay candidatos por agendar.</p>
+                    )}
+                </Section>
+
+                <Section>
+                    <SectionTitle>Entrevistas sin Notificación</SectionTitle>
+                    {loading ? (
+                        <LoadingSpinner />
+                    ) : interviewsWithUnnotifiedCandidates.length > 0 ? (
+                        <CandidateTableContainer>
+                            <TableHeader gridtemplatecolumns="60px 250px 300px 180px 1fr">
+                                <DataCell>Foto</DataCell>
+                                <DataCell>Candidato</DataCell>
+                                <DataCell>Email</DataCell>
+                                <DataCell>Fecha de Entrevista</DataCell>
+                                <DataCell>Estado</DataCell>
+                            </TableHeader>
+                            {interviewsWithUnnotifiedCandidates.map(interview => (
+                                interview.candidates.map(candidateId => {
+                                    const candidate = candidates.find(c => c._id === candidateId);
+                                    if (!candidate) return null;
+                                    const isNotified = interview.opinions[candidateId]?.interviewNotified;
+
+                                    return !isNotified && (
+                                        <TableRow key={`${interview._id}-${candidateId}`} gridtemplatecolumns="60px 250px 300px 180px 1fr">
+                                            <DataCell>
+                                                <Avatar
+                                                    src={candidate.photoUrl || defaultAvatar}
+                                                    onError={(e) => (e.currentTarget.src = defaultAvatar)}
+                                                />
+                                            </DataCell>
+                                            <DataCell>
+                                                <CandidateName href={`/profile/${candidate._id}`}>
+                                                    {candidate.name}
+                                                </CandidateName>
+                                            </DataCell>
+                                            <DataCell>
+                                                <span
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(candidate.email);
+                                                        addToast("Email copiado", "success");
+                                                    }}
+                                                    style={{ cursor: 'pointer', color: 'var(--link-color)' }}
+                                                >
+                                                    {candidate.email}
+                                                </span>
+                                            </DataCell>
+                                            <DataCell>
+                                                {new Date(interview.date).toLocaleString()}
+                                            </DataCell>
+                                            <DataCell>
+                                                <EditButton onClick={() => openModal(interview)} />
+                                            </DataCell>
+                                        </TableRow>
+                                    );
+                                })
+                            ))}
+                        </CandidateTableContainer>
+                    ) : (
+                        <p>No hay entrevistas sin notificación.</p>
                     )}
                 </Section>
 
