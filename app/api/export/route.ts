@@ -14,6 +14,45 @@ import FormConnection from "@/lib/models/formConnection";
 import FormResponse from "@/lib/models/formResponse";
 import Incident from "@/lib/models/incident";
 import JSZip from "jszip";
+import { Types } from 'mongoose';
+
+function transformMongoData(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  // Handle Date objects and date strings
+  if (obj instanceof Date) {
+    const date = obj instanceof Date ? obj : new Date(obj);
+    return { "$date": date.toISOString() };
+  }
+
+  // Handle ObjectId - both as instance and string
+  if (obj instanceof Types.ObjectId) {
+    return { "$oid": obj.toString() };
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => transformMongoData(item));
+  }
+
+  // Handle objects
+  if (typeof obj === 'object') {
+    const transformed: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip keys starting with underscore (like _id) as they're handled separately
+      if (!key.startsWith('_')) {
+        transformed[key] = transformMongoData(value);
+      } else if (key === '_id') {
+        transformed[key] = transformMongoData(value);
+      }
+    }
+    return transformed;
+  }
+
+  return obj;
+}
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -23,30 +62,36 @@ export async function GET(req: NextRequest) {
 
   await dbConnect();
 
-  // Fetch all collections
-  const interviews = await Interview.find({});
-  const candidates = await Candidate.find({});
-  const users = await User.find({});
-  const committees = await Committee.find({});
-  const configs = await Config.find({});
-  const feedbacks = await Feedback.find({});
-  const forms = await Form.find({});
-  const formconnections = await FormConnection.find({});
-  const formresponses = await FormResponse.find({});
-  const incidents = await Incident.find({});
+  // Fetch all collections with proper transformation
+  const interviews = await Interview.find({}).lean({ getters: true });
+  const candidates = await Candidate.find({}).lean({ getters: true });
+  const users = await User.find({}).lean({ getters: true });
+  const committees = await Committee.find({}).lean({ getters: true });
+  const configs = await Config.find({}).lean({ getters: true });
+  const feedbacks = await Feedback.find({}).lean({ getters: true });
+  const forms = await Form.find({}).lean({ getters: true });
+  const formconnections = await FormConnection.find({}).lean({ getters: true });
+  const formresponses = await FormResponse.find({}).lean({ getters: true });
+  const incidents = await Incident.find({}).lean({ getters: true });
 
-  // Create zip
+  // Create zip with transformed data
   const zip = new JSZip();
-  zip.file("interviews.json", JSON.stringify(interviews, null, 2));
-  zip.file("candidates.json", JSON.stringify(candidates, null, 2));
-  zip.file("users.json", JSON.stringify(users, null, 2));
-  zip.file("committees.json", JSON.stringify(committees, null, 2));
-  zip.file("configs.json", JSON.stringify(configs, null, 2));
-  zip.file("feedbacks.json", JSON.stringify(feedbacks, null, 2));
-  zip.file("forms.json", JSON.stringify(forms, null, 2));
-  zip.file("formconnections.json", JSON.stringify(formconnections, null, 2));
-  zip.file("formresponses.json", JSON.stringify(formresponses, null, 2));
-  zip.file("incidents.json", JSON.stringify(incidents, null, 2));
+
+  // Helper function to stringify with MongoDB Extended JSON v2
+  const stringifyExtendedJSON = (data: any) => {
+    return JSON.stringify(transformMongoData(data), null, 2);
+  };
+
+  zip.file("interviews.json", stringifyExtendedJSON(interviews));
+  zip.file("candidates.json", stringifyExtendedJSON(candidates));
+  zip.file("users.json", stringifyExtendedJSON(users));
+  zip.file("committees.json", stringifyExtendedJSON(committees));
+  zip.file("configs.json", stringifyExtendedJSON(configs));
+  zip.file("feedbacks.json", stringifyExtendedJSON(feedbacks));
+  zip.file("forms.json", stringifyExtendedJSON(forms));
+  zip.file("formconnections.json", stringifyExtendedJSON(formconnections));
+  zip.file("formresponses.json", stringifyExtendedJSON(formresponses));
+  zip.file("incidents.json", stringifyExtendedJSON(incidents));
 
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
