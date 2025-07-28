@@ -26,11 +26,16 @@ export async function PUT(req: NextRequest, context: any) {
     }
     const params = await context.params;
     const { interviewData, events } = await req.json();
+
     const updatedInterviewData = {
-        ...interviewData,
+        date: interviewData.date,
+        online: interviewData.online,
+        location: interviewData.location,
+        opinions: interviewData.opinions,
         candidates: interviewData.candidates.map((id: string) => new Types.ObjectId(id)),
         interviewers: interviewData.interviewers.map((id: string) => new Types.ObjectId(id)),
     };
+
     const updatedInterview = await updateInterview(params.id, updatedInterviewData);
     if (!updatedInterview) {
         return NextResponse.json({ message: "Failed to update interview" }, { status: 500 });

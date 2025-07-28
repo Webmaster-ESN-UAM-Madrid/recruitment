@@ -10,6 +10,7 @@ import { LaunchButton } from '../buttons/LaunchButton';
 import { useToast } from '../toasts/ToastContext';
 import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
+import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
 
 interface InterviewModalProps {
   interview: IInterview | null;
@@ -127,6 +128,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const [location, setLocation] = useState('');
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
   const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
+  const [loading, setLoading] = useState(false);
 
   const eventNames = [
     'Welcome Meeting',
@@ -141,34 +143,58 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
   const pad2 = (n: number) => (n < 10 ? '0' + n : '' + n);
 
+
+
   useEffect(() => {
-    if (interview) {
-      const date = new Date(interview.date);
+    setLoading(true);
+    const fetchInterview = async () => {
+      if (interview?._id) {
+        try {
+          const response = await fetch(`/api/interviews/${interview._id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch interview data');
+          }
+          const latestInterview: IInterview = await response.json();
 
-      const year = date.getFullYear();
-      const month = pad2(date.getMonth() + 1);
-      const day = pad2(date.getDate());
-      const hours = pad2(date.getHours());
-      const minutes = pad2(date.getMinutes());
+          const date = new Date(latestInterview.date);
+          const year = date.getFullYear();
+          const month = pad2(date.getMonth() + 1);
+          const day = pad2(date.getDate());
+          const hours = pad2(date.getHours());
+          const minutes = pad2(date.getMinutes());
 
-      setDate(`${year}-${month}-${day}T${hours}:${minutes}`);
-      setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
-      setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
-      setOnline(interview.online ?? false);
-      setLocation(interview.location || '');
-      setOpinions(interview.opinions || {});
-      const initialEvents: Record<string, ICandidate['events']> = {};
-      candidates.forEach(candidate => {
-        if (interview.candidates.includes(candidate._id)) {
-          initialEvents[candidate._id] = candidate.events || {
-            'Welcome Meeting': false,
-            'Welcome Days': false,
-            'Integration Weekend': false,
-            'Plataforma Local': false,
-          };
+          setDate(`${year}-${month}-${day}T${hours}:${minutes}`);
+          const populatedCandidates = latestInterview.candidates.filter(c => typeof c === 'object') as ICandidate[];
+          const populatedInterviewers = latestInterview.interviewers.filter(i => typeof i === 'object') as IUser[];
+
+          setSelectedCandidates(populatedCandidates);
+          setSelectedInterviewers(populatedInterviewers);
+
+          setOnline(latestInterview.online ?? false);
+          setLocation(latestInterview.location || '');
+          setOpinions(latestInterview.opinions || {});
+
+          const initialEvents: Record<string, ICandidate['events']> = {};
+          populatedCandidates.forEach(c => {
+            initialEvents[c._id] = c.events || {
+              'Welcome Meeting': false,
+              'Welcome Days': false,
+              'Integration Weekend': false,
+              'Plataforma Local': false,
+            };
+          });
+          setEvents(initialEvents);
+        } catch (error) {
+          console.error(error);
+          addToast('Error al cargar los datos de la entrevista', 'error');
+        } finally {
+          setLoading(false);
         }
-      });
-      setEvents(initialEvents);
+      }
+    };
+
+    if (interview) {
+      fetchInterview();
     } else {
       setDate('');
       setSelectedCandidates([]);
@@ -177,29 +203,77 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setLocation('');
       setOpinions({});
       setEvents({});
+      setLoading(false);
     }
-  }, [interview, users, candidates]);
+  }, [interview, users, candidates, addToast]);
 
   const handleSave = async () => {
-    if (
-        !date ||
-        (selectedCandidates.length === 0 && !Array.isArray(selectedCandidates)) ||
-        (selectedInterviewers.length === 0 && !Array.isArray(selectedInterviewers))
-    ) {
-      addToast('Por favor, rellena todos los campos obligatorios', 'error');
+    if (!session?.user?.id || !interview?._id) {
+      addToast('Error de autenticación o datos de la entrevista no encontrados.', 'error');
       return;
     }
 
-    const interviewData: Partial<IInterview> = {
-      date: new Date(date),
-      candidates: selectedCandidates.map(c => c._id),
-      interviewers: selectedInterviewers.map(u => u._id),
-      online: online,
-      location,
-      opinions: opinions,
-    };
+    if (
+      !date ||
+      (selectedCandidates.length === 0 && !Array.isArray(selectedCandidates)) ||
+      (selectedInterviewers.length === 0 && !Array.isArray(selectedInterviewers))
+    ) {
+      addToast('Por favor, rellena todos los campos obligatorios.', 'error');
+      return;
+    }
 
-    await onSave(interviewData, events);
+    try {
+      const response = await fetch(`/api/interviews/${interview._id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch latest interview data');
+      }
+      const latestInterview: IInterview = await response.json();
+      const dbOpinions = latestInterview.opinions || {};
+
+      const mergedOpinions = JSON.parse(JSON.stringify(dbOpinions));
+
+      for (const candidate of selectedCandidates) {
+        const candidateId = candidate._id;
+        const localOpinion = opinions[candidateId];
+
+        if (!mergedOpinions[candidateId]) {
+          mergedOpinions[candidateId] = { interviewers: {}, status: 'unset' };
+        }
+
+        if (localOpinion?.interviewers?.[session.user.id]) {
+          if (!mergedOpinions[candidateId].interviewers) {
+            mergedOpinions[candidateId].interviewers = {};
+          }
+          mergedOpinions[candidateId].interviewers[session.user.id] = localOpinion.interviewers[session.user.id];
+        }
+
+        if (localOpinion) {
+          if (localOpinion.status && localOpinion.status !== 'unset') {
+            mergedOpinions[candidateId].status = localOpinion.status;
+          }
+          if (Object.prototype.hasOwnProperty.call(localOpinion, 'interviewNotified')) {
+            mergedOpinions[candidateId].interviewNotified = localOpinion.interviewNotified;
+          }
+          if (Object.prototype.hasOwnProperty.call(localOpinion, 'interviewConfirmed')) {
+            mergedOpinions[candidateId].interviewConfirmed = localOpinion.interviewConfirmed;
+          }
+        }
+      }
+
+      const interviewData: Partial<IInterview> = {
+        date: new Date(date),
+        candidates: selectedCandidates.map(c => c._id),
+        interviewers: selectedInterviewers.map(u => u._id),
+        online: online,
+        location: location || "",
+        opinions: mergedOpinions,
+      };
+
+      await onSave(interviewData, events);
+    } catch (error) {
+      console.error('Error saving interview:', error);
+      addToast('Error al guardar la entrevista. Por favor, inténtalo de nuevo.', 'error');
+    }
   };
 
   const handleOpinionChange = (candidateId: string, interviewerId: string, opinion: string) => {
@@ -258,7 +332,11 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
   return (
       <Form>
-        <FormRow>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <FormRow>
           <DateField>
             <TextField
                 label="Fecha y Hora"
@@ -433,10 +511,12 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
             </>
         )}
 
-        <ModalActions>
-          <CancelButton onClick={onClose} />
-          <SaveButton onClick={handleSave} />
-        </ModalActions>
+            <ModalActions>
+              <CancelButton onClick={onClose} />
+              <SaveButton onClick={handleSave} />
+            </ModalActions>
+          </>
+        )}
       </Form>
   );
 };

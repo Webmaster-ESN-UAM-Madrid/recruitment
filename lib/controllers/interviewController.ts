@@ -5,7 +5,9 @@ import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController"
 export const getInterviewById = async (id: string): Promise<IInterview | null> => {
     await dbConnect();
     try {
-        const interview = await Interview.findById(id);
+        const interview = await Interview.findById(id)
+            .populate('candidates')
+            .populate('interviewers');
         return interview;
     } catch (error) {
         console.error(`Error fetching interview by ID ${id}:`, error);
@@ -27,8 +29,47 @@ export const getInterviewsByCandidate = async (candidateId: string): Promise<IIn
 export const updateInterview = async (id: string, updates: Partial<IInterview>): Promise<IInterview | null> => {
     await dbConnect();
     try {
-        const interview = await Interview.findByIdAndUpdate(id, updates, { new: true });
-        return interview;
+        const { opinions, ...restOfUpdates } = updates;
+
+        const interview = await Interview.findById(id);
+        if (!interview) {
+            return null;
+        }
+
+        Object.assign(interview, restOfUpdates);
+
+        if (opinions) {
+            for (const candidateId in opinions) {
+                if (Object.prototype.hasOwnProperty.call(opinions, candidateId)) {
+                    const opinionUpdate = opinions[candidateId];
+                    const existingOpinion = interview.opinions.get(candidateId);
+
+                    if (existingOpinion) {
+                        if (opinionUpdate.interviewers) {
+                            for (const interviewerId in opinionUpdate.interviewers) {
+                                if (Object.prototype.hasOwnProperty.call(opinionUpdate.interviewers, interviewerId)) {
+                                    existingOpinion.interviewers.set(interviewerId, opinionUpdate.interviewers[interviewerId]);
+                                }
+                            }
+                        }
+                        if (opinionUpdate.status && opinionUpdate.status !== 'unset') {
+                            existingOpinion.status = opinionUpdate.status;
+                        }
+                        if (Object.prototype.hasOwnProperty.call(opinionUpdate, 'interviewNotified')) {
+                            existingOpinion.interviewNotified = opinionUpdate.interviewNotified;
+                        }
+                        if (Object.prototype.hasOwnProperty.call(opinionUpdate, 'interviewConfirmed')) {
+                            existingOpinion.interviewConfirmed = opinionUpdate.interviewConfirmed;
+                        }
+                    } else {
+                        interview.opinions.set(candidateId, opinionUpdate);
+                    }
+                }
+            }
+        }
+
+        const updatedInterview = await interview.save();
+        return updatedInterview;
     } catch (error) {
         console.error(`Error updating interview ${id}:`, error);
         return null;

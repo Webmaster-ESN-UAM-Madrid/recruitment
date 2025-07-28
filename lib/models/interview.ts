@@ -24,7 +24,7 @@ export interface IInterview extends Document {
 
 const interviewSchema = new Schema<IInterview>({
     recruitmentId: { type: String, required: true },
-    location: { type: String, required: true, default: "" },
+    location: { type: String, default: "" },
     interviewers: [{ type: Schema.Types.ObjectId, required: true, ref: "User" }],
     candidates: [{ type: Schema.Types.ObjectId, required: true, ref: "Candidate" }],
     date: { type: Date, required: true },
@@ -44,8 +44,8 @@ const interviewSchema = new Schema<IInterview>({
                 enum: ["unset", "present", "delayed", "absent", "cancelled"],
                 default: "unset"
             },
-            interviewNotified: { type: Boolean, required: true, default: false },
-            interviewConfirmed: { type: Boolean, required: true, default: false }
+            interviewNotified: { type: Boolean, default: false },
+            interviewConfirmed: { type: Boolean, default: false }
         }),
         default: {}
     }
