@@ -58,26 +58,35 @@ const spin = keyframes`
   100% { transform: rotate(360deg); }
 `;
 
-const getColor = (color: string) => {
+const getColor = (color: string, isDisabled: boolean) => {
+  let baseColor;
   switch (color) {
     case "primary":
-      return "var(--button-primary-bg)";
+      baseColor = "var(--button-primary-bg)";
+      break;
     case "secondary":
-      return "var(--button-secondary-bg)";
+      baseColor = "var(--button-secondary-bg)";
+      break;
     case "success":
-      return "var(--button-success-bg)";
+      baseColor = "var(--button-success-bg)";
+      break;
     case "warning":
-      return "var(--button-warning-bg)";
+      baseColor = "var(--button-warning-bg)";
+      break;
     case "danger":
-      return "var(--button-danger-bg)";
+      baseColor = "var(--button-danger-bg)";
+      break;
     default:
-      return "var(--button-default-bg)";
+      baseColor = "var(--button-default-bg)";
   }
-}
+  return isDisabled
+    ? `color-mix(in srgb, ${baseColor}, transparent 50%)`
+    : baseColor;
+};
 
 const CustomSpinner = styled.div<{ size: number; color: string }>`
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-left-color: ${({ color }) => getColor(color)};
+  border-left-color: ${({ color }) => getColor(color, false)};
   border-radius: 50%;
   width: ${({ size }) => size}px;
   height: ${({ size }) => size}px;
@@ -238,7 +247,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
     };
   }, []);
 
-  const buttonColor = getColor(color);
+  const isActuallyDisabled = disabled || loading || disableAll;
+  const buttonColor = getColor(color, isActuallyDisabled);
 
   return (
     <Tooltip title="Mantén presionado para confirmar" open={showTooltip} placement="top" arrow>
@@ -246,7 +256,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         isIconOnly
         color={color}
         aria-label={ariaLabel}
-        isDisabled={disabled || loading || disableAll}
+        isDisabled={isActuallyDisabled}
         onPressStart={startHold}
         onPressEnd={endHold}
         onPress={handlePress}
