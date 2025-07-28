@@ -5,7 +5,9 @@ import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController"
 export const getInterviewById = async (id: string): Promise<IInterview | null> => {
     await dbConnect();
     try {
-        const interview = await Interview.findById(id);
+        const interview = await Interview.findById(id)
+            .populate('candidates')
+            .populate('interviewers');
         return interview;
     } catch (error) {
         console.error(`Error fetching interview by ID ${id}:`, error);

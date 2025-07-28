@@ -146,6 +146,8 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
   const pad2 = (n: number) => (n < 10 ? '0' + n : '' + n);
 
+
+
   useEffect(() => {
     const fetchInterview = async () => {
       if (interview?._id) {
@@ -164,21 +166,24 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
           const minutes = pad2(date.getMinutes());
 
           setDate(`${year}-${month}-${day}T${hours}:${minutes}`);
-          setSelectedCandidates(candidates.filter(c => latestInterview.candidates.includes(c._id)));
-          setSelectedInterviewers(users.filter(u => latestInterview.interviewers.includes(u._id)));
+          const populatedCandidates = latestInterview.candidates.filter(c => typeof c === 'object') as ICandidate[];
+          const populatedInterviewers = latestInterview.interviewers.filter(i => typeof i === 'object') as IUser[];
+
+          setSelectedCandidates(populatedCandidates);
+          setSelectedInterviewers(populatedInterviewers);
+
           setOnline(latestInterview.online ?? false);
           setLocation(latestInterview.location || '');
           setOpinions(latestInterview.opinions || {});
+
           const initialEvents: Record<string, ICandidate['events']> = {};
-          candidates.forEach(candidate => {
-            if (latestInterview.candidates.includes(candidate._id)) {
-              initialEvents[candidate._id] = candidate.events || {
-                'Welcome Meeting': false,
-                'Welcome Days': false,
-                'Integration Weekend': false,
-                'Plataforma Local': false,
-              };
-            }
+          populatedCandidates.forEach(c => {
+            initialEvents[c._id] = c.events || {
+              'Welcome Meeting': false,
+              'Welcome Days': false,
+              'Integration Weekend': false,
+              'Plataforma Local': false,
+            };
           });
           setEvents(initialEvents);
         } catch (error) {
@@ -199,7 +204,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setOpinions({});
       setEvents({});
     }
-  }, [interview?._id, users, candidates]);
+  }, [interview, users, candidates, addToast]);
 
   const handleSave = async () => {
     if (!session?.user?.id || !interview?._id) {
