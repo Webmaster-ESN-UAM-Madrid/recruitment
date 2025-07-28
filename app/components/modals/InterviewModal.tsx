@@ -10,7 +10,6 @@ import { LaunchButton } from '../buttons/LaunchButton';
 import { useToast } from '../toasts/ToastContext';
 import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
 
 interface InterviewModalProps {
@@ -87,10 +86,6 @@ const FieldTitle = styled.div`
 `;
 
 const NotificationsContainer = styled.div`
-  margin: 16px 0;
-  padding: 16px;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--border-radius-md);
 `;
 
 const NotificationRow = styled.div`
@@ -372,6 +367,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
               onChange={e => setLocation(e.target.value)}
               fullWidth
               placeholder={online ? "Link de la reunión" : "Lugar de la entrevista"}
+              style={{ paddingRight: 0 }}
               InputProps={{
                 endAdornment: (
                   <>
@@ -379,7 +375,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
                       content={location}
                       iconSize={20}
                       style={{ marginRight: 8 }}
-                    />
+                      />
                     <LaunchButton
                       href={location}
                       iconSize={20}
@@ -456,11 +452,14 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
               {selectedCandidates.map(candidate => (
                   <div key={candidate._id}>
                     <SectionTitle>
-                      Feedback para <Link href={`/profile/${candidate._id}`}>{candidate.name}</Link>
+                      Feedback para {candidate.name}
                       <CopyButton
                         content={candidate.email}
-                        iconSize={20}
-                        style={{ marginLeft: 4 }}
+                        iconSize={16}
+                      />
+                      <LaunchButton
+                        href={`/profile/${candidate._id}`}
+                        iconSize={16}
                       />
                     </SectionTitle>
 

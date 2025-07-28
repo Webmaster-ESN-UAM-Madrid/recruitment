@@ -102,6 +102,7 @@ const CustomCheckbox = styled.span<{ checked: boolean }>`
   border-radius: 3px;
   position: relative;
   box-sizing: border-box;
+  flex-shrink: 0;
 
   &::after {
     content: '';

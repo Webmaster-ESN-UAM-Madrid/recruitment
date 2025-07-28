@@ -23,7 +23,6 @@ const HiddenInput = styled.input`
 
 const CustomCheckWrapper = styled.label`
   display: flex;
-  align-items: center;
   gap: 8px;
   cursor: pointer;
 
@@ -42,6 +41,7 @@ const CustomCheckbox = styled.span<{ checked: boolean }>`
   border-radius: 3px;
   position: relative;
   box-sizing: border-box;
+  flex-shrink: 0;
 
   &::after {
     content: '';

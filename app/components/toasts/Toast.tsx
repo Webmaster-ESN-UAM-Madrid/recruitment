@@ -37,7 +37,7 @@ const fadeIn = keyframes`
   }
 `;
 
-const ToastContainer = styled.div<{ type: ToastType; isClosing?: boolean }>`
+const ToastContainer = styled.div<{ type: ToastType; $isClosing?: boolean }>`
   display: flex;
   align-items: center;
   padding: 10px;
@@ -50,11 +50,11 @@ const ToastContainer = styled.div<{ type: ToastType; isClosing?: boolean }>`
   animation: ${fadeIn} 0.3s ease-in-out;
   max-width: 320px;
   transition: all 0.4s ease-in-out;
-  opacity: ${({ isClosing }) => (isClosing ? 0 : 1)};
-  max-height: ${({ isClosing }) => (isClosing ? '0' : '75px')};
-  padding-top: ${({ isClosing }) => (isClosing ? 0 : '10px')};
-  padding-bottom: ${({ isClosing }) => (isClosing ? 0 : '10px')};
-  margin-bottom: ${({ isClosing }) => (isClosing ? 0 : '10px')};
+  opacity: ${({ $isClosing }) => ($isClosing ? 0 : 1)};
+  max-height: ${({ $isClosing }) => ($isClosing ? '0' : '75px')};
+  padding-top: ${({ $isClosing }) => ($isClosing ? 0 : '10px')};
+  padding-bottom: ${({ $isClosing }) => ($isClosing ? 0 : '10px')};
+  margin-bottom: ${({ $isClosing }) => ($isClosing ? 0 : '10px')};
   overflow: hidden;
 `;
 
@@ -100,7 +100,7 @@ const Toast: React.FC<ToastProps> = ({ id, message, type, onClose, isClosing }) 
   }, [handleClose]);
 
   return (
-    <ToastContainer type={type} isClosing={isClosing}>
+    <ToastContainer type={type} $isClosing={isClosing}>
       <IconWrapper>{toastIcons[type]}</IconWrapper>
       <Message>{message}</Message>
       <CloseButton onClick={handleClose}>
