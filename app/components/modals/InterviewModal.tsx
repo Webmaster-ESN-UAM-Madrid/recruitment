@@ -246,8 +246,16 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
           mergedOpinions[candidateId].interviewers[session.user.id] = localOpinion.interviewers[session.user.id];
         }
 
-        if (localOpinion?.status && localOpinion.status !== 'unset') {
-          mergedOpinions[candidateId].status = localOpinion.status;
+        if (localOpinion) {
+          if (localOpinion.status && localOpinion.status !== 'unset') {
+            mergedOpinions[candidateId].status = localOpinion.status;
+          }
+          if (Object.prototype.hasOwnProperty.call(localOpinion, 'interviewNotified')) {
+            mergedOpinions[candidateId].interviewNotified = localOpinion.interviewNotified;
+          }
+          if (Object.prototype.hasOwnProperty.call(localOpinion, 'interviewConfirmed')) {
+            mergedOpinions[candidateId].interviewConfirmed = localOpinion.interviewConfirmed;
+          }
         }
       }
 

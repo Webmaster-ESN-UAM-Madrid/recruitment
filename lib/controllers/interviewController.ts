@@ -55,6 +55,12 @@ export const updateInterview = async (id: string, updates: Partial<IInterview>):
                         if (opinionUpdate.status && opinionUpdate.status !== 'unset') {
                             existingOpinion.status = opinionUpdate.status;
                         }
+                        if (Object.prototype.hasOwnProperty.call(opinionUpdate, 'interviewNotified')) {
+                            existingOpinion.interviewNotified = opinionUpdate.interviewNotified;
+                        }
+                        if (Object.prototype.hasOwnProperty.call(opinionUpdate, 'interviewConfirmed')) {
+                            existingOpinion.interviewConfirmed = opinionUpdate.interviewConfirmed;
+                        }
                     } else {
                         interview.opinions.set(candidateId, opinionUpdate);
                     }
