@@ -270,7 +270,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
         candidates: selectedCandidates.map(c => c._id),
         interviewers: selectedInterviewers.map(u => u._id),
         online: online,
-        location,
+        location: location || "",
         opinions: mergedOpinions,
       };
 
