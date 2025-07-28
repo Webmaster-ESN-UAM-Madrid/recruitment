@@ -18,6 +18,8 @@ import { IUser } from '@/lib/models/user';
 import Modal from '@/app/components/modals/Modal';
 import InterviewModal from '@/app/components/modals/InterviewModal';
 import { EditButton } from '@/app/components/buttons/EditButton';
+import { IForm } from '@/lib/models/form';
+import { IFormResponse } from '@/lib/models/formResponse';
 
 const availableTags = [
     { tag: 'nextSem', label: 'Próximo Cuatri', Icon: NextSemIcon },
@@ -137,12 +139,12 @@ const CandidateCardContainer = styled.div`
     gap: 12px;
 `;
 
-const CandidateCard = styled.div`
+const CandidateCard = styled.div<{ hasInterviewResponse?: boolean }>`
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px;
-    border: 1px solid var(--border-primary);
+    border: 1px solid ${props => props.hasInterviewResponse ? 'var(--brand-primary)' : 'var(--border-primary)'};
     border-radius: 16px;
     background-color: var(--bg-primary);
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -159,6 +161,8 @@ const TasksPage: React.FC = () => {
     const [candidates, setCandidates] = useState<ICandidate[]>([]);
     const [interviews, setInterviews] = useState<IInterview[]>([]);
     const [users, setUsers] = useState<IUser[]>([]);
+    const [forms, setForms] = useState<IForm[]>([]);
+    const [formResponses, setFormResponses] = useState<IFormResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const { addToast } = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -167,10 +171,12 @@ const TasksPage: React.FC = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [candidatesRes, interviewsRes, usersRes] = await Promise.all([
+            const [candidatesRes, interviewsRes, usersRes, formsRes, formResponsesRes] = await Promise.all([
                 fetch('/api/candidates'),
                 fetch('/api/interviews'), // /past removed. We have to fetch all interviews to remove candidates from the list
                 fetch('/api/users'),
+                fetch('/api/forms'),
+                fetch('/api/form-responses'),
             ]);
 
             if (candidatesRes.ok) {
@@ -195,6 +201,22 @@ const TasksPage: React.FC = () => {
             } else {
                 console.error("Failed to fetch users");
                 addToast("Error al cargar los usuarios", "error");
+            }
+
+            if (formsRes.ok) {
+                const data = await formsRes.json();
+                setForms(data);
+            } else {
+                console.error("Failed to fetch forms");
+                addToast("Error al cargar los formularios", "error");
+            }
+
+            if (formResponsesRes.ok) {
+                const data = await formResponsesRes.json();
+                setFormResponses(data);
+            } else {
+                console.error("Failed to fetch form responses");
+                addToast("Error al cargar las respuestas de los formularios", "error");
             }
         } catch (error) {
             console.error("Failed to fetch data:", error);
@@ -287,6 +309,9 @@ const TasksPage: React.FC = () => {
 
     const scheduledCandidateIds = new Set(interviews.flatMap(i => i.candidates));
     const unscheduledCandidates = candidates.filter(c => c.active && !scheduledCandidateIds.has(c._id));
+
+    const interviewFormIds = new Set(forms.filter(f => f.formIdentifier?.startsWith('entrevista')).map(f => (f._id as string).toString()));
+    const candidatesWithInterviewResponse = new Set(formResponses.filter(r => r.candidateId && interviewFormIds.has(r.formId.toString())).map(r => r.candidateId?.toString()));
 
     const interviewsWithUnnotifiedCandidates = interviews.filter(interview => {
         for (const candidateId of interview.candidates) {
@@ -407,7 +432,7 @@ const TasksPage: React.FC = () => {
                     ) : unscheduledCandidates.length > 0 ? (
                         <CandidateCardContainer>
                             {unscheduledCandidates.map(candidate => (
-                                <CandidateCard key={candidate._id}>
+                                <CandidateCard key={candidate._id} hasInterviewResponse={candidatesWithInterviewResponse.has(candidate._id)}>
                                     <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
                                     <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>
                                 </CandidateCard>

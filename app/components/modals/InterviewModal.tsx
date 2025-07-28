@@ -11,6 +11,7 @@ import { useToast } from '../toasts/ToastContext';
 import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
 
 interface InterviewModalProps {
   interview: IInterview | null;
@@ -132,6 +133,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const [location, setLocation] = useState('');
   const [opinions, setOpinions] = useState<IInterview['opinions']>({});
   const [events, setEvents] = useState<Record<string, ICandidate['events']>>({});
+  const [loading, setLoading] = useState(false);
 
   const eventNames = [
     'Welcome Meeting',
@@ -149,6 +151,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
 
   useEffect(() => {
+    setLoading(true);
     const fetchInterview = async () => {
       if (interview?._id) {
         try {
@@ -189,6 +192,8 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
         } catch (error) {
           console.error(error);
           addToast('Error al cargar los datos de la entrevista', 'error');
+        } finally {
+          setLoading(false);
         }
       }
     };
@@ -203,6 +208,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setLocation('');
       setOpinions({});
       setEvents({});
+      setLoading(false);
     }
   }, [interview, users, candidates, addToast]);
 
@@ -331,7 +337,11 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
 
   return (
       <Form>
-        <FormRow>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <FormRow>
           <DateField>
             <TextField
                 label="Fecha y Hora"
@@ -502,10 +512,12 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
             </>
         )}
 
-        <ModalActions>
-          <CancelButton onClick={onClose} />
-          <SaveButton onClick={handleSave} />
-        </ModalActions>
+            <ModalActions>
+              <CancelButton onClick={onClose} />
+              <SaveButton onClick={handleSave} />
+            </ModalActions>
+          </>
+        )}
       </Form>
   );
 };
