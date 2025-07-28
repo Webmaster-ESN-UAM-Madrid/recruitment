@@ -147,33 +147,49 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   const pad2 = (n: number) => (n < 10 ? '0' + n : '' + n);
 
   useEffect(() => {
-    if (interview) {
-      const date = new Date(interview.date);
+    const fetchInterview = async () => {
+      if (interview?._id) {
+        try {
+          const response = await fetch(`/api/interviews/${interview._id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch interview data');
+          }
+          const latestInterview: IInterview = await response.json();
 
-      const year = date.getFullYear();
-      const month = pad2(date.getMonth() + 1);
-      const day = pad2(date.getDate());
-      const hours = pad2(date.getHours());
-      const minutes = pad2(date.getMinutes());
+          const date = new Date(latestInterview.date);
+          const year = date.getFullYear();
+          const month = pad2(date.getMonth() + 1);
+          const day = pad2(date.getDate());
+          const hours = pad2(date.getHours());
+          const minutes = pad2(date.getMinutes());
 
-      setDate(`${year}-${month}-${day}T${hours}:${minutes}`);
-      setSelectedCandidates(candidates.filter(c => interview.candidates.includes(c._id)));
-      setSelectedInterviewers(users.filter(u => interview.interviewers.includes(u._id)));
-      setOnline(interview.online ?? false);
-      setLocation(interview.location || '');
-      setOpinions(interview.opinions || {});
-      const initialEvents: Record<string, ICandidate['events']> = {};
-      candidates.forEach(candidate => {
-        if (interview.candidates.includes(candidate._id)) {
-          initialEvents[candidate._id] = candidate.events || {
-            'Welcome Meeting': false,
-            'Welcome Days': false,
-            'Integration Weekend': false,
-            'Plataforma Local': false,
-          };
+          setDate(`${year}-${month}-${day}T${hours}:${minutes}`);
+          setSelectedCandidates(candidates.filter(c => latestInterview.candidates.includes(c._id)));
+          setSelectedInterviewers(users.filter(u => latestInterview.interviewers.includes(u._id)));
+          setOnline(latestInterview.online ?? false);
+          setLocation(latestInterview.location || '');
+          setOpinions(latestInterview.opinions || {});
+          const initialEvents: Record<string, ICandidate['events']> = {};
+          candidates.forEach(candidate => {
+            if (latestInterview.candidates.includes(candidate._id)) {
+              initialEvents[candidate._id] = candidate.events || {
+                'Welcome Meeting': false,
+                'Welcome Days': false,
+                'Integration Weekend': false,
+                'Plataforma Local': false,
+              };
+            }
+          });
+          setEvents(initialEvents);
+        } catch (error) {
+          console.error(error);
+          addToast('Error al cargar los datos de la entrevista', 'error');
         }
-      });
-      setEvents(initialEvents);
+      }
+    };
+
+    if (interview) {
+      fetchInterview();
     } else {
       setDate('');
       setSelectedCandidates([]);
@@ -183,7 +199,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
       setOpinions({});
       setEvents({});
     }
-  }, [interview, users, candidates]);
+  }, [interview?._id, users, candidates]);
 
   const handleSave = async () => {
     if (
