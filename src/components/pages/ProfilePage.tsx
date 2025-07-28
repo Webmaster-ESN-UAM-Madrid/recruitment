@@ -747,7 +747,7 @@ export default function ProfilePage() {
             setCandidate({ ...candidate, tutor: newInput })
           }
           renderInput={(params) => (
-            <TextField {...params} label="Padrino" disabled={!isEditing} fullWidth={isMobile} />
+            <TextField {...params} label="Padrino" disabled={!isEditing} fullWidth />
           )}
           disabled={!isEditing}
         />
