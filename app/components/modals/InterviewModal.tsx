@@ -202,25 +202,64 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   }, [interview?._id, users, candidates]);
 
   const handleSave = async () => {
-    if (
-        !date ||
-        (selectedCandidates.length === 0 && !Array.isArray(selectedCandidates)) ||
-        (selectedInterviewers.length === 0 && !Array.isArray(selectedInterviewers))
-    ) {
-      addToast('Por favor, rellena todos los campos obligatorios', 'error');
+    if (!session?.user?.id || !interview?._id) {
+      addToast('Error de autenticación o datos de la entrevista no encontrados.', 'error');
       return;
     }
 
-    const interviewData: Partial<IInterview> = {
-      date: new Date(date),
-      candidates: selectedCandidates.map(c => c._id),
-      interviewers: selectedInterviewers.map(u => u._id),
-      online: online,
-      location,
-      opinions: opinions,
-    };
+    if (
+      !date ||
+      (selectedCandidates.length === 0 && !Array.isArray(selectedCandidates)) ||
+      (selectedInterviewers.length === 0 && !Array.isArray(selectedInterviewers))
+    ) {
+      addToast('Por favor, rellena todos los campos obligatorios.', 'error');
+      return;
+    }
 
-    await onSave(interviewData, events);
+    try {
+      const response = await fetch(`/api/interviews/${interview._id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch latest interview data');
+      }
+      const latestInterview: IInterview = await response.json();
+      const dbOpinions = latestInterview.opinions || {};
+
+      const mergedOpinions = JSON.parse(JSON.stringify(dbOpinions));
+
+      for (const candidate of selectedCandidates) {
+        const candidateId = candidate._id;
+        const localOpinion = opinions[candidateId];
+
+        if (!mergedOpinions[candidateId]) {
+          mergedOpinions[candidateId] = { interviewers: {}, status: 'unset' };
+        }
+
+        if (localOpinion?.interviewers?.[session.user.id]) {
+          if (!mergedOpinions[candidateId].interviewers) {
+            mergedOpinions[candidateId].interviewers = {};
+          }
+          mergedOpinions[candidateId].interviewers[session.user.id] = localOpinion.interviewers[session.user.id];
+        }
+
+        if (localOpinion?.status && localOpinion.status !== 'unset') {
+          mergedOpinions[candidateId].status = localOpinion.status;
+        }
+      }
+
+      const interviewData: Partial<IInterview> = {
+        date: new Date(date),
+        candidates: selectedCandidates.map(c => c._id),
+        interviewers: selectedInterviewers.map(u => u._id),
+        online: online,
+        location,
+        opinions: mergedOpinions,
+      };
+
+      await onSave(interviewData, events);
+    } catch (error) {
+      console.error('Error saving interview:', error);
+      addToast('Error al guardar la entrevista. Por favor, inténtalo de nuevo.', 'error');
+    }
   };
 
   const handleOpinionChange = (candidateId: string, interviewerId: string, opinion: string) => {
