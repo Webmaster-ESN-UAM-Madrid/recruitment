@@ -11,6 +11,7 @@ import { useToast } from '../toasts/ToastContext';
 import { TextField, Autocomplete, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, FormGroup } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
+import AutoSizingTextField from '../AutoSizingTextField';
 
 interface InterviewModalProps {
   interview: IInterview | null;
@@ -492,20 +493,40 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
                       </FormGroup>
                     </FormControl>
 
-                    {selectedInterviewers.map(interviewer => (
-                        <FormField key={interviewer._id}>
-                          <TextField
-                              label={`Opinión de ${interviewer.name}`}
-                              multiline
-                              rows={3}
-                              value={opinions[candidate._id]?.interviewers?.[interviewer._id]?.opinion || ''}
-                              onChange={e => handleOpinionChange(candidate._id, interviewer._id, e.target.value)}
-                              fullWidth
-                              margin="normal"
-                              disabled={session?.user?.id !== interviewer._id}
-                          />
-                        </FormField>
-                    ))}
+                    {selectedInterviewers.map(interviewer => {
+                        const isOwner = session?.user?.id === interviewer._id;
+                        return (
+                          <FormField key={interviewer._id}>
+                            {isOwner ? (
+                              <TextField
+                                label={`Opinión de ${interviewer.name}`}
+                                multiline
+                                value={opinions[candidate._id]?.interviewers?.[interviewer._id]?.opinion || ''}
+                                onChange={e => handleOpinionChange(candidate._id, interviewer._id, e.target.value)}
+                                fullWidth
+                                margin="normal"
+                                InputProps={{
+                                  sx: {
+                                    '& textarea': {
+                                      overflow: 'hidden',
+                                      resize: 'none',
+                                      minHeight: '72px',
+                                    },
+                                  },
+                                }}
+                              />
+                            ) : (
+                              <AutoSizingTextField
+                                label={`Opinión de ${interviewer.name}`}
+                                value={opinions[candidate._id]?.interviewers?.[interviewer._id]?.opinion || ''}
+                                fullWidth
+                                margin="normal"
+                                disabled
+                              />
+                            )}
+                          </FormField>
+                        );
+                      })}
                   </div>
               ))}
             </>
