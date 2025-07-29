@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
-import { getFormResponses } from "@/lib/controllers/formResponseController";
+import { getFormResponses } from "@/lib/controllers/formController";
 
 export async function GET() {
     const session = await getServerSession(authOptions);

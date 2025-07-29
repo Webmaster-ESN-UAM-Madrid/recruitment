@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
 import { getCandidates } from "@/lib/controllers/candidateController";
+import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -12,10 +13,11 @@ export async function GET(req: NextRequest) {
     }
 
     const isRecruiter = await checkRecruiterAccess(session.user?.email);
+    const recruitmentDetails = await getCurrentRecruitmentDetails();
 
     if (isRecruiter) {
         const candidates = await getCandidates();
-        return NextResponse.json(candidates);
+        return NextResponse.json({ candidates, currentPhase: recruitmentDetails.recruitmentPhase });
     } else {
         const candidates = await getCandidates(true);
         const limitedCandidates = candidates.map((candidate) => ({
@@ -23,6 +25,6 @@ export async function GET(req: NextRequest) {
             name: candidate.name,
             photoUrl: candidate.photoUrl
         }));
-        return NextResponse.json(limitedCandidates);
+        return NextResponse.json({ candidates: limitedCandidates, currentPhase: recruitmentDetails.recruitmentPhase });
     }
 }

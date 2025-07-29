@@ -96,7 +96,8 @@ export const processFormResponse = async (formResponseId: string) => {
                         recruitmentId: form.recruitmentProcessId,
                         name,
                         email: primaryEmail,
-                        alternateEmails
+                        alternateEmails,
+                        recruitmentPhase: "registro"
                     });
                     console.log(`Successfully created candidate from response ${response._id}`);
                 }
@@ -117,6 +118,30 @@ export const processFormResponse = async (formResponseId: string) => {
             details: `Failed to process form response ${formResponseId}: ` + (error instanceof Error ? error.message : String(error))
         });
         return { status: "failed", incidents: [] };
+    }
+};
+
+export const getFormResponses = async () => {
+    await dbConnect();
+    try {
+        const recruitmentDetails = await getCurrentRecruitmentDetails();
+        if (!recruitmentDetails.currentRecruitment) {
+            console.error("Could not retrieve current recruitment details.");
+            return { status: 500, message: "Could not determine current recruitment" };
+        }
+        const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+        const formsInCurrentRecruitment = await Form.find({ recruitmentProcessId: currentRecruitmentId }).select("_id");
+        const formIds = formsInCurrentRecruitment.map((form) => form._id);
+
+        const formResponses = await FormResponse.find({
+            formId: { $in: formIds }
+        });
+
+        return { status: 200, data: formResponses };
+    } catch (error) {
+        console.error("Error fetching all form responses for current recruitment:", error);
+        return { status: 500, message: "Internal server error" };
     }
 };
 
@@ -203,6 +228,7 @@ export const deleteForm = async (formId: string) => {
     await dbConnect();
     try {
         const recruitmentDetails = await getCurrentRecruitmentDetails();
+
         if (!recruitmentDetails.currentRecruitment) {
             console.error("Could not retrieve current recruitment details.");
             return { status: 500, message: "Could not determine current recruitment" };
@@ -448,6 +474,7 @@ export const processSingleFormResponse = async (responseId: string) => {
 
 export const deleteFormResponse = async (responseId: string) => {
     await dbConnect();
+
     try {
         const deletedResponse = await FormResponse.findByIdAndDelete(responseId);
         if (!deletedResponse) {

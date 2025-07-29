@@ -56,7 +56,7 @@ const TableHeader = styled.div<{ gridtemplatecolumns: string; $isMobile: boolean
   align-items: center;
 `;
 
-const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string; $isMobile: boolean }>`
+const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string; $isMobile: boolean, $isDifferentPhase?: boolean }>`
   display: grid;
   grid-template-columns: ${props => props.gridtemplatecolumns};
   align-items: center;
@@ -65,7 +65,7 @@ const TableRow = styled.div<{ $inactive?: boolean, gridtemplatecolumns: string; 
   text-decoration: none;
   color: inherit;
   opacity: ${props => (props.$inactive ? 0.6 : 1)};
-  background-color: ${props => (props.$inactive ? '#f9f9f9' : 'var(--bg-primary)')};
+  background-color: ${props => (props.$inactive ? '#f9f9f9' : (props.$isDifferentPhase ? 'var(--table-different-phase-row-bg)' : 'var(--bg-primary)'))};
 
   &:hover {
     background-color: ${props => (props.$inactive ? '#f0f0f0' : 'var(--table-row-hover-bg)')};
@@ -129,6 +129,7 @@ interface Candidate {
   photoUrl?: string;
   active: boolean;
   rejectedReason?: string;
+  recruitmentPhase?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -178,6 +179,7 @@ interface SelectableTableProps {
   maxSelectableColumns: number;
   isInactiveTable: boolean;
   isMobile: boolean; // Added isMobile prop
+  currentPhase: string;
 }
 
 const SelectableTable: React.FC<SelectableTableProps> = ({
@@ -191,7 +193,8 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
   loading,
   maxSelectableColumns,
   isInactiveTable,
-  isMobile, // Destructure isMobile
+  isMobile,
+  currentPhase,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const defaultAvatar = '/default-avatar.jpg';
@@ -250,7 +253,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
           <LoadingSpinner />
         ) : candidates.length > 0 ? (
           candidates.map(candidate => (
-            <TableRow key={candidate._id} gridtemplatecolumns={currentGridTemplateColumns} $inactive={!candidate.active} $isMobile={isMobile}>
+            <TableRow key={candidate._id} gridtemplatecolumns={currentGridTemplateColumns} $inactive={!candidate.active} $isMobile={isMobile} $isDifferentPhase={candidate.recruitmentPhase !== currentPhase}>
               {currentVisibleColumns.map(column => (
                 <DataCell key={column.key}>
                   {column.key === 'tags' && (
@@ -328,6 +331,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
 
 const DashboardPage: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [currentPhase, setCurrentPhase] = useState('');
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [loading, setLoading] = useState(true);
   const [formStructure, setFormStructure] = useState<FormSection[]>([]);
@@ -380,7 +384,8 @@ const DashboardPage: React.FC = () => {
         }
 
         if (candidatesRes.ok) {
-          const candidatesData = await candidatesRes.json();
+          const { candidates: candidatesData, currentPhase: phase } = await candidatesRes.json();
+          setCurrentPhase(phase);
           const allFormResponsesRes = await fetch('/api/forms/all-responses');
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           let allFormResponses: any[] = [];
@@ -538,6 +543,7 @@ const DashboardPage: React.FC = () => {
         maxSelectableColumns={MAX_SELECTED_COLUMNS}
         isInactiveTable={false}
         isMobile={isMobile} // Pass isMobile prop
+        currentPhase={currentPhase}
       />
       <SelectableTable
         title="Candidatos Inactivos"
@@ -552,6 +558,7 @@ const DashboardPage: React.FC = () => {
         maxSelectableColumns={MAX_SELECTED_COLUMNS - 1}
         isInactiveTable={true}
         isMobile={isMobile} // Pass isMobile prop
+        currentPhase={currentPhase}
       />
     </PageContainer>
   );

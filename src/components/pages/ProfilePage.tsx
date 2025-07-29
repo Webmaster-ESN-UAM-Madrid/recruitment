@@ -56,6 +56,7 @@ interface Candidate {
     "Integration Weekend": boolean;
     "Plataforma Local": boolean;
   };
+  recruitmentPhase: string;
 }
 
 interface FormResponse {
@@ -67,7 +68,7 @@ interface FormResponse {
   submittedAt: string;
 }
 
-const isValidEmail = (email: string) => /^[\S]+@[\S]+\.[\S]+$/.test(email);
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Styled Components
 const Container = styled.div`
@@ -313,6 +314,23 @@ const InterviewCommentText = styled.p`
   white-space: pre-wrap;
 `;
 
+const PhaseBanner = styled.div`
+  background-color: color-mix(in srgb, var(--button-warning-bg), 25% transparent);
+  border: 3px solid var(--button-warning-bg);
+  border-radius: 8px;
+  color: var(--button-primary-text);
+  padding: 8px 32px;
+  margin: -32px -32px 24px -32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+
+  @media (max-width: 768px) {
+    margin: 0 0 15px 0;
+  }
+`;
+
 const availableTags = [
   { tag: 'nextSem', label: 'Próximo Cuatri', Icon: NextSemIcon },
   { tag: 'erasmus', label: 'Erasmus', Icon: ErasmusIcon },
@@ -327,6 +345,7 @@ export default function ProfilePage() {
   const { data: session } = useSession();
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [currentPhase, setCurrentPhase] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [interviewComments, setInterviewComments] = useState<{ interviewer: User; opinion: string }[]>([]);
@@ -338,7 +357,7 @@ export default function ProfilePage() {
   const [showRejectedReasonModal, setShowRejectedReasonModal] = useState(false);
   const [tempRejectedReason, setTempRejectedReason] = useState('');
   const [isDeactivating, setIsDeactivating] = useState(false);
-  const [events, setEvents] = useState<Candidate['events']>({ 
+  const [events, setEvents] = useState<Candidate['events']>({
     "Welcome Meeting": false,
     "Welcome Days": false,
     "Integration Weekend": false,
@@ -462,9 +481,22 @@ export default function ProfilePage() {
     }
   }, [session, candidate]);
 
+  const fetchCurrentPhase = useCallback(async () => {
+    try {
+        const res = await fetch('/api/config');
+        if (!res.ok) throw new Error('Failed to fetch config');
+        const config = await res.json();
+        setCurrentPhase(config.recruitmentPhase);
+    } catch (error) {
+        console.error(error);
+        addToast('Error al cargar la fase actual.', 'error');
+    }
+  }, [addToast]);
+
   useEffect(() => {
     fetchCommittees();
-  }, [fetchCommittees]);
+    fetchCurrentPhase();
+  }, [fetchCommittees, fetchCurrentPhase]);
 
   useEffect(() => {
     if (id) {
@@ -589,11 +621,13 @@ export default function ProfilePage() {
         events: events,
       };
 
-      const res = await fetch(`/api/candidates/${candidate._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedCandidate),
-      });
+      const res = await fetch(`/api/candidates/${candidate._id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedCandidate),
+        }
+      );
       if (!res.ok) throw new Error();
       setIsEditing(false);
       setCandidate(updatedCandidate);
@@ -661,11 +695,37 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePhaseChange = async () => {
+    if (!candidate) return;
+    try {
+      const res = await fetch(`/api/candidates/${candidate._id}/phase`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error();
+      const updatedCandidate = await res.json();
+      setCandidate(updatedCandidate);
+      addToast('Fase actualizada con éxito', 'success');
+    } catch {
+      addToast('Error al actualizar la fase', 'error');
+    }
+  };
+
   if (!candidate) return <div>Cargando...</div>;
+
+  const isDifferentPhase = candidate.recruitmentPhase !== currentPhase;
 
   return (
     <Container>
       <Title>Perfil del Candidato</Title>
+
+      {isDifferentPhase && (
+        <PhaseBanner>
+          <span>Este candidato está en la fase de {candidate.recruitmentPhase}, pero la fase actual es {currentPhase}. Pulsa el botón para cambiar de fase:</span>
+          <AcceptButton onClick={handlePhaseChange} needsConfirmation={true} showSpinner={true} />
+        </PhaseBanner>
+      )}
 
       <Header>
         <ProfileCard>

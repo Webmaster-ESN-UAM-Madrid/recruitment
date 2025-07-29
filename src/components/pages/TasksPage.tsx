@@ -47,12 +47,16 @@ const SectionTitle = styled.h2`
   margin-bottom: 20px;
 `;
 
+const CandidateTableContainerWrapper = styled.div`
+  overflow-x: auto;
+`;
+
 const CandidateTableContainer = styled.div`
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-primary);
   border-radius: 5px;
-  overflow-x: auto;
+  width: fit-content;
 `;
 
 const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
@@ -74,6 +78,7 @@ const TableRow = styled.div<{ gridtemplatecolumns: string }>`
   border-bottom: 1px solid var(--border-secondary);
   text-decoration: none;
   color: inherit;
+  width: fit-content;
 
   &:hover {
     background-color: var(--table-row-hover-bg);
@@ -105,7 +110,6 @@ const DataCell = styled.div`
   align-items: center;
   gap: 5px;
   min-width: 0; /* Allow content to shrink */
-  flex-shrink: 1;
 `;
 
 const ItemCard = styled.div`
@@ -139,12 +143,12 @@ const CandidateCardContainer = styled.div`
     gap: 12px;
 `;
 
-const CandidateCard = styled.div<{ hasInterviewResponse?: boolean }>`
+const CandidateCard = styled.div<{ $hasInterviewResponse?: boolean }>`
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px;
-    border: 1px solid ${props => props.hasInterviewResponse ? 'var(--brand-primary)' : 'var(--border-primary)'};
+    border: 1px solid ${props => props.$hasInterviewResponse ? 'var(--brand-primary)' : 'var(--border-primary)'};
     border-radius: 16px;
     background-color: var(--bg-primary);
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -181,7 +185,7 @@ const TasksPage: React.FC = () => {
 
             if (candidatesRes.ok) {
                 const data = await candidatesRes.json();
-                setCandidates(data);
+                setCandidates(data.candidates);
             } else {
                 console.error("Failed to fetch candidates");
                 addToast("Error al cargar los candidatos", "error");
@@ -322,7 +326,7 @@ const TasksPage: React.FC = () => {
         return false;
     });
 
-    const gridtemplatecolumns = '40px 60px 300px 1fr 85px';
+    const gridtemplatecolumns = '40px 60px minmax(150px, 1fr) minmax(150px, 2fr) 85px';
     const defaultAvatar = '/default-avatar.jpg';
 
     return (
@@ -358,71 +362,73 @@ const TasksPage: React.FC = () => {
                         )}
                     </ItemCard>
                     <h3>Inactivos</h3>
-                    <CandidateTableContainer>
-                        <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
-                            <DataCell></DataCell>
-                            <DataCell>Foto</DataCell>
-                            <DataCell>Nombre</DataCell>
-                            <DataCell>Motivo de Rechazo</DataCell>
-                            <DataCell>Acciones</DataCell>
-                        </TableHeader>
-                        {loading ? (
-                            <LoadingSpinner />
-                        ) : inactiveCandidatesWithPendingEmails.length > 0 ? (
-                            inactiveCandidatesWithPendingEmails.map(candidate => (
-                                <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns}>
-                                    <DataCell>
-                                        <TagIconsContainer>
-                                            {availableTags.map((tagInfo, idx) => {
-                                                const currentTag = candidate.tags?.find(t => t.tag === tagInfo.tag);
-                                                if (currentTag) {
-                                                    const TagIconComponent = tagInfo.Icon;
-                                                    const tooltipTitle = (
-                                                        <>
-                                                            <strong>{tagInfo.label}</strong>
-                                                            {currentTag.comment && `: ${currentTag.comment}`}
-                                                        </>
-                                                    );
-                                                    return (
-                                                        <Tooltip
-                                                            key={tagInfo.tag}
-                                                            title={tooltipTitle}
-                                                            arrow
-                                                            placement={idx < 2 ? "top" : "bottom"}
-                                                            slotProps={{
-                                                                tooltip: {
-                                                                    sx: {
-                                                                        fontSize: '1rem',
+                    <CandidateTableContainerWrapper>
+                        <CandidateTableContainer>
+                            <TableHeader gridtemplatecolumns={gridtemplatecolumns}>
+                                <DataCell></DataCell>
+                                <DataCell>Foto</DataCell>
+                                <DataCell>Nombre</DataCell>
+                                <DataCell>Motivo de Rechazo</DataCell>
+                                <DataCell>Acciones</DataCell>
+                            </TableHeader>
+                            {loading ? (
+                                <LoadingSpinner />
+                            ) : inactiveCandidatesWithPendingEmails.length > 0 ? (
+                                inactiveCandidatesWithPendingEmails.map(candidate => (
+                                    <TableRow key={candidate._id} gridtemplatecolumns={gridtemplatecolumns}>
+                                        <DataCell>
+                                            <TagIconsContainer>
+                                                {availableTags.map((tagInfo, idx) => {
+                                                    const currentTag = candidate.tags?.find(t => t.tag === tagInfo.tag);
+                                                    if (currentTag) {
+                                                        const TagIconComponent = tagInfo.Icon;
+                                                        const tooltipTitle = (
+                                                            <>
+                                                                <strong>{tagInfo.label}</strong>
+                                                                {currentTag.comment && `: ${currentTag.comment}`}
+                                                            </>
+                                                        );
+                                                        return (
+                                                            <Tooltip
+                                                                key={tagInfo.tag}
+                                                                title={tooltipTitle}
+                                                                arrow
+                                                                placement={idx < 2 ? "top" : "bottom"}
+                                                                slotProps={{
+                                                                    tooltip: {
+                                                                        sx: {
+                                                                            fontSize: '1rem',
+                                                                        },
                                                                     },
-                                                                },
-                                                            }}
-                                                        >
-                                                            <div style={{ height: 18 }}>
-                                                                <TagIconComponent iconSize={18} />
-                                                            </div>
-                                                        </Tooltip>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
-                                        </TagIconsContainer>
-                                    </DataCell>
-                                    <DataCell><Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} /></DataCell>
-                                    <DataCell><CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName></DataCell>
-                                    <DataCell>{candidate.rejectedReason}</DataCell>
-                                    <DataCell>
-                                        <AcceptButton
-                                            onClick={() => handleMarkAsSent([candidate._id])}
-                                            needsConfirmation={true}
-                                            showSpinner={true}
-                                        />
-                                    </DataCell>
-                                </TableRow>
-                            ))
-                        ) : (
-                            <ItemCard style={{ border: 'none', marginBottom: 0 }}>No hay candidatos para mostrar.</ItemCard>
-                        )}
-                    </CandidateTableContainer>
+                                                                }}
+                                                            >
+                                                                <div style={{ height: 18 }}>
+                                                                    <TagIconComponent iconSize={18} />
+                                                                </div>
+                                                            </Tooltip>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })}
+                                            </TagIconsContainer>
+                                        </DataCell>
+                                        <DataCell><Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} /></DataCell>
+                                        <DataCell><CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName></DataCell>
+                                        <DataCell>{candidate.rejectedReason}</DataCell>
+                                        <DataCell>
+                                            <AcceptButton
+                                                onClick={() => handleMarkAsSent([candidate._id])}
+                                                needsConfirmation={true}
+                                                showSpinner={true}
+                                            />
+                                        </DataCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <ItemCard style={{ border: 'none', marginBottom: 0 }}>No hay candidatos para mostrar.</ItemCard>
+                            )}
+                        </CandidateTableContainer>
+                    </CandidateTableContainerWrapper>
                 </Section>
 
                 <Section>
@@ -432,7 +438,7 @@ const TasksPage: React.FC = () => {
                     ) : unscheduledCandidates.length > 0 ? (
                         <CandidateCardContainer>
                             {unscheduledCandidates.map(candidate => (
-                                <CandidateCard key={candidate._id} hasInterviewResponse={candidatesWithInterviewResponse.has(candidate._id)}>
+                                <CandidateCard key={candidate._id} $hasInterviewResponse={candidatesWithInterviewResponse.has(candidate._id)}>
                                     <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
                                     <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>
                                 </CandidateCard>

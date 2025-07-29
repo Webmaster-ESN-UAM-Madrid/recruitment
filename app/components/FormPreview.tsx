@@ -54,9 +54,9 @@ const AccordionHeader = styled.div`
   }
 `;
 
-const AccordionContent = styled.div<{ expanded: boolean; }>`
+const AccordionContent = styled.div<{ $expanded: boolean; }>`
   display: grid;
-  grid-template-rows: ${({ expanded }) => (expanded ? '1fr' : '0fr')};
+  grid-template-rows: ${({ $expanded }) => ($expanded ? '1fr' : '0fr')};
   transition: grid-template-rows 0.5s ease-in-out;
   overflow: hidden;
 
@@ -157,7 +157,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
           {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
         </AccordionHeader>
       )}
-      <AccordionContent expanded={isExpanded}>
+      <AccordionContent $expanded={isExpanded}>
         <div>
           {parsedForm.map((section, sectionIndex) => {
             const [sectionTitle, fields] = section;
