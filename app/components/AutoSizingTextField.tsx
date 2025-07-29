@@ -69,12 +69,9 @@ const AutoSizingTextField: React.FC<AutoSizingTextFieldProps> = ({
             overflow: 'auto',
 
             // Scrollbar Styling
-            // scrollbarWidth: 'thin', // Firefox
+            scrollbarWidth: 'thin', // Firefox
             scrollbarColor: 'rgba(0,0,0,0.3) transparent',
 
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
             '&::-webkit-scrollbar-track': {
               backgroundColor: 'transparent',
             },
