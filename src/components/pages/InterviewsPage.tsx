@@ -58,7 +58,7 @@ const InterviewsPage = () => {
 
       setInterviews(interviewsData);
       setUsers(usersData);
-      setCandidates(candidatesData);
+      setCandidates(candidatesData.candidates);
     } catch (error) {
       console.error("Error al cargar los datos:", error);
       addToast("Error al cargar los datos", "error");

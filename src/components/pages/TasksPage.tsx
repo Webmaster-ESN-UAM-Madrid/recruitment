@@ -78,7 +78,7 @@ const TableRow = styled.div<{ gridtemplatecolumns: string }>`
   border-bottom: 1px solid var(--border-secondary);
   text-decoration: none;
   color: inherit;
-  width: fit-content;
+  min-width: fit-content;
 
   &:hover {
     background-color: var(--table-row-hover-bg);
@@ -177,7 +177,7 @@ const TasksPage: React.FC = () => {
         try {
             const [candidatesRes, interviewsRes, usersRes, formsRes, formResponsesRes] = await Promise.all([
                 fetch('/api/candidates'),
-                fetch('/api/interviews'), // /past removed. We have to fetch all interviews to remove candidates from the list
+                fetch('/api/interviews'),
                 fetch('/api/users'),
                 fetch('/api/forms'),
                 fetch('/api/form-responses'),

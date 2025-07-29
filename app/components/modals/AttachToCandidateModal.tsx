@@ -73,7 +73,7 @@ const AttachToCandidateModal: React.FC<AttachToCandidateModalProps> = ({ isOpen,
       fetch('/api/candidates')
         .then(res => res.json())
         .then(data => {
-          setCandidates(data);
+          setCandidates(data.candidates);
           setLoading(false);
         });
     }

@@ -236,7 +236,7 @@ const FeedbackPage: React.FC = () => {
 
         if (candidatesRes.ok) {
           const data = await candidatesRes.json();
-          setCandidates(data);
+          setCandidates(data.candidates);
         } else {
           addToast('Error al obtener los candidatos', 'error');
         }
