@@ -1,45 +1,88 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useLayoutEffect,
+} from 'react';
 import { TextField, TextFieldProps } from '@mui/material';
 
-const MIN_ROWS = 3;
-const LINE_HEIGHT = 24; // px
-const MIN_HEIGHT = MIN_ROWS * LINE_HEIGHT;
+type AutoSizingTextFieldProps = TextFieldProps & {
+  minRows?: number;
+  lineHeight?: number;
+  maxLines?: number;
+};
 
-const AutoSizingTextField: React.FC<TextFieldProps> = props => {
-  const [maxHeight, setMaxHeight] = useState<number>(MIN_HEIGHT);
-  const [isResizable, setIsResizable] = useState(false);
+const AutoSizingTextField: React.FC<AutoSizingTextFieldProps> = ({
+  minRows = 3,
+  lineHeight = 24,
+  maxLines,
+  InputProps = {},
+  ...props
+}) => {
+  const minHeight = minRows * lineHeight;
+  const maxAllowedHeight = maxLines ? maxLines * lineHeight : undefined;
+
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [maxHeight, setMaxHeight] = useState<number>(minHeight);
+  const [isResizable, setIsResizable] = useState(false);
 
-  const updateHeight = () => {
+  const updateHeight = useCallback(() => {
     if (inputRef.current) {
+      inputRef.current.style.height = 'auto'; // Reset height to get accurate scrollHeight
       const scrollHeight = inputRef.current.scrollHeight;
-      setMaxHeight(scrollHeight);
-      setIsResizable(scrollHeight > MIN_HEIGHT);
+      const calculatedHeight = Math.max(minHeight, scrollHeight);
+      const finalHeight = maxAllowedHeight
+        ? Math.min(calculatedHeight, maxAllowedHeight)
+        : calculatedHeight;
+
+      setMaxHeight(finalHeight);
+      setIsResizable(finalHeight > minHeight);
     }
-  };
+  }, [minHeight, maxAllowedHeight]);
+
+  useLayoutEffect(() => {
+    updateHeight();
+  }, [props.value, updateHeight]);
 
   useEffect(() => {
-    updateHeight();
     window.addEventListener('resize', updateHeight);
     return () => window.removeEventListener('resize', updateHeight);
-  }, [props.value]);
+  }, [updateHeight]);
 
   return (
     <TextField
       {...props}
       multiline
+      rows={minRows}
       inputRef={inputRef}
       InputProps={{
-        ...props.InputProps,
+        ...InputProps,
         sx: {
-          '& textarea': {
-            minHeight: `${MIN_HEIGHT}px`,
+          backgroundColor: 'rgba(0,0,0,0.04)',
+          ...InputProps.sx,
+          '& .MuiInputBase-inputMultiline': {
+            height: `${maxHeight}px`,
+            minHeight: `${minHeight}px`,
             maxHeight: `${maxHeight}px`,
             resize: isResizable ? 'vertical' : 'none',
             overflow: 'auto',
+
+            // Scrollbar Styling
+            // scrollbarWidth: 'thin', // Firefox
+            scrollbarColor: 'rgba(0,0,0,0.3) transparent',
+
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              borderRadius: '4px',
+            },
           },
-          backgroundColor: 'rgba(0,0,0,0.04)',
-          ...props.InputProps?.sx,
         },
       }}
     />
