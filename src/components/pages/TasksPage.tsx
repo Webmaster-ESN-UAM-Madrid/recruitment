@@ -137,6 +137,10 @@ const TagIconsContainer = styled.div`
   color: var(--brand-primary-dark);
 `;
 
+const CandidateCardContainerWrapper = styled.div`
+  overflow-x: auto;
+`;
+
 const CandidateCardContainer = styled.div`
     display: flex;
     flex-wrap: wrap;
@@ -436,14 +440,16 @@ const TasksPage: React.FC = () => {
                     {loading ? (
                         <LoadingSpinner />
                     ) : unscheduledCandidates.length > 0 ? (
-                        <CandidateCardContainer>
-                            {unscheduledCandidates.map(candidate => (
-                                <CandidateCard key={candidate._id} $hasInterviewResponse={candidatesWithInterviewResponse.has(candidate._id)}>
-                                    <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
-                                    <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>
-                                </CandidateCard>
-                            ))}
-                        </CandidateCardContainer>
+                        <CandidateCardContainerWrapper>
+                            <CandidateCardContainer>
+                                {unscheduledCandidates.map(candidate => (
+                                    <CandidateCard key={candidate._id} $hasInterviewResponse={candidatesWithInterviewResponse.has(candidate._id)}>
+                                        <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
+                                        <CandidateName href={`/profile/${candidate._id}`}>{candidate.name}</CandidateName>
+                                    </CandidateCard>
+                                ))}
+                            </CandidateCardContainer>
+                        </CandidateCardContainerWrapper>
                     ) : (
                         <p>No hay candidatos por agendar.</p>
                     )}
@@ -454,7 +460,8 @@ const TasksPage: React.FC = () => {
                     {loading ? (
                         <LoadingSpinner />
                     ) : interviewsWithUnnotifiedCandidates.length > 0 ? (
-                        <CandidateTableContainer>
+                        <CandidateTableContainerWrapper>
+                            <CandidateTableContainer>
                             <TableHeader gridtemplatecolumns="60px 250px 300px 180px 1fr">
                                 <DataCell>Foto</DataCell>
                                 <DataCell>Candidato</DataCell>
@@ -502,7 +509,8 @@ const TasksPage: React.FC = () => {
                                     );
                                 })
                             ))}
-                        </CandidateTableContainer>
+                            </CandidateTableContainer>
+                        </CandidateTableContainerWrapper>
                     ) : (
                         <p>No hay entrevistas sin notificación.</p>
                     )}
