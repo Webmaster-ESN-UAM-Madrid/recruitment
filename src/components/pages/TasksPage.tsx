@@ -302,13 +302,18 @@ const TasksPage: React.FC = () => {
     const inactiveCandidatesWithPendingEmails = candidates.filter(c => !c.active && !c.emailSent);
     const activeEmails = activeCandidatesWithPendingEmails.map(c => c.email).join(', ');
 
+    const nonFeedbackStatuses = ["cancelled", "absent"];
+
     const interviewsWithPendingFeedback = interviews.filter(interview => {
         const interviewDate = new Date(interview.date);
         if (!session?.user?.id || !interview.interviewers.includes(session.user.id) || interviewDate.getTime() > Date.now()) {
             return false;
         }
         for (const candidateId of interview.candidates) {
-            if (!interview.opinions[candidateId]?.interviewers[session.user.id]?.opinion) {
+            if (
+                !interview.opinions[candidateId]?.interviewers[session.user.id]?.opinion &&
+                !nonFeedbackStatuses.includes(interview.opinions[candidateId]?.status)
+            ) {
                 return true;
             }
         }
