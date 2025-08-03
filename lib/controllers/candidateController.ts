@@ -111,6 +111,8 @@ export const addAlternateEmail = async (id: string, email: string): Promise<ICan
     }
 };
 
+const nonFeedbackStatuses = ["cancelled", "absent"];
+
 export const getTasksStatus = async (userId: string) => {
     await dbConnect();
     try {
@@ -129,7 +131,10 @@ export const getTasksStatus = async (userId: string) => {
 
             for (const candidate of interview.candidates) {
                 const candidateId = candidate._id.toString();
-                if (!interview.opinions.get(candidateId)?.interviewers.get(userId)?.opinion) {
+                if (
+                    !interview.opinions.get(candidateId)?.interviewers.get(userId)?.opinion &&
+                    !nonFeedbackStatuses.includes(interview.opinions.get(candidateId)?.status)
+                ) {
                     return true;
                 }
             }
