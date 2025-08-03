@@ -51,10 +51,10 @@ interface Candidate {
   rejectedReason?: string;
   tags?: { tag: string; comment?: string }[];
   events: {
-    "Welcome Meeting": boolean;
-    "Welcome Days": boolean;
-    "Integration Weekend": boolean;
-    "Plataforma Local": boolean;
+    "Welcome Meeting": boolean | null;
+    "Welcome Days": boolean | null;
+    "Integration Weekend": boolean | null;
+    "Plataforma Local": boolean | null;
   };
   recruitmentPhase: string;
 }
@@ -584,10 +584,21 @@ export default function ProfilePage() {
   };
 
   const handleEventChange = (eventName: keyof Candidate['events']) => {
-    setEvents(prevEvents => ({
-      ...prevEvents,
-      [eventName]: !prevEvents[eventName],
-    }));
+    setEvents(prevEvents => {
+      const currentStatus = prevEvents[eventName];
+      let newStatus: boolean | null;
+      if (currentStatus === false) {
+        newStatus = true;
+      } else if (currentStatus === true) {
+        newStatus = null;
+      } else { // currentStatus is null or undefined
+        newStatus = false;
+      }
+      return {
+        ...prevEvents,
+        [eventName]: newStatus,
+      };
+    });
   };
 
   const handleSave = async () => {
@@ -956,19 +967,47 @@ export default function ProfilePage() {
         <SubTitle>Asistencia a Eventos</SubTitle>
         <FormGroup row={!isMobile}> {/* Use row prop conditionally */}
           <FormControlLabel
-            control={<Checkbox checked={events["Welcome Meeting"]} onChange={() => handleEventChange("Welcome Meeting")} disabled={!isEditing} />}
+            control={
+              <Checkbox
+                checked={events["Welcome Meeting"] === true}
+                indeterminate={events["Welcome Meeting"] === null}
+                onChange={() => handleEventChange("Welcome Meeting")}
+                disabled={!isEditing}
+              />
+            }
             label="Welcome Meeting"
           />
           <FormControlLabel
-            control={<Checkbox checked={events["Welcome Days"]} onChange={() => handleEventChange("Welcome Days")} disabled={!isEditing} />}
+            control={
+              <Checkbox
+                checked={events["Welcome Days"] === true}
+                indeterminate={events["Welcome Days"] === null}
+                onChange={() => handleEventChange("Welcome Days")}
+                disabled={!isEditing}
+              />
+            }
             label="Welcome Days"
           />
           <FormControlLabel
-            control={<Checkbox checked={events["Integration Weekend"]} onChange={() => handleEventChange("Integration Weekend")} disabled={!isEditing} />}
+            control={
+              <Checkbox
+                checked={events["Integration Weekend"] === true}
+                indeterminate={events["Integration Weekend"] === null}
+                onChange={() => handleEventChange("Integration Weekend")}
+                disabled={!isEditing}
+              />
+            }
             label="Integration Weekend"
           />
           <FormControlLabel
-            control={<Checkbox checked={events["Plataforma Local"]} onChange={() => handleEventChange("Plataforma Local")} disabled={!isEditing} />}
+            control={
+              <Checkbox
+                checked={events["Plataforma Local"] === true}
+                indeterminate={events["Plataforma Local"] === null}
+                onChange={() => handleEventChange("Plataforma Local")}
+                disabled={!isEditing}
+              />
+            }
             label="Plataforma Local"
           />
         </FormGroup>

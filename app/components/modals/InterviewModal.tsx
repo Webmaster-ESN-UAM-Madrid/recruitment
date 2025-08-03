@@ -317,13 +317,24 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   };
 
   const handleEventChange = (candidateId: string, eventName: keyof ICandidate['events']) => {
-    setEvents(prev => ({
-      ...prev,
-      [candidateId]: {
-        ...(prev[candidateId] || {}),
-        [eventName]: !prev[candidateId]?.[eventName],
-      },
-    }));
+    setEvents(prev => {
+      const currentStatus = prev[candidateId]?.[eventName];
+      let newStatus: boolean | null;
+      if (currentStatus === false) {
+        newStatus = true;
+      } else if (currentStatus === true) {
+        newStatus = null;
+      } else { // currentStatus is null or undefined
+        newStatus = false;
+      }
+      return {
+        ...prev,
+        [candidateId]: {
+          ...(prev[candidateId] || {}),
+          [eventName]: newStatus,
+        },
+      };
+    });
   };
 
   const isValidUrl = (urlString: string) => {
@@ -487,7 +498,8 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
                                 key={ev}
                                 control={
                                   <Checkbox
-                                      checked={events[candidate._id]?.[ev] || false}
+                                      checked={events[candidate._id]?.[ev] === true}
+                                      indeterminate={events[candidate._id]?.[ev] === null}
                                       onChange={() => handleEventChange(candidate._id, ev)}
                                   />
                                 }

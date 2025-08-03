@@ -1,5 +1,7 @@
 import { Schema, model, models, Document } from "mongoose";
 
+export type EventAttendance = boolean | null;
+
 export interface ICandidate extends Document {
     _id: string;
     recruitmentId: string;
@@ -14,10 +16,10 @@ export interface ICandidate extends Document {
     tutor?: string;
     interests: Schema.Types.ObjectId[];
     events: {
-        "Welcome Meeting": boolean;
-        "Welcome Days": boolean;
-        "Integration Weekend": boolean;
-        "Plataforma Local": boolean;
+        "Welcome Meeting": EventAttendance;
+        "Welcome Days": EventAttendance;
+        "Integration Weekend": EventAttendance;
+        "Plataforma Local": EventAttendance;
     };
     recruitmentPhase: string;
     emailSent: boolean;
