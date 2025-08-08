@@ -73,8 +73,8 @@ export const updateRecruitmentDetails = async (currentRecruitment: string, recru
                     const opinions = interview.opinions instanceof Map ? interview.opinions : new Map(Object.entries(interview.opinions || {}));
                     
                     opinions.forEach((opinion: any, candidateId: string) => {
-                        // Only exclude candidates who have been present or delayed
-                        if (opinion?.status === 'present' || opinion?.status === 'delayed') {
+                        // Only exclude candidates who have been present or delayed, or unset (there is an upcoming interview in this case)
+                        if (opinion?.status === 'present' || opinion?.status === 'delayed' || opinion?.status === 'unset') {
                             candidatesWithValidInterviews.add(candidateId);
                         }
                     });
