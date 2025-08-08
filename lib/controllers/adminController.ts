@@ -85,26 +85,38 @@ export const updateRecruitmentDetails = async (currentRecruitment: string, recru
                     return !candidatesWithValidInterviews.has(candidate._id.toString());
                 });
 
-                // Set emailSent to false only for the filtered candidates
+                // Set emailSent to false and update phase only for the filtered candidates
                 const candidateIds = candidatesForPendingEmails.map(c => c._id);
                 if (candidateIds.length > 0) {
                     await Candidate.updateMany(
                         { _id: { $in: candidateIds } },
-                        { $set: { emailSent: false } }
+                        { $set: { emailSent: false, recruitmentPhase: recruitmentPhase } }
+                    );
+                }
+                
+                // Update phase for candidates who don't need pending emails (but keep emailSent as true)
+                const candidatesWithoutPendingEmails = activeCandidates.filter(candidate => {
+                    return candidatesWithValidInterviews.has(candidate._id.toString());
+                });
+                const candidateIdsWithoutPendingEmails = candidatesWithoutPendingEmails.map(c => c._id);
+                if (candidateIdsWithoutPendingEmails.length > 0) {
+                    await Candidate.updateMany(
+                        { _id: { $in: candidateIdsWithoutPendingEmails } },
+                        { $set: { recruitmentPhase: recruitmentPhase } }
                     );
                 }
             } else {
                 // Default behavior for other phase transitions
                 await Candidate.updateMany(
-                    { recruitmentPhase: oldRecruitmentPhase },
+                    { recruitmentPhase: oldRecruitmentPhase, recruitmentId: globalConfig.currentRecruitment },
                     { $set: { emailSent: false } }
                 );
+                
+                await Candidate.updateMany(
+                    { active: true, recruitmentId: globalConfig.currentRecruitment },
+                    { $set: { recruitmentPhase: recruitmentPhase } }
+                );
             }
-
-            await Candidate.updateMany(
-                { active: true },
-                { $set: { recruitmentPhase: recruitmentPhase } }
-            );
         }
 
         globalConfig.currentRecruitment = currentRecruitment;
