@@ -68,11 +68,13 @@ export const updateRecruitmentDetails = async (currentRecruitment: string, recru
 
                 const candidatesWithValidInterviews = new Set();
                 
-                interviews.forEach(interview => {
-                    Object.keys(interview.opinions).forEach(candidateId => {
-                        const opinion = interview.opinions[candidateId];
+                interviews.forEach(interview => {                    
+                    // Handle both Map and Object structures
+                    const opinions = interview.opinions instanceof Map ? interview.opinions : new Map(Object.entries(interview.opinions || {}));
+                    
+                    opinions.forEach((opinion: any, candidateId: string) => {
                         // Only exclude candidates who have been present or delayed
-                        if (opinion.status === 'present' || opinion.status === 'delayed') {
+                        if (opinion?.status === 'present' || opinion?.status === 'delayed') {
                             candidatesWithValidInterviews.add(candidateId);
                         }
                     });
@@ -107,14 +109,14 @@ export const updateRecruitmentDetails = async (currentRecruitment: string, recru
                 }
             } else {
                 // Default behavior for other phase transitions
+                // Update active candidates from old phase to new phase and mark for pending emails
                 await Candidate.updateMany(
-                    { recruitmentPhase: oldRecruitmentPhase, recruitmentId: globalConfig.currentRecruitment },
-                    { $set: { emailSent: false } }
-                );
-                
-                await Candidate.updateMany(
-                    { active: true, recruitmentId: globalConfig.currentRecruitment },
-                    { $set: { recruitmentPhase: recruitmentPhase } }
+                    { 
+                        active: true, 
+                        recruitmentPhase: oldRecruitmentPhase, 
+                        recruitmentId: globalConfig.currentRecruitment 
+                    },
+                    { $set: { emailSent: false, recruitmentPhase: recruitmentPhase } }
                 );
             }
         }
