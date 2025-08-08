@@ -31,8 +31,8 @@ interface FormPreviewProps {
   startsExpanded?: boolean;
 }
 
-const FormContainer = styled.div<{ isEditing?: boolean; }>`
-  ${({ isEditing }) => (isEditing ? '' : `
+const FormContainer = styled.div<{ $isEditing?: boolean; }>`
+  ${({ $isEditing }) => ($isEditing ? '' : `
     border: 2px solid var(--border-secondary);
     border-radius: var(--border-radius-md); /* Apply rounded corners */
     padding: 20px;
@@ -150,7 +150,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
   };
 
   return (
-    <FormContainer isEditing={isEditing}>
+    <FormContainer $isEditing={isEditing}>
       {isAccordion && (
         <AccordionHeader onClick={toggleAccordion}>
           <SectionTitle>{parsedForm[0][0]}</SectionTitle>
