@@ -2,6 +2,7 @@ import dbConnect from "@/lib/mongodb";
 import Config from "@/lib/models/config";
 import User from "@/lib/models/user";
 import Candidate from "@/lib/models/candidate";
+import Interview from "@/lib/models/interview";
 
 const defaultImage = "https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3383.jpg?semt=ais_items_boosted&w=500";
 
@@ -53,10 +54,52 @@ export const updateRecruitmentDetails = async (currentRecruitment: string, recru
         const oldRecruitmentPhase = globalConfig.recruitmentPhase;
 
         if (oldRecruitmentPhase !== recruitmentPhase) {
-            await Candidate.updateMany(
-                { recruitmentPhase: oldRecruitmentPhase },
-                { $set: { emailSent: false } }
-            );
+            // Special logic for entrevistas1 to entrevistas2 transition
+            if (oldRecruitmentPhase === 'entrevistas1' && recruitmentPhase === 'entrevistas2') {
+                const activeCandidates = await Candidate.find({ 
+                    active: true, 
+                    recruitmentPhase: oldRecruitmentPhase,
+                    recruitmentId: globalConfig.currentRecruitment 
+                });
+
+                const interviews = await Interview.find({ 
+                    recruitmentId: globalConfig.currentRecruitment 
+                });
+
+                const candidatesWithValidInterviews = new Set();
+                
+                interviews.forEach(interview => {
+                    Object.keys(interview.opinions).forEach(candidateId => {
+                        const opinion = interview.opinions[candidateId];
+                        // Only exclude candidates who have been present or delayed
+                        if (opinion.status === 'present' || opinion.status === 'delayed') {
+                            candidatesWithValidInterviews.add(candidateId);
+                        }
+                    });
+                });
+
+                // Filter active candidates to include only those who:
+                // 1. Have not been to any interview, OR
+                // 2. Their interview status is absent, cancelled, or unset
+                const candidatesForPendingEmails = activeCandidates.filter(candidate => {
+                    return !candidatesWithValidInterviews.has(candidate._id.toString());
+                });
+
+                // Set emailSent to false only for the filtered candidates
+                const candidateIds = candidatesForPendingEmails.map(c => c._id);
+                if (candidateIds.length > 0) {
+                    await Candidate.updateMany(
+                        { _id: { $in: candidateIds } },
+                        { $set: { emailSent: false } }
+                    );
+                }
+            } else {
+                // Default behavior for other phase transitions
+                await Candidate.updateMany(
+                    { recruitmentPhase: oldRecruitmentPhase },
+                    { $set: { emailSent: false } }
+                );
+            }
 
             await Candidate.updateMany(
                 { active: true },
