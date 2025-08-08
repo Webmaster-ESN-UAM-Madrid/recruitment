@@ -344,7 +344,7 @@ const GlobalConfigManager = () => {
     }
   };
 
-  const recruitmentPhaseSuggestions = ['registro', 'entrevistas', 'welcome days'];
+  const recruitmentPhaseSuggestions = ['registro', 'entrevistas1', 'entrevistas2', 'welcome days'];
 
   return (
     <Container>
