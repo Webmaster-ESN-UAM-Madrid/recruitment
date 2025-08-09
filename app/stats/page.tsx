@@ -20,9 +20,9 @@ export default function Stats() {
     }
 
     const checkAccess = async () => {
-      const response = await fetch('/api/access/recruitment');
+      const response = await fetch('/api/access/recruiter');
       const data = await response.json();
-      if (!data.hasRecruitmentAccess) {
+      if (!data.hasAccess) {
         router.push('/auth/signin');
       } else {
         setHasAccess(true);
