@@ -109,7 +109,14 @@ export default function RecruitmentStatsPage() {
     );
   }
 
-  const committeeData = Object.entries(stats.committeeInterests).map(([name, d]) => ({ name, count: d.count, color: d.color }));
+  const committeeData = Object.entries(stats.committeeInterests)
+    .map(([name, d]) => ({ name, count: d.count, color: d.color }))
+    .sort((a, b) => {
+      const aIsGD = /^gd?[at]/i.test(a.name.trim()); // gda or gdt
+      const bIsGD = /^gd?[at]/i.test(b.name.trim());
+      if (aIsGD !== bIsGD) return aIsGD ? 1 : -1; // place gda/gdt at the end
+      return b.count - a.count; // sort descending within each group
+    });
   const eventData = Object.entries(stats.eventAttendance).map(([name, v]) => ({ name, yes: v.yes, maybe: v.maybe, no: v.no }));
 
   const interviewRate = stats
@@ -210,15 +217,15 @@ export default function RecruitmentStatsPage() {
                 <XAxis
                   dataKey="name"
                   interval={isXs ? "preserveStartEnd" : 0}
-                  angle={isXs ? 0 : -20}
-                  textAnchor={isXs ? "middle" : "end"}
+                  angle={0}
+                  textAnchor="middle"
                   height={isXs ? 40 : 60}
                 />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="yes" stackId="a" fill="#4caf50" name="Sí" />
-                <Bar dataKey="maybe" stackId="a" fill="#ff9800" name="Quizás" />
-                <Bar dataKey="no" stackId="a" fill="#f44336" name="No" />
+                <Bar dataKey="yes" fill="#4caf50" name="Sí" />
+                <Bar dataKey="maybe" fill="#ff9800" name="Quizás" />
+                <Bar dataKey="no" fill="#f44336" name="No" />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
