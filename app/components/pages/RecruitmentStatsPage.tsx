@@ -191,7 +191,10 @@ export default function RecruitmentStatsPage() {
                   height={isXs ? 40 : 60}
                 />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: any /* number */, _name: any) => [value as number, "Total"]}
+                  labelFormatter={(label: any) => <strong>{String(label)}</strong>}
+                />
                 <Bar dataKey="count">
                   {committeeData.map((entry, index) => (
                     <Cell key={`cell-committee-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
@@ -222,7 +225,7 @@ export default function RecruitmentStatsPage() {
                   height={isXs ? 40 : 60}
                 />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
+                <Tooltip labelFormatter={(label: any) => <strong>{String(label)}</strong>} />
                 <Bar dataKey="yes" fill="#4caf50" name="Sí" />
                 <Bar dataKey="maybe" fill="#ff9800" name="Quizás" />
                 <Bar dataKey="no" fill="#f44336" name="No" />
