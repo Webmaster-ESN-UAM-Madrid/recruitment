@@ -192,8 +192,8 @@ export default function RecruitmentStatsPage() {
                 />
                 <YAxis allowDecimals={false} />
                 <Tooltip
-                  formatter={(value: any /* number */, _name: any) => [value as number, "Total"]}
-                  labelFormatter={(label: any) => <strong>{String(label)}</strong>}
+                  formatter={(value: number) => [value, "Total"]}
+                  labelFormatter={(label: string | number) => <strong>{String(label)}</strong>}
                 />
                 <Bar dataKey="count">
                   {committeeData.map((entry, index) => (
@@ -225,7 +225,7 @@ export default function RecruitmentStatsPage() {
                   height={isXs ? 40 : 60}
                 />
                 <YAxis allowDecimals={false} />
-                <Tooltip labelFormatter={(label: any) => <strong>{String(label)}</strong>} />
+                <Tooltip labelFormatter={(label: string | number) => <strong>{String(label)}</strong>} />
                 <Bar dataKey="yes" fill="#4caf50" name="Sí" />
                 <Bar dataKey="maybe" fill="#ff9800" name="Quizás" />
                 <Bar dataKey="no" fill="#f44336" name="No" />
