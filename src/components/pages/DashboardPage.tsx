@@ -303,11 +303,17 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
                       formResponses={candidate.formResponses}
                       gridTemplateColumns={currentGridTemplateColumns}
                       question={(() => {
-                        if (!isNaN(Number(column.key))) {
+                        // Support composite keys: formName:id
+                        const parts = column.key.split(':');
+                        if (parts.length === 2) {
+                          const [formName, qid] = parts;
                           for (const section of formStructure) {
-                            for (const question of section.questions) {
-                              if (question.id.toString() === column.key) {
-                                return question;
+                            const [sectionFormName] = section.title.split(': ', 2);
+                            if (sectionFormName === formName) {
+                              for (const question of section.questions) {
+                                if (question.id.toString() === qid) {
+                                  return question;
+                                }
                               }
                             }
                           }
@@ -359,7 +365,10 @@ const DashboardPage: React.FC = () => {
     { key: 'notes', header: 'Notas', fixed: false, width: '130px' },
     { key: 'tutor', header: 'Tutor', fixed: false, width: '1fr' },
     { key: 'interests', header: 'Intereses', fixed: false, width: '1fr' },
-    ...formStructure.flatMap(section => section.questions.map(question => ({ key: question.id.toString(), header: question.title, fixed: false, width: '1fr' }))),
+    ...formStructure.flatMap(section => {
+      const [formName] = section.title.split(': ', 2);
+      return section.questions.map(question => ({ key: `${formName}:${question.id}`, header: question.title, fixed: false, width: '1fr' }));
+    }),
   ];
 
   const [activeVisibleColumnIds, setActiveVisibleColumnIds] = useState<string[]>([]);
@@ -418,9 +427,10 @@ const DashboardPage: React.FC = () => {
           const formsData = await formsRes.json();
           if (formsData.length > 0) {
             const allSections: FormSection[] = [];
-            formsData.forEach((form: { formIdentifier: string; structure: string }) => {
+            formsData.forEach((form: { _id: string; formIdentifier: string; structure: string }) => {
               const sections = JSON.parse(form.structure).map(([title, questions]: [string, FormQuestion[]]) => ({
-                title: `${form.formIdentifier}: ${title}`,
+                // Prefix section title with a composite form key: `${formId}|${formIdentifier}` to ensure uniqueness across forms with same name
+                title: `${form._id}|${form.formIdentifier}: ${title}`,
                 questions,
               }));
               allSections.push(...sections);
@@ -432,7 +442,8 @@ const DashboardPage: React.FC = () => {
               try {
                 const parsedColumns = JSON.parse(savedActiveColumns);
                 if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
-                  setActiveVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS));
+                  const filtered = parsedColumns.filter((id: string) => allColumns.some(c => c.key === id));
+                  setActiveVisibleColumnIds(filtered.slice(0, MAX_SELECTED_COLUMNS));
                 }
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               } catch (error) {
@@ -455,7 +466,8 @@ const DashboardPage: React.FC = () => {
               try {
                 const parsedColumns = JSON.parse(savedInactiveColumns);
                 if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
-                  setInactiveVisibleColumnIds(parsedColumns.slice(0, MAX_SELECTED_COLUMNS - 1));
+                  const filtered = parsedColumns.filter((id: string) => allColumns.some(c => c.key === id));
+                  setInactiveVisibleColumnIds(filtered.slice(0, MAX_SELECTED_COLUMNS - 1));
                 }
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               } catch (error) {

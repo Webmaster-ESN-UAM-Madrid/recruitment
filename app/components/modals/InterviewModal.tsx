@@ -213,8 +213,8 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
   }, [interview, users, candidates, addToast]);
 
   const handleSave = async () => {
-    if (!session?.user?.id || !interview?._id) {
-      addToast('Error de autenticación o datos de la entrevista no encontrados.', 'error');
+    if (!session?.user?.id) {
+      addToast('Error de autenticación.', 'error');
       return;
     }
 
@@ -228,21 +228,25 @@ const InterviewModal: React.FC<InterviewModalProps> = ({ interview, users, candi
     }
 
     try {
-      const response = await fetch(`/api/interviews/${interview._id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch latest interview data');
-      }
-      const latestInterview: IInterview = await response.json();
-      const dbOpinions = latestInterview.opinions || {};
+      let mergedOpinions: IInterview['opinions'] = {};
 
-      const mergedOpinions = JSON.parse(JSON.stringify(dbOpinions));
+      // Only fetch and merge existing opinions when editing an existing interview
+      if (interview?._id) {
+        const response = await fetch(`/api/interviews/${interview._id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch latest interview data');
+        }
+        const latestInterview: IInterview = await response.json();
+        const dbOpinions = latestInterview.opinions || {};
+        mergedOpinions = JSON.parse(JSON.stringify(dbOpinions));
+      }
 
       for (const candidate of selectedCandidates) {
         const candidateId = candidate._id;
         const localOpinion = opinions[candidateId];
 
         if (!mergedOpinions[candidateId]) {
-          mergedOpinions[candidateId] = { interviewers: {}, status: 'unset' };
+          mergedOpinions[candidateId] = { interviewers: {}, status: 'unset', interviewNotified: false, interviewConfirmed: false };
         }
 
         if (localOpinion?.interviewers?.[session.user.id]) {

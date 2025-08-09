@@ -108,17 +108,18 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   };
 
   const customNonFixedColumns = allColumns.filter(
-    (c) => !c.fixed && isNaN(Number(c.key))
+    (c) => !c.fixed && isNaN(Number(c.key)) && !c.key.includes(':')
   );
 
+  // Group sections by unique formKey (may be `${formId}|${formIdentifier}`)
   const groupedByForm = formStructure.reduce((acc, section) => {
-    const [formName, sectionTitle] = section.title.split(': ', 2);
+    const [formKey, sectionTitle] = section.title.split(': ', 2);
 
-    if (!acc[formName]) {
-      acc[formName] = [];
+    if (!acc[formKey]) {
+      acc[formKey] = [];
     }
 
-    acc[formName].push({ ...section, title: sectionTitle });
+    acc[formKey].push({ ...section, title: sectionTitle });
     return acc;
   }, {} as Record<string, FormSection[]>);
 
@@ -149,21 +150,24 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
       <ColumnSection>
         <SectionHeader>Respuestas de Formulario</SectionHeader>
-        {Object.entries(groupedByForm).map(([formName, sections]) => (
-          <div key={formName}>
-            <h4 style={{ marginTop: 16 }}>Respuestas al formulario &quot;{formName}&quot;</h4>
+        {Object.entries(groupedByForm).map(([formKey, sections]) => {
+          const displayName = formKey.includes('|') ? formKey.split('|', 2)[1] : formKey;
+          return (
+          <div key={formKey}>
+            <h4 style={{ marginTop: 16 }}>Respuestas al formulario &quot;{displayName}&quot;</h4>
             {sections.map((section, sectionIndex) => (
               <div key={sectionIndex}>
                 <h5>{section.title}</h5>
                 {section.questions.map((question) => {
-                  const questionKey = question.id.toString();
+                  const questionKey = `${formKey}:${question.id}`;
                   const isChecked = visibleColumnIds.includes(questionKey);
                   const isDisabled =
                     !isChecked && visibleColumnIds.length >= maxColumns;
-                  const inputId = `question-${question.id}`;
+                  const safeFormKey = formKey.replaceAll('|', '-');
+                  const inputId = `question-${safeFormKey}-${question.id}`;
 
                   return (
-                    <CustomCheckWrapper key={question.id} htmlFor={inputId}>
+                    <CustomCheckWrapper key={`${formKey}-${question.id}`} htmlFor={inputId}>
                       <HiddenInput
                         id={inputId}
                         type="checkbox"
@@ -179,7 +183,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               </div>
             ))}
           </div>
-        ))}
+        );})}
       </ColumnSection>
     </ColumnList>
   );

@@ -164,15 +164,39 @@ const DashboardItem: React.FC<DashboardItemProps> = ({ candidate, data, columnKe
     return () => window.removeEventListener('resize', checkOverflow);
   }, [data, formResponses, gridTemplateColumns, question, availableCommittees]);
 
-  const isFormQuestion = !isNaN(Number(columnKey));
+  // Support composite keys: (formKey)":"(questionId)
+  // Where formKey may be `${formId}|${formIdentifier}` to guarantee uniqueness across same-named forms
+  const keyParts = columnKey.split(':');
+  const effectiveKey = keyParts.length === 2 ? keyParts[1] : columnKey;
+  const formKey = keyParts.length === 2 ? keyParts[0] : undefined;
+  const formIdFromKey = formKey && formKey.includes('|') ? formKey.split('|', 2)[0] : undefined;
+  const isFormQuestion = !isNaN(Number(effectiveKey));
 
   let displayValue: string | JSX.Element;
   let modalContent: JSX.Element | null = null;
   let showModalButton = false;
 
   if (isFormQuestion && formResponses) {
-    const formResponse = formResponses.find(response => response.responses && response.responses[columnKey] !== undefined);
-    const rawValue = formResponse && formResponse.responses[columnKey] !== undefined ? formResponse.responses[columnKey] : "";
+    const normalizeFormId = (fid: unknown): string | undefined => {
+      if (!fid) return undefined;
+      if (typeof fid === 'string') return fid;
+      if (typeof fid === 'object' && fid !== null) {
+        // Could be populated form object or a mongoose ObjectId-like value
+        const maybeObj = fid as { _id?: unknown; toString?: () => string };
+        if (maybeObj._id !== undefined) return String(maybeObj._id);
+        if (typeof maybeObj.toString === 'function') return String(maybeObj.toString());
+      }
+      return undefined;
+    };
+
+    const formResponse = formResponses.find(response => {
+      const hasAnswer = response?.responses && response.responses[effectiveKey] !== undefined;
+      if (!hasAnswer) return false;
+      if (!formIdFromKey) return hasAnswer; // legacy or non-composite form key
+      const respFormId = normalizeFormId(response.formId);
+      return respFormId === formIdFromKey;
+    });
+    const rawValue = formResponse && formResponse.responses[effectiveKey] !== undefined ? formResponse.responses[effectiveKey] : "";
 
     switch (question?.type) {
       case 'DATE':
