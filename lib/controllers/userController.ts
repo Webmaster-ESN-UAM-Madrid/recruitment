@@ -43,3 +43,17 @@ export const getUserNotes = async (userId: string) => {
         return new Map();
     }
 };
+
+export const deleteUser = async (userId: string) => {
+    await dbConnect();
+    try {
+        const result = await User.findByIdAndDelete(userId);
+        if (!result) {
+            return { deleted: false, message: 'User not found' };
+        }
+        return { deleted: true };
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return { deleted: false, message: 'Internal Server Error' };
+    }
+};
