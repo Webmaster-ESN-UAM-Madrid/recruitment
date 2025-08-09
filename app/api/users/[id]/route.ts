@@ -6,22 +6,22 @@ import { authOptions } from "@/lib/auth";
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await getServerSession(authOptions);
-    if (!session || !checkAdminAccess(session.user?.email)) {
-        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-    }
+  const session = await getServerSession(authOptions);
+  if (!session || !checkAdminAccess(session.user?.email)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
 
-    try {
-    const { id } = params;
+  try {
+    const { id } = await params;
     const result = await deleteUser(id);
     if (!result.deleted) {
-        return NextResponse.json({ message: result.message || 'Not Found' }, { status: 404 });
+      return NextResponse.json({ message: result.message || 'Not Found' }, { status: 404 });
     }
     return NextResponse.json({ deleted: true });
-    } catch (error) {
+  } catch (error) {
     console.error('Failed to delete user', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
-    }
+  }
 }

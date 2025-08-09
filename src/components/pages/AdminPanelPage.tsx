@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import GlobalConfigManager from '@/app/components/admin/GlobalConfigManager';
 import styled from 'styled-components';
-import Tooltip from '@mui/material/Tooltip';
 import { DeleteButton as IconDeleteButton } from '@/app/components/buttons/DeleteButton';
 import Image from 'next/image';
 
