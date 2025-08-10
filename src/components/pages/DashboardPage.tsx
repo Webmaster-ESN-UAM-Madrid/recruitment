@@ -342,6 +342,7 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [formStructure, setFormStructure] = useState<FormSection[]>([]);
   const [isMobile, setIsMobile] = useState(false); // Add isMobile state
+  const [columnsInitialized, setColumnsInitialized] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -355,6 +356,62 @@ const DashboardPage: React.FC = () => {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
+
+  // Initialize visible columns from localStorage or sensible defaults after formStructure (and thus allColumns) is available
+  useEffect(() => {
+    if (columnsInitialized) return;
+    if (formStructure.length === 0) return;
+
+    // Active table
+    const savedActiveColumns = localStorage.getItem('dashboardActiveVisibleColumns');
+    if (savedActiveColumns) {
+      try {
+        const parsedColumns = JSON.parse(savedActiveColumns);
+        if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
+          const filtered = parsedColumns.filter((id: string) => allColumns.some(c => c.key === id));
+          setActiveVisibleColumnIds(filtered.slice(0, MAX_SELECTED_COLUMNS));
+        }
+      } catch {
+        // ignore error
+      }
+    } else {
+      const initialVisibleColumnIds: string[] = [];
+      const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
+      for (const key of initialNonFixedKeys) {
+        const column = allColumns.find(c => c.key === key);
+        if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
+          initialVisibleColumnIds.push(column.key);
+        }
+      }
+      setActiveVisibleColumnIds(initialVisibleColumnIds);
+    }
+
+    // Inactive table
+    const savedInactiveColumns = localStorage.getItem('dashboardInactiveVisibleColumns');
+    if (savedInactiveColumns) {
+      try {
+        const parsedColumns = JSON.parse(savedInactiveColumns);
+        if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
+          const filtered = parsedColumns.filter((id: string) => allColumns.some(c => c.key === id));
+          setInactiveVisibleColumnIds(filtered.slice(0, MAX_SELECTED_COLUMNS - 1));
+        }
+      } catch {
+        // ignore error
+      }
+    } else {
+      const initialVisibleColumnIds: string[] = ['rejectedReason'];
+      const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
+      for (const key of initialNonFixedKeys) {
+        const column = allColumns.find(c => c.key === key);
+        if (column && initialVisibleColumnIds.length < (MAX_SELECTED_COLUMNS - 1)) {
+          initialVisibleColumnIds.push(column.key);
+        }
+      }
+      setInactiveVisibleColumnIds(initialVisibleColumnIds);
+    }
+
+    setColumnsInitialized(true);
+  }, [formStructure, columnsInitialized]);
 
   const allColumns: Column[] = [
     { key: 'tags', header: '', fixed: true, width: '40px' },
@@ -417,7 +474,6 @@ const DashboardPage: React.FC = () => {
             const note = notesData.get(candidate._id) || '';
             return { ...candidate, formResponses: candidateResponses, feedback: candidateFeedback, notes: note };
           });
-
           setCandidates(candidatesWithData);
         } else {
           console.error("Failed to fetch candidates");
@@ -436,54 +492,6 @@ const DashboardPage: React.FC = () => {
               allSections.push(...sections);
             });
             setFormStructure(allSections);
-
-            const savedActiveColumns = localStorage.getItem('dashboardActiveVisibleColumns');
-            if (savedActiveColumns) {
-              try {
-                const parsedColumns = JSON.parse(savedActiveColumns);
-                if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
-                  const filtered = parsedColumns.filter((id: string) => allColumns.some(c => c.key === id));
-                  setActiveVisibleColumnIds(filtered.slice(0, MAX_SELECTED_COLUMNS));
-                }
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              } catch (error) {
-                // ignore error
-              }
-            } else {
-              const initialVisibleColumnIds: string[] = [];
-              const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
-              for (const key of initialNonFixedKeys) {
-                const column = allColumns.find(c => c.key === key);
-                if (column && initialVisibleColumnIds.length < MAX_SELECTED_COLUMNS) {
-                  initialVisibleColumnIds.push(column.key);
-                }
-              }
-              setActiveVisibleColumnIds(initialVisibleColumnIds);
-            }
-            
-            const savedInactiveColumns = localStorage.getItem('dashboardInactiveVisibleColumns');
-            if (savedInactiveColumns) {
-              try {
-                const parsedColumns = JSON.parse(savedInactiveColumns);
-                if (Array.isArray(parsedColumns) && parsedColumns.every(item => typeof item === 'string')) {
-                  const filtered = parsedColumns.filter((id: string) => allColumns.some(c => c.key === id));
-                  setInactiveVisibleColumnIds(filtered.slice(0, MAX_SELECTED_COLUMNS - 1));
-                }
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              } catch (error) {
-                // ignore error
-              }
-            } else {
-                const initialVisibleColumnIds: string[] = ['rejectedReason']; // Add rejectedReason by default
-                const initialNonFixedKeys = ['email', 'feedback', 'tutor', 'interests'];
-                for (const key of initialNonFixedKeys) {
-                  const column = allColumns.find(c => c.key === key);
-                  if (column && initialVisibleColumnIds.length < (MAX_SELECTED_COLUMNS - 1)) {
-                    initialVisibleColumnIds.push(column.key);
-                  }
-                }
-                setInactiveVisibleColumnIds(initialVisibleColumnIds);
-            }
           }
         } else {
           console.error("Failed to fetch forms");
@@ -505,16 +513,16 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && columnsInitialized) {
       localStorage.setItem('dashboardActiveVisibleColumns', JSON.stringify(activeVisibleColumnIds));
     }
-  }, [activeVisibleColumnIds, loading]);
+  }, [activeVisibleColumnIds, loading, columnsInitialized]);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && columnsInitialized) {
       localStorage.setItem('dashboardInactiveVisibleColumns', JSON.stringify(inactiveVisibleColumnIds));
     }
-  }, [inactiveVisibleColumnIds, loading]);
+  }, [inactiveVisibleColumnIds, loading, columnsInitialized]);
 
   const handleColumnToggle = (columnKey: string, tableType: 'active' | 'inactive', maxAllowedColumns: number) => {
     const column = allColumns.find(c => c.key === columnKey);
