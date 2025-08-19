@@ -31,11 +31,8 @@ interface FormPreviewProps {
     startsExpanded?: boolean;
 }
 
-const FormContainer = styled.div<{ $isEditing?: boolean }>`
-    ${({ $isEditing }) =>
-        $isEditing
-            ? ""
-            : `
+const FormContainer = styled.div<{ $isEditing?: boolean; }>`
+  ${({ $isEditing }) => ($isEditing ? '' : `
     border: 2px solid var(--border-secondary);
     border-radius: var(--border-radius-md); /* Apply rounded corners */
     padding: 20px;
@@ -152,35 +149,47 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formStructure, responses, isE
         }
     };
 
-    return (
-        <FormContainer $isEditing={isEditing}>
-            {isAccordion && (
-                <AccordionHeader onClick={toggleAccordion}>
-                    <SectionTitle>{parsedForm[0][0]}</SectionTitle>
-                    {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-                </AccordionHeader>
-            )}
-            <AccordionContent $expanded={isExpanded}>
-                <div>
-                    {parsedForm.map((section, sectionIndex) => {
-                        const [sectionTitle, fields] = section;
-                        return (
-                            <div key={sectionIndex}>
-                                {(!isAccordion || sectionIndex !== 0) && <SectionTitle>{sectionTitle}</SectionTitle>}
-                                {Array.isArray(fields) && fields.map((field) => <Question key={field.id} question={field} responseValue={getFieldValue(field.id)} isEditing={isEditing} mappingOptions={["none", "user.name", "user.email"]} currentMapping={currentMappings.get(String(field.id)) || "none"} onMappingChange={handleMappingChange} nameMapped={nameMapped} emailMapped={emailMapped} />)}
-                            </div>
-                        );
-                    })}
-                    {isEditing && (
-                        <ButtonWrapper>
-                            <SaveButton isLoading={isSaving} onClick={handleSave} />
-                            <CancelButton isLoading={isSaving} onClick={handleCancel} />
-                        </ButtonWrapper>
-                    )}
-                </div>
-            </AccordionContent>
-        </FormContainer>
-    );
+  return (
+    <FormContainer $isEditing={isEditing}>
+      {isAccordion && (
+        <AccordionHeader onClick={toggleAccordion}>
+          <SectionTitle>{parsedForm[0][0]}</SectionTitle>
+          {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+        </AccordionHeader>
+      )}
+      <AccordionContent $expanded={isExpanded}>
+        <div>
+          {parsedForm.map((section, sectionIndex) => {
+            const [sectionTitle, fields] = section;
+            return (
+              <div key={sectionIndex}>
+                {(!isAccordion || sectionIndex !== 0) && <SectionTitle>{sectionTitle}</SectionTitle>}
+                {Array.isArray(fields) && fields.map((field) => (
+                  <Question
+                    key={field.id}
+                    question={field}
+                    responseValue={getFieldValue(field.id)}
+                    isEditing={isEditing}
+                    mappingOptions={['none', 'user.name', 'user.email']}
+                    currentMapping={currentMappings.get(String(field.id)) || 'none'}
+                    onMappingChange={handleMappingChange}
+                    nameMapped={nameMapped}
+                    emailMapped={emailMapped}
+                  />
+                ))}
+              </div>
+            );
+          })}
+          {isEditing && (
+            <ButtonWrapper>
+              <SaveButton isLoading={isSaving} onClick={handleSave} />
+              <CancelButton isLoading={isSaving} onClick={handleCancel} />
+            </ButtonWrapper>
+          )}
+        </div>
+      </AccordionContent>
+    </FormContainer>
+  );
 };
 
 export default FormPreview;

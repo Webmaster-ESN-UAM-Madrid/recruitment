@@ -57,6 +57,7 @@ const CandidateTableContainer = styled.div`
   border: 1px solid var(--border-primary);
   border-radius: 5px;
   width: fit-content;
+  min-width: 100%;
 `;
 
 const TableHeader = styled.div<{ gridtemplatecolumns: string }>`
