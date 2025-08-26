@@ -174,10 +174,10 @@ export const getAllFeedbackWithCategories = async () => {
             };
         }
         const tutorEmail = candidateTutorMap[candidateId];
-        if (recruiters.includes(fb.givenBy.email)) {
-            categorizedFeedback[candidateId].recruiters.push(fb.toObject());
-        } else if (fb.givenBy.email === tutorEmail) {
+        if (fb.givenBy.email === tutorEmail) {
             categorizedFeedback[candidateId].tutor.push(fb.toObject());
+        } else if (recruiters.includes(fb.givenBy.email)) {
+            categorizedFeedback[candidateId].recruiters.push(fb.toObject());
         } else {
             categorizedFeedback[candidateId].volunteers.push(fb.toObject());
         }

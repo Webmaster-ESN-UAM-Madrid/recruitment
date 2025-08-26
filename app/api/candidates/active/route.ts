@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
     const limitedCandidates = candidates.map((candidate) => ({
         _id: candidate._id,
         name: candidate.name,
-        photoUrl: candidate.photoUrl
+        photoUrl: candidate.photoUrl,
+        tutor: candidate.tutor
     }));
     return NextResponse.json({ candidates: limitedCandidates, currentPhase: recruitmentDetails.recruitmentPhase });
 }
