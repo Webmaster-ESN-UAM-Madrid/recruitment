@@ -11,6 +11,7 @@ import { ViewButton } from "../../../app/components/buttons/ViewButton";
 import { HideButton } from "../../../app/components/buttons/HideButton";
 import { useToast } from "../../../app/components/toasts/ToastContext";
 import Modal from "../../../app/components/modals/Modal";
+import TextField from "@mui/material/TextField";
 
 const PageContainer = styled.div`
     padding: 20px;
@@ -164,14 +165,6 @@ const FeedbackDates = styled.small`
     @media (max-width: 768px) {
         white-space: normal; /* Allow text to wrap on mobile */
     }
-`;
-
-const Textarea = styled.textarea`
-    width: 100%;
-    min-height: 100px;
-    padding: 10px;
-    border: 1px solid var(--border-primary);
-    border-radius: var(--border-radius-md);
 `;
 
 const ModalActions = styled.div`
@@ -407,9 +400,20 @@ const FeedbackPage: React.FC = () => {
                 <Modal
                     isOpen={isModalOpen}
                     // onClose={closeModal}
-                    title={`${editingFeedback ? "Editar" : "Añadir"} Comentario para ${selectedCandidate.name}`}
+                    title={`${editingFeedback ? "Editar" : "Añadir"} comentario para ${selectedCandidate.name}`}
                     width="sm">
-                    <Textarea value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} />
+                    <TextField
+                        multiline
+                        fullWidth
+                        value={feedbackText}
+                        onChange={(e) => setFeedbackText(e.target.value)}
+                        sx={{
+                            "& textarea": {
+                                minHeight: "100px",
+                                maxHeight: "300px"
+                            }
+                        }}
+                    />
                     <ModalActions>
                         <CancelButton onClick={closeModal} />
                         <SaveButton onClick={handleFeedbackSubmit} />
