@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useEffect, useCallback } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { FaCheckCircle, FaExclamationCircle, FaInfoCircle, FaTimes } from 'react-icons/fa';
+import React, { useEffect, useCallback } from "react";
+import styled, { keyframes } from "styled-components";
+import { FaCheckCircle, FaExclamationCircle, FaInfoCircle, FaTimes } from "react-icons/fa";
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = "success" | "error" | "info";
 
 export interface ToastProps {
   id: number;
@@ -17,13 +17,13 @@ export interface ToastProps {
 const toastIcons = {
   success: <FaCheckCircle />,
   error: <FaExclamationCircle />,
-  info: <FaInfoCircle />,
+  info: <FaInfoCircle />
 };
 
 const toastColors = {
-  success: 'var(--toast-success-bg)',
-  error: 'var(--toast-error-bg)',
-  info: 'var(--toast-info-bg)',
+  success: "var(--toast-success-bg)",
+  error: "var(--toast-error-bg)",
+  info: "var(--toast-info-bg)"
 };
 
 const fadeIn = keyframes`
@@ -51,10 +51,10 @@ const ToastContainer = styled.div<{ type: ToastType; $isClosing?: boolean }>`
   max-width: 320px;
   transition: all 0.4s ease-in-out;
   opacity: ${({ $isClosing }) => ($isClosing ? 0 : 1)};
-  max-height: ${({ $isClosing }) => ($isClosing ? '0' : '75px')};
-  padding-top: ${({ $isClosing }) => ($isClosing ? 0 : '10px')};
-  padding-bottom: ${({ $isClosing }) => ($isClosing ? 0 : '10px')};
-  margin-bottom: ${({ $isClosing }) => ($isClosing ? 0 : '10px')};
+  max-height: ${({ $isClosing }) => ($isClosing ? "0" : "75px")};
+  padding-top: ${({ $isClosing }) => ($isClosing ? 0 : "10px")};
+  padding-bottom: ${({ $isClosing }) => ($isClosing ? 0 : "10px")};
+  margin-bottom: ${({ $isClosing }) => ($isClosing ? 0 : "10px")};
   overflow: hidden;
 `;
 

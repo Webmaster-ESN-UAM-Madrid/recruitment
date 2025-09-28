@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
 import { signOut } from "next-auth/react";
-import styled from 'styled-components';
+import styled from "styled-components";
 
 const StyledButton = styled.button`
   background-color: var(--button-primary-bg);
@@ -22,7 +22,7 @@ const StyledButton = styled.button`
 
 export default function SignOut() {
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>Cerrar Sesión</h1>
       <p>Seguro que quieres salir de tu cuenta?</p>
       <br />

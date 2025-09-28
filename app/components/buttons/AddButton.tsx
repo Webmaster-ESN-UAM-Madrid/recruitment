@@ -20,7 +20,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

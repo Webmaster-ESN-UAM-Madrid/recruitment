@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback } from 'react';
-import { ToastContext, ToastType } from './ToastContext';
-import Toast, { ToastProps } from './Toast';
-import styled from 'styled-components';
+import React, { useState, useCallback } from "react";
+import { ToastContext, ToastType } from "./ToastContext";
+import Toast, { ToastProps } from "./Toast";
+import styled from "styled-components";
 
-interface ToastState extends Omit<ToastProps, 'onClose'> {
+interface ToastState extends Omit<ToastProps, "onClose"> {
   id: number;
   isClosing?: boolean;
 }
@@ -25,18 +25,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addToast = useCallback((message: string, type: ToastType) => {
     const id = Date.now();
-    setToasts(prevToasts => [...prevToasts, { id, message, type }]);
+    setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
   }, []);
 
   const removeToast = useCallback((id: number) => {
-    setToasts(prevToasts =>
-      prevToasts.map(toast =>
-        toast.id === id ? { ...toast, isClosing: true } : toast
-      )
+    setToasts((prevToasts) =>
+      prevToasts.map((toast) => (toast.id === id ? { ...toast, isClosing: true } : toast))
     );
 
     setTimeout(() => {
-      setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id));
+      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
     }, 400);
   }, []);
 
@@ -44,12 +42,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ToastContext.Provider value={{ addToast }}>
       {children}
       <ToastContainerWrapper>
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            {...toast}
-            onClose={removeToast}
-          />
+        {toasts.map((toast) => (
+          <Toast key={toast.id} {...toast} onClose={removeToast} />
         ))}
       </ToastContainerWrapper>
     </ToastContext.Provider>

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import GlobalConfigManager from '@/app/components/admin/GlobalConfigManager';
-import styled from 'styled-components';
-import { DeleteButton as IconDeleteButton } from '@/app/components/buttons/DeleteButton';
-import Image from 'next/image';
+import React, { useEffect, useState } from "react";
+import GlobalConfigManager from "@/app/components/admin/GlobalConfigManager";
+import styled from "styled-components";
+import { DeleteButton as IconDeleteButton } from "@/app/components/buttons/DeleteButton";
+import Image from "next/image";
 
 const PageContainer = styled.div`
   padding: 20px;
@@ -12,7 +12,7 @@ const Subtitle = styled.h3`
   color: #333;
   margin-top: 50px;
   margin-bottom: 15px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
 `;
 
 const Card = styled.div`
@@ -59,7 +59,7 @@ const NameCell = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-size: 14px;
   line-height: 1.2;
   min-width: 0; /* allow children to shrink for ellipsis */
@@ -82,7 +82,7 @@ const AvatarPlaceholder = styled.div`
 
 const InnerContent = styled.div`
   padding: 0 32px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   @media (max-width: 768px) {
     padding: 0 15px;
   }
@@ -106,7 +106,6 @@ const HeaderCell = styled.div`
   font-size: 14px;
 `;
 
-
 interface AdminUser {
   _id: string;
   name: string;
@@ -122,33 +121,33 @@ const AdminPanelPage: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch("/api/users");
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
       }
     } catch (e) {
-      console.error('Failed to fetch users', e);
+      console.error("Failed to fetch users", e);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    const confirm = window.confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.');
+    const confirm = window.confirm("¿Eliminar este usuario? Esta acción no se puede deshacer.");
     if (!confirm) return;
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
       if (res.ok) {
-        setUsers(prev => prev.filter(u => u._id !== id));
+        setUsers((prev) => prev.filter((u) => u._id !== id));
       } else {
-        const { message } = await res.json().catch(() => ({ message: 'Error' }));
-        alert(message || 'No se pudo eliminar el usuario');
+        const { message } = await res.json().catch(() => ({ message: "Error" }));
+        alert(message || "No se pudo eliminar el usuario");
       }
     } catch (e) {
-      console.error('Failed to delete user', e);
-      alert('Error eliminando el usuario');
+      console.error("Failed to delete user", e);
+      alert("Error eliminando el usuario");
     } finally {
       setDeletingId(null);
     }
@@ -182,9 +181,17 @@ const AdminPanelPage: React.FC = () => {
                   <UsersRow key={u._id}>
                     <AvatarCell>
                       {u.image ? (
-                        <Image src={u.image} alt="Profile" width={40} height={40} style={{ borderRadius: '100%' }} />
+                        <Image
+                          src={u.image}
+                          alt="Profile"
+                          width={40}
+                          height={40}
+                          style={{ borderRadius: "100%" }}
+                        />
                       ) : (
-                        <AvatarPlaceholder>{(u.name || u.email || '?').slice(0,2)}</AvatarPlaceholder>
+                        <AvatarPlaceholder>
+                          {(u.name || u.email || "?").slice(0, 2)}
+                        </AvatarPlaceholder>
                       )}
                     </AvatarCell>
                     <NameCell>
@@ -198,8 +205,7 @@ const AdminPanelPage: React.FC = () => {
                         iconSize={20}
                       />
                     </div>
-                
-  </UsersRow>
+                  </UsersRow>
                 ))}
               </>
             )}

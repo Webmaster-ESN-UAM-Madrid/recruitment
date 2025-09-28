@@ -1,10 +1,9 @@
+"use client";
 
-'use client';
-
-import React from 'react';
-import styled from 'styled-components';
-import { useTheme } from './contexts/ThemeContext';
-import Link from 'next/link';
+import React from "react";
+import styled from "styled-components";
+import { useTheme } from "./contexts/ThemeContext";
+import Link from "next/link";
 
 const AppContainer = styled.div`
   text-align: center;
@@ -12,7 +11,7 @@ const AppContainer = styled.div`
 `;
 
 const Navbar = styled.nav`
-  background-color: ${props => props.theme.colors.primary};
+  background-color: ${(props) => props.theme.colors.primary};
   padding: 10px;
   ul {
     list-style: none;
@@ -35,7 +34,7 @@ const ThemeControls = styled.div`
 `;
 
 const ThemeToggleButton = styled.button<{ primaryColor: string }>`
-  background-color: ${props => props.primaryColor};
+  background-color: ${(props) => props.primaryColor};
   color: white;
   padding: 10px 20px;
   border: none;
@@ -58,30 +57,46 @@ export default function App() {
     <>
       <Navbar>
         <ul>
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/feedback">Feedback</Link></li>
-          <li><Link href="/dashboard">Dashboard</Link></li>
-          <li><Link href="/incidents">Incidents</Link></li>
-          <li><Link href="/profile">Profile</Link></li>
-          <li><Link href="/admin">Admin Panel</Link></li>
+          <li>
+            <Link href="/">Home</Link>
+          </li>
+          <li>
+            <Link href="/feedback">Feedback</Link>
+          </li>
+          <li>
+            <Link href="/dashboard">Dashboard</Link>
+          </li>
+          <li>
+            <Link href="/incidents">Incidents</Link>
+          </li>
+          <li>
+            <Link href="/profile">Profile</Link>
+          </li>
+          <li>
+            <Link href="/admin">Admin Panel</Link>
+          </li>
         </ul>
       </Navbar>
 
       <AppContainer>
         <ThemeControls>
           <p>Current theme: {theme}</p>
-          <ThemeToggleButton primaryColor={colors.primary} onClick={toggleTheme}>Toggle Theme</ThemeToggleButton>
+          <ThemeToggleButton primaryColor={colors.primary} onClick={toggleTheme}>
+            Toggle Theme
+          </ThemeToggleButton>
 
           <div>
             <h3>Customize Colors:</h3>
-            <label>Primary Color:
+            <label>
+              Primary Color:
               <ColorInput
                 type="color"
                 value={colors.primary}
                 onChange={(e) => setPrimaryColor(e.target.value)}
               />
             </label>
-            <label>Secondary Color:
+            <label>
+              Secondary Color:
               <ColorInput
                 type="color"
                 value={colors.secondary}

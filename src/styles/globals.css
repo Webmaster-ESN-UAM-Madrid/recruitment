@@ -1,78 +1,78 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap");
 
 :root {
-    /* Brand Colors */
-    --brand-primary: #007bff; /* #ec008c; */
-    --brand-primary-dark: #0056b3; /* #b3006b; */
-    --brand-secondary: #6c757d;
+  /* Brand Colors */
+  --brand-primary: #007bff; /* #ec008c; */
+  --brand-primary-dark: #0056b3; /* #b3006b; */
+  --brand-secondary: #6c757d;
 
-    /* Button Colors */
-    --button-primary-bg: #0070f0; /* var(--brand-primary) */
-    --button-secondary-bg: #7828c8;
-    --button-success-bg: #17c964;
-    --button-warning-bg: #f5a524;
-    --button-danger-bg: #f31260;
-    --button-disabled-bg: #999;
+  /* Button Colors */
+  --button-primary-bg: #0070f0; /* var(--brand-primary) */
+  --button-secondary-bg: #7828c8;
+  --button-success-bg: #17c964;
+  --button-warning-bg: #f5a524;
+  --button-danger-bg: #f31260;
+  --button-disabled-bg: #999;
 
-    --button-primary-text: #ffffff;
-    --button-primary-hover-bg: #0056b3;
-    --button-default-bg: #f0f0f0;
-    --button-default-bg: #333333;
-    --button-default-hover-bg: #e0e0e0;
+  --button-primary-text: #ffffff;
+  --button-primary-hover-bg: #0056b3;
+  --button-default-bg: #f0f0f0;
+  --button-default-bg: #333333;
+  --button-default-hover-bg: #e0e0e0;
 
-    /* Link Colors */
-    --link-color: var(--brand-primary);
-    --link-hover-color: var(--brand-primary);
+  /* Link Colors */
+  --link-color: var(--brand-primary);
+  --link-hover-color: var(--brand-primary);
 
-    /* Incident Colors */
-    --warning-color: #ffb700;
-    --error-color: #ff2a00;
+  /* Incident Colors */
+  --warning-color: #ffb700;
+  --error-color: #ff2a00;
 
-    /* Text Colors */
-    --text-primary: #333333;
-    --text-secondary: #666666;
-    --text-light: #ffffff;
+  /* Text Colors */
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-light: #ffffff;
 
-    /* Background Colors */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #f0f0f0;
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f0f0f0;
 
-    /* Border Colors */
-    --border-primary: #dddddd;
-    --border-secondary: #eeeeee;
-    --border-focus: var(--brand-primary);
+  /* Border Colors */
+  --border-primary: #dddddd;
+  --border-secondary: #eeeeee;
+  --border-focus: var(--brand-primary);
 
-    /* Component Specific */
-    --navbar-bg: var(--bg-primary);
-    --navbar-text: var(--text-primary);
-    --navbar-border: var(--border-secondary);
-    --modal-bg: var(--bg-primary);
-    --table-header-bg: var(--bg-tertiary);
-    --table-row-hover-bg: #e9e9e9;
-    --table-different-phase-row-bg: #fff6f0;
-    --tutor-row-bg: #f8efda;
-    --tutor-row-hover-bg: #f5e5cc;
-    --toast-success-bg: #4caf50;
-    --toast-error-bg: #f44336;
-    --toast-info-bg: #2196f3;
+  /* Component Specific */
+  --navbar-bg: var(--bg-primary);
+  --navbar-text: var(--text-primary);
+  --navbar-border: var(--border-secondary);
+  --modal-bg: var(--bg-primary);
+  --table-header-bg: var(--bg-tertiary);
+  --table-row-hover-bg: #e9e9e9;
+  --table-different-phase-row-bg: #fff6f0;
+  --tutor-row-bg: #f8efda;
+  --tutor-row-hover-bg: #f5e5cc;
+  --toast-success-bg: #4caf50;
+  --toast-error-bg: #f44336;
+  --toast-info-bg: #2196f3;
 
-    --border-radius-md: 8px;
+  --border-radius-md: 8px;
 }
 
 html,
 body {
-    max-width: 100vw;
-    overflow-x: hidden;
-    color: var(--text-primary);
-    background: var(--bg-primary);
-    font-family: "Lato", "Inter", sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    height: 100%;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
+  max-width: 100vw;
+  overflow-x: hidden;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font-family: "Lato", "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
@@ -81,20 +81,20 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: "kelsonSans", "Montserrat", sans-serif;
+  font-family: "kelsonSans", "Montserrat", sans-serif;
 }
 
 h1 {
-    margin-bottom: 50px;
+  margin-bottom: 50px;
 }
 
 * {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
 }
 
 a {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }

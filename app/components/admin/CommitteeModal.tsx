@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
-import { HexColorPicker } from 'react-colorful';
-import styled from 'styled-components';
-import { SaveButton } from '@/app/components/buttons/SaveButton';
-import { CancelButton } from '@/app/components/buttons/CancelButton';
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { HexColorPicker } from "react-colorful";
+import styled from "styled-components";
+import { SaveButton } from "@/app/components/buttons/SaveButton";
+import { CancelButton } from "@/app/components/buttons/CancelButton";
 
 interface CommitteeModalProps {
   open: boolean;
@@ -24,18 +24,18 @@ const CommitteeModal: React.FC<CommitteeModalProps> = ({
   open,
   onClose,
   onSave,
-  editingCommittee,
+  editingCommittee
 }) => {
-  const [name, setName] = useState('');
-  const [color, setColor] = useState('#aabbcc');
+  const [name, setName] = useState("");
+  const [color, setColor] = useState("#aabbcc");
 
   useEffect(() => {
     if (editingCommittee) {
       setName(editingCommittee.name);
       setColor(editingCommittee.color);
     } else {
-      setName('');
-      setColor('#aabbcc');
+      setName("");
+      setColor("#aabbcc");
     }
   }, [editingCommittee, open]);
 
@@ -46,7 +46,7 @@ const CommitteeModal: React.FC<CommitteeModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{editingCommittee ? 'Editar Comité' : 'Añadir Comité'}</DialogTitle>
+      <DialogTitle>{editingCommittee ? "Editar Comité" : "Añadir Comité"}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -66,7 +66,7 @@ const CommitteeModal: React.FC<CommitteeModalProps> = ({
             fullWidth
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            style={{ marginTop: '10px' }}
+            style={{ marginTop: "10px" }}
           />
         </ColorPickerContainer>
       </DialogContent>

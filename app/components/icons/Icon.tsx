@@ -11,7 +11,7 @@ export const Icon: React.FC<IconProps> = ({
   path,
   size = 24,
   color = "currentColor",
-  viewBox = "0 -960 960 960",
+  viewBox = "0 -960 960 960"
 }) => {
   return (
     <svg

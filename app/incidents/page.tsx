@@ -1,11 +1,10 @@
+"use client";
 
-'use client';
-
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import IncidentsPage from '../../src/components/pages/IncidentsPage';
-import LoadingSpinner from '../components/loaders/LoadingSpinner';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import IncidentsPage from "../../src/components/pages/IncidentsPage";
+import LoadingSpinner from "../components/loaders/LoadingSpinner";
 
 export default function Incidents() {
   const { data: session, status } = useSession();
@@ -13,18 +12,18 @@ export default function Incidents() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === "loading") return;
 
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
       return;
     }
 
     const checkAccess = async () => {
-      const response = await fetch('/api/access/recruiter');
+      const response = await fetch("/api/access/recruiter");
       const data = await response.json();
       if (!data.hasAccess) {
-        router.push('/auth/signin');
+        router.push("/auth/signin");
       } else {
         setHasAccess(true);
       }
@@ -34,10 +33,10 @@ export default function Incidents() {
   }, [session, status, router]);
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('updateIncidentsDot'));
+    window.dispatchEvent(new CustomEvent("updateIncidentsDot"));
   }, []);
 
-  if (status === 'loading' || !hasAccess) {
+  if (status === "loading" || !hasAccess) {
     return <LoadingSpinner />;
   }
 

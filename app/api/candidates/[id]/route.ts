@@ -37,4 +37,3 @@ export async function PUT(req: NextRequest, context: any) {
   }
   return NextResponse.json(updatedCandidate);
 }
-

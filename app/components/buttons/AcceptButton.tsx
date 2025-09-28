@@ -24,7 +24,7 @@ export const AcceptButton: React.FC<AcceptButtonProps> = ({
   iconSize = 24,
   needsConfirmation = false,
   confirmationDuration,
-  style,
+  style
 }) => {
   return (
     <IconButton

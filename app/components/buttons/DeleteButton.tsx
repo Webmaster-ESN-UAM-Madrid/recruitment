@@ -24,7 +24,7 @@ export const DeleteButton: React.FC<DeleteButtonProps> = ({
   confirmationDuration = undefined, // Use default
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

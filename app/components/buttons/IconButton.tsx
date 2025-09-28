@@ -1,12 +1,24 @@
 "use client";
 
-import React, { useState, ReactNode, createContext, useContext, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  ReactNode,
+  createContext,
+  useContext,
+  useRef,
+  useEffect,
+  useCallback
+} from "react";
 import { Button } from "@nextui-org/react";
 import styled, { keyframes } from "styled-components";
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip from "@mui/material/Tooltip";
 
 // Define a styled component for the button to apply custom styles
-const StyledButton = styled(Button)<{ iconSize: number; $holdProgress: number; $buttonColor: string }>`
+const StyledButton = styled(Button)<{
+  iconSize: number;
+  $holdProgress: number;
+  $buttonColor: string;
+}>`
   background-color: rgba(0, 0, 0, 0.035);
   width: ${({ iconSize }) => iconSize * 2}px;
   height: ${({ iconSize }) => iconSize * 2}px;
@@ -20,7 +32,9 @@ const StyledButton = styled(Button)<{ iconSize: number; $holdProgress: number; $
   align-items: center;
   position: relative;
   overflow: hidden;
-  transition: background-color 0.2s ease-in-out, border-radius 0.2s ease-in-out;
+  transition:
+    background-color 0.2s ease-in-out,
+    border-radius 0.2s ease-in-out;
 
   &:not(:disabled):hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -36,7 +50,7 @@ const StyledButton = styled(Button)<{ iconSize: number; $holdProgress: number; $
   }
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -79,9 +93,7 @@ const getColor = (color: string, isDisabled: boolean) => {
     default:
       baseColor = "var(--button-default-bg)";
   }
-  return isDisabled
-    ? `color-mix(in srgb, ${baseColor}, transparent 50%)`
-    : baseColor;
+  return isDisabled ? `color-mix(in srgb, ${baseColor}, transparent 50%)` : baseColor;
 };
 
 const CustomSpinner = styled.div<{ size: number; color: string }>`
@@ -98,13 +110,7 @@ const CustomSpinner = styled.div<{ size: number; color: string }>`
 interface IconButtonProps {
   onClick: () => Promise<void> | void;
   path: string;
-  color?:
-    | "default"
-    | "primary"
-    | "secondary"
-    | "success"
-    | "warning"
-    | "danger";
+  color?: "default" | "primary" | "secondary" | "success" | "warning" | "danger";
   ariaLabel: string;
   disabled?: boolean;
   isLoading?: boolean;
@@ -152,7 +158,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   confirmationDuration = 750,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   const [loading, setLoading] = useState(isLoading);
   const [isHolding, setIsHolding] = useState(false);
@@ -223,7 +229,15 @@ export const IconButton: React.FC<IconButtonProps> = ({
         executeClick();
       }
     }, confirmationDuration);
-  }, [disabled, loading, disableAll, needsConfirmation, confirmationDuration, isHolding, executeClick]);
+  }, [
+    disabled,
+    loading,
+    disableAll,
+    needsConfirmation,
+    confirmationDuration,
+    isHolding,
+    executeClick
+  ]);
 
   const handlePress = () => {
     if (!needsConfirmation) {

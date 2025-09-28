@@ -14,7 +14,7 @@ import FormConnection from "@/lib/models/formConnection";
 import FormResponse from "@/lib/models/formResponse";
 import Incident from "@/lib/models/incident";
 import JSZip from "jszip";
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
 
 function transformMongoData(obj: any): any {
   if (obj === null || obj === undefined) {
@@ -24,27 +24,27 @@ function transformMongoData(obj: any): any {
   // Handle Date objects and date strings
   if (obj instanceof Date) {
     const date = obj instanceof Date ? obj : new Date(obj);
-    return { "$date": date.toISOString() };
+    return { $date: date.toISOString() };
   }
 
   // Handle ObjectId - both as instance and string
   if (obj instanceof Types.ObjectId) {
-    return { "$oid": obj.toString() };
+    return { $oid: obj.toString() };
   }
 
   // Handle arrays
   if (Array.isArray(obj)) {
-    return obj.map(item => transformMongoData(item));
+    return obj.map((item) => transformMongoData(item));
   }
 
   // Handle objects
-  if (typeof obj === 'object') {
+  if (typeof obj === "object") {
     const transformed: any = {};
     for (const [key, value] of Object.entries(obj)) {
       // Skip keys starting with underscore (like _id) as they're handled separately
-      if (!key.startsWith('_')) {
+      if (!key.startsWith("_")) {
         transformed[key] = transformMongoData(value);
-      } else if (key === '_id') {
+      } else if (key === "_id") {
         transformed[key] = transformMongoData(value);
       }
     }
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": "attachment; filename=db_export.zip",
-    },
+      "Content-Disposition": "attachment; filename=db_export.zip"
+    }
   });
 }

@@ -20,7 +20,7 @@ export const SaveButton: React.FC<SaveButtonProps> = ({
   showSpinner = true,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

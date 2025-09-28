@@ -20,7 +20,7 @@ export const ReadButton: React.FC<ReadButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

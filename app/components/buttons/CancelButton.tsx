@@ -20,7 +20,7 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

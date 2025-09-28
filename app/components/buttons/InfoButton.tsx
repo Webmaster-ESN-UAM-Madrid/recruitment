@@ -20,7 +20,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

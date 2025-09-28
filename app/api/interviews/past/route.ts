@@ -5,18 +5,18 @@ import { checkRecruiterAccess } from "@/lib/utils/authUtils";
 import { getInterviews } from "@/lib/controllers/interviewController";
 
 export async function GET(req: NextRequest) {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-    if (!session) {
-        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-    }
+  if (!session) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
 
-    const isRecruiter = await checkRecruiterAccess(session.user?.email);
+  const isRecruiter = await checkRecruiterAccess(session.user?.email);
 
-    if (isRecruiter) {
-        const interviews = await getInterviews(false, true);
-        return NextResponse.json(interviews);
-    } else {
-        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-    }
+  if (isRecruiter) {
+    const interviews = await getInterviews(false, true);
+    return NextResponse.json(interviews);
+  } else {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
 }

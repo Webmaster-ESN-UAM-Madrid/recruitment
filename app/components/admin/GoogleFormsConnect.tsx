@@ -1,13 +1,13 @@
 /* eslint-disable react/no-unescaped-entities */
-import { useState, useEffect } from 'react';
-import FormPreview from '../FormPreview';
-import { config } from '@/lib/config';
-import styled from 'styled-components';
+import { useState, useEffect } from "react";
+import FormPreview from "../FormPreview";
+import { config } from "@/lib/config";
+import styled from "styled-components";
 import { CopyButton } from "@/app/components/buttons/CopyButton";
-import { useToast } from '@/app/components/toasts/ToastContext';
-import { BackButton } from '../buttons/BackButton';
-import { NextButton } from '../buttons/NextButton';
-import { SaveButton } from '../buttons/SaveButton';
+import { useToast } from "@/app/components/toasts/ToastContext";
+import { BackButton } from "../buttons/BackButton";
+import { NextButton } from "../buttons/NextButton";
+import { SaveButton } from "../buttons/SaveButton";
 
 type FormSection = [string, any[]];
 
@@ -19,7 +19,7 @@ const Container = styled.div`
 const Title = styled.h2`
   color: #333;
   margin-bottom: 20px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
 `;
 
 const CodeInput = styled.input`
@@ -52,7 +52,7 @@ const StyledCheckbox = styled.input`
 `;
 
 const StyledLabel = styled.label`
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
 `;
 
 const CodeWrapper = styled.div`
@@ -104,10 +104,10 @@ interface GoogleFormsConnectProps {
 const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProps) => {
   const [step, setStep] = useState(1);
   const [key, setKey] = useState<string | null>(null);
-  const [code, setCode] = useState(Array(6).fill(''));
+  const [code, setCode] = useState(Array(6).fill(""));
   const [formId, setFormId] = useState<string | null>(null);
   const [formStructure, setFormStructure] = useState<FormSection[] | null>(null);
-  const [formIdentifier, setFormIdentifier] = useState<string>('');
+  const [formIdentifier, setFormIdentifier] = useState<string>("");
   const [canCreateUsers, setCanCreateUsers] = useState<boolean>(false);
 
   const { addToast } = useToast();
@@ -261,9 +261,9 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
 
   const startNewConnection = async () => {
     setStep(1);
-    setFormIdentifier('');
+    setFormIdentifier("");
     setCanCreateUsers(false);
-    const response = await fetch('/api/forms/connect/init', { method: 'POST' });
+    const response = await fetch("/api/forms/connect/init", { method: "POST" });
     const data = await response.json();
     setKey(data.key);
   };
@@ -271,12 +271,12 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const inputValue = e.target.value;
     const prevValue = code[index];
-    let newChar = '';
+    let newChar = "";
 
     if (inputValue.length === 1) {
       newChar = inputValue;
     } else if (inputValue.length > 1) {
-      const addedChar = [...inputValue].find(char => !prevValue.includes(char));
+      const addedChar = [...inputValue].find((char) => !prevValue.includes(char));
       newChar = addedChar || inputValue.slice(-1);
     }
 
@@ -294,25 +294,25 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'ArrowLeft' && index > 0) {
+    if (e.key === "ArrowLeft" && index > 0) {
       const prevInput = document.getElementById(`code-${index - 1}`) as HTMLInputElement;
       if (prevInput) {
         e.preventDefault();
         prevInput.focus();
         prevInput.select();
       }
-    } else if (e.key === 'ArrowRight' && index < 5) {
+    } else if (e.key === "ArrowRight" && index < 5) {
       const nextInput = document.getElementById(`code-${index + 1}`) as HTMLInputElement;
       if (nextInput) {
         e.preventDefault();
         nextInput.focus();
         nextInput.select();
       }
-    } else if (e.key === 'Backspace' && !code[index] && index > 0) {
+    } else if (e.key === "Backspace" && !code[index] && index > 0) {
       const prevInput = document.getElementById(`code-${index - 1}`) as HTMLInputElement;
       if (prevInput) {
         const newCode = [...code];
-        newCode[index - 1] = '';
+        newCode[index - 1] = "";
         setCode(newCode);
         prevInput.focus();
       }
@@ -324,10 +324,10 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
   };
 
   const submitCode = async () => {
-    const response = await fetch('/api/forms/connect/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, code: code.join(''), formIdentifier, canCreateUsers }),
+    const response = await fetch("/api/forms/connect/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, code: code.join(""), formIdentifier, canCreateUsers })
     });
 
     const data = await response.json();
@@ -335,33 +335,33 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
     if (response.ok) {
       setFormId(data.formId);
       const structure = await fetch(`/api/forms/${data.formId}`)
-        .then(res => res.json())
-        .then(data => data.structure);
+        .then((res) => res.json())
+        .then((data) => data.structure);
       setFormStructure(structure);
       setStep(4);
-      addToast('Formulario conectado correctamente', 'success');
+      addToast("Formulario conectado correctamente", "success");
       onFormConnected();
     } else {
-      addToast('Error al validar el código', 'error');
+      addToast("Error al validar el código", "error");
     }
   };
 
   const handleSaveMappings = async (mappings: Map<string, string>) => {
     try {
       const response = await fetch(`/api/forms/${formId}/map`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) }),
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) })
       });
 
       if (response.ok) {
-        addToast('Formulario actualizado correctamente', 'success');
+        addToast("Formulario actualizado correctamente", "success");
         onClose();
       } else {
-        addToast('Error al actualizar el formulario', 'error');
+        addToast("Error al actualizar el formulario", "error");
       }
     } catch (e) {
-      addToast(`Error al actuializar el formulario: ${(e as Error).message}`, 'error');
+      addToast(`Error al actuializar el formulario: ${(e as Error).message}`, "error");
     }
   };
 
@@ -372,89 +372,103 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
   return (
     <Container>
       {step === 1 && (
-      <div>
-        <Title>Paso 1: Ve al Editor de Scripts</Title>
-        <p>Ve al formulario que quieres conectar, haz clic en los tres puntos (⋮) y selecciona "Editor de secuencias de comandos" o "Apps Script".</p>
-        <ButtonContainer>
-          <BackButton onClick={() => {}} disabled={true}></BackButton>
-          <NextButton onClick={() => setStep(2)}></NextButton>
-        </ButtonContainer>
-      </div>
+        <div>
+          <Title>Paso 1: Ve al Editor de Scripts</Title>
+          <p>
+            Ve al formulario que quieres conectar, haz clic en los tres puntos (⋮) y selecciona
+            "Editor de secuencias de comandos" o "Apps Script".
+          </p>
+          <ButtonContainer>
+            <BackButton onClick={() => {}} disabled={true}></BackButton>
+            <NextButton onClick={() => setStep(2)}></NextButton>
+          </ButtonContainer>
+        </div>
       )}
 
       {step === 2 && (
-      <div>
-        <Title>Paso 2: Pega el Código</Title>
-        <p>
-          Copia este código y pégalo en el editor de secuencias de comandos (reemplaza el código actual). Asegúrate de guardar el archivo.
-        </p>
-        <br />
-        <CodeWrapper>
-          <FloatingCopyButton>
-            <CopyButton content={getAppsScript()} iconSize={20} />
-          </FloatingCopyButton>
-          <CodeBlock>{getAppsScript()}</CodeBlock>
-        </CodeWrapper>
-        <ButtonContainer>
-          <BackButton onClick={() => setStep(1)}></BackButton>
-          <NextButton onClick={() => setStep(3)}></NextButton>
-        </ButtonContainer>
-      </div>
+        <div>
+          <Title>Paso 2: Pega el Código</Title>
+          <p>
+            Copia este código y pégalo en el editor de secuencias de comandos (reemplaza el código
+            actual). Asegúrate de guardar el archivo.
+          </p>
+          <br />
+          <CodeWrapper>
+            <FloatingCopyButton>
+              <CopyButton content={getAppsScript()} iconSize={20} />
+            </FloatingCopyButton>
+            <CodeBlock>{getAppsScript()}</CodeBlock>
+          </CodeWrapper>
+          <ButtonContainer>
+            <BackButton onClick={() => setStep(1)}></BackButton>
+            <NextButton onClick={() => setStep(3)}></NextButton>
+          </ButtonContainer>
+        </div>
       )}
 
       {step === 3 && (
-      <div>
-        <Title>Paso 3: Validar</Title>
-        <p>Ve a la pestaña de activadores y añade un activador para la función "onFormSubmit" con el tipo de evento "Al enviar formulario".</p>
-        <br />
-        <p>Luego, vuelve a la pestaña de código, selecciona "validateForm" y ejecuta la función.</p>
-        <br />
         <div>
-        <StyledLabel htmlFor="formIdentifier">Identificador del formulario (Opcional, para reemplazar formularios existentes):</StyledLabel>
-        <StyledInput
-          id="formIdentifier"
-          type="text"
-          value={formIdentifier}
-          onChange={(e) => setFormIdentifier(e.target.value)}
-        />
+          <Title>Paso 3: Validar</Title>
+          <p>
+            Ve a la pestaña de activadores y añade un activador para la función "onFormSubmit" con
+            el tipo de evento "Al enviar formulario".
+          </p>
+          <br />
+          <p>
+            Luego, vuelve a la pestaña de código, selecciona "validateForm" y ejecuta la función.
+          </p>
+          <br />
+          <div>
+            <StyledLabel htmlFor="formIdentifier">
+              Identificador del formulario (Opcional, para reemplazar formularios existentes):
+            </StyledLabel>
+            <StyledInput
+              id="formIdentifier"
+              type="text"
+              value={formIdentifier}
+              onChange={(e) => setFormIdentifier(e.target.value)}
+            />
+          </div>
+          <StyledCheckboxContainer>
+            <StyledCheckbox
+              id="canCreateUsers"
+              type="checkbox"
+              checked={canCreateUsers}
+              onChange={(e) => setCanCreateUsers(e.target.checked)}
+            />
+            <StyledLabel htmlFor="canCreateUsers">
+              Este formulario puede crear nuevos usuarios
+            </StyledLabel>
+          </StyledCheckboxContainer>
+          <p>Introduce aquí el código de 6 dígitos que aparece en la consola:</p>
+          <div>
+            {code.map((digit, index) => (
+              <CodeInput
+                key={index}
+                id={`code-${index}`}
+                type="text"
+                value={digit}
+                onChange={(e) => handleCodeChange(e, index)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+                onFocus={handleFocus}
+              />
+            ))}
+          </div>
+          <ButtonContainer>
+            <BackButton onClick={() => setStep(2)}></BackButton>
+            <SaveButton onClick={submitCode}></SaveButton>
+          </ButtonContainer>
         </div>
-        <StyledCheckboxContainer>
-          <StyledCheckbox
-            id="canCreateUsers"
-            type="checkbox"
-            checked={canCreateUsers}
-            onChange={(e) => setCanCreateUsers(e.target.checked)}
-          />
-          <StyledLabel htmlFor="canCreateUsers">Este formulario puede crear nuevos usuarios</StyledLabel>
-        </StyledCheckboxContainer>
-        <p>Introduce aquí el código de 6 dígitos que aparece en la consola:</p>
-        <div>
-        {code.map((digit, index) => (
-          <CodeInput
-            key={index}
-            id={`code-${index}`}
-            type="text"
-            value={digit}
-            onChange={(e) => handleCodeChange(e, index)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-            onFocus={handleFocus}
-          />
-        ))}
-        </div>
-        <ButtonContainer>
-          <BackButton onClick={() => setStep(2)}></BackButton>
-          <SaveButton onClick={submitCode}></SaveButton>
-        </ButtonContainer>
-      </div>
       )}
 
       {step === 4 && formStructure && formId && (
-      <FormPreview
-        formStructure={formStructure as any}
-        responses={new Map()}
-        isEditing={true} 
-        onSaveMappings={handleSaveMappings}
-        onCancelEdit={handleCancelEdit} />
+        <FormPreview
+          formStructure={formStructure as any}
+          responses={new Map()}
+          isEditing={true}
+          onSaveMappings={handleSaveMappings}
+          onCancelEdit={handleCancelEdit}
+        />
       )}
     </Container>
   );

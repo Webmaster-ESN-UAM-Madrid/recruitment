@@ -13,6 +13,8 @@ import { HideButton } from "../../../app/components/buttons/HideButton";
 import { useToast } from "../../../app/components/toasts/ToastContext";
 import Modal from "../../../app/components/modals/Modal";
 import TextField from "@mui/material/TextField";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 
 const PageContainer = styled.div`
   padding: 20px;
@@ -28,27 +30,39 @@ const CandidateTable = styled.div`
   margin: 0 auto;
 `;
 
-const TableHeader = styled.div<{ $isMobile: boolean }>`
+const TableHeader = styled.div<{ $isMobile: boolean; $isNewbie?: boolean }>`
   display: grid;
-  grid-template-columns: 60px 1fr ${({ $isMobile }) => ($isMobile ? "120px" : "150px 120px")};
+  grid-template-columns: 60px 1fr ${({ $isMobile, $isNewbie }) =>
+      $isMobile ? "120px" : $isNewbie ? "200px 120px" : "150px 120px"};
   padding: 10px 15px;
   background-color: var(--table-header-bg);
   font-weight: bold;
   border-bottom: 1px solid var(--border-primary);
 `;
 
-const TableRow = styled.div<{ $isTutor?: boolean; $isMobile: boolean }>`
-  background-color: ${({ $isTutor }) => ($isTutor ? "var(--tutor-row-bg)" : "var(--bg-primary)")};
+const TableRow = styled.div<{
+  $isTutor?: boolean;
+  $isMobile: boolean;
+  $isNewbie?: boolean;
+  $isSelected?: boolean;
+}>`
+  background-color: ${({ $isSelected, $isTutor }) => {
+    if ($isSelected) return "rgba(0, 112, 240, 0.12)";
+    return $isTutor ? "var(--tutor-row-bg)" : "var(--bg-primary)";
+  }};
   display: grid;
-  grid-template-columns: 60px 1fr ${({ $isMobile }) => ($isMobile ? "120px" : "150px 120px")};
+  grid-template-columns: 60px 1fr ${({ $isMobile, $isNewbie }) =>
+      $isMobile ? "120px" : $isNewbie ? "200px 120px" : "150px 120px"};
   align-items: center;
   padding: 10px 15px;
   border-top: 2px solid var(--border-secondary);
   cursor: pointer;
 
   &:hover {
-    background-color: ${({ $isTutor }) =>
-      $isTutor ? "var(--tutor-row-hover-bg)" : "var(--table-row-hover-bg)"};
+    background-color: ${({ $isSelected, $isTutor }) => {
+      if ($isSelected) return "rgba(0, 112, 240, 0.18)";
+      return $isTutor ? "var(--tutor-row-hover-bg)" : "var(--table-row-hover-bg)";
+    }};
   }
 
   &:last-child {
@@ -184,6 +198,17 @@ const ModalActions = styled.div`
   margin-top: 20px;
 `;
 
+const MobileSelectionWrapper = styled.div`
+  padding: 5px 40px;
+  display: flex;
+  justify-content: center;
+`;
+
+const MobileSelectionLabel = styled.span`
+  font-weight: 500;
+  line-height: 1.4;
+`;
+
 interface Candidate {
   _id: string;
   name: string;
@@ -201,7 +226,11 @@ interface Feedback {
   isEdited: boolean;
 }
 
-const FeedbackPage: React.FC = () => {
+interface FeedbackPageProps {
+  maxNewbieSelections?: number;
+}
+
+const FeedbackPage: React.FC<FeedbackPageProps> = ({ maxNewbieSelections = 3 }) => {
   const { data: session } = useSession();
   const { addToast } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -213,7 +242,10 @@ const FeedbackPage: React.FC = () => {
   const [feedbackText, setFeedbackText] = useState("");
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [newbieSelections, setNewbieSelections] = useState<string[]>([]);
+  const [isSavingSelection, setIsSavingSelection] = useState(false);
   const defaultAvatar = "/default-avatar.jpg";
+  const isNewbie = session?.user?.newbie;
 
   useEffect(() => {
     const checkMobile = () => {
@@ -259,6 +291,71 @@ const FeedbackPage: React.FC = () => {
 
     fetchData();
   }, [addToast]);
+
+  useEffect(() => {
+    if (!isNewbie) {
+      setNewbieSelections([]);
+      return;
+    }
+
+    const fetchSelections = async () => {
+      try {
+        const res = await fetch("/api/users/newbie-selections");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.selections)) {
+            setNewbieSelections(data.selections);
+          }
+        } else {
+          console.error("Failed to fetch newbie selections");
+        }
+      } catch (error) {
+        console.error("Error fetching newbie selections", error);
+      }
+    };
+
+    fetchSelections();
+  }, [isNewbie]);
+
+  const handleNewbieSelectionToggle = async (candidateId: string) => {
+    if (!isNewbie) return;
+    if (isSavingSelection) return;
+
+    const previousSelections = [...newbieSelections];
+    const isAlreadySelected = previousSelections.includes(candidateId);
+
+    if (!isAlreadySelected && previousSelections.length >= maxNewbieSelections) {
+      addToast(`Solo puedes seleccionar ${maxNewbieSelections} candidatos.`, "info");
+      return;
+    }
+
+    const nextSelections = isAlreadySelected
+      ? previousSelections.filter((id) => id !== candidateId)
+      : [...previousSelections, candidateId];
+
+    setNewbieSelections(nextSelections);
+    setIsSavingSelection(true);
+
+    try {
+      const res = await fetch("/api/users/newbie-selections", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ selections: nextSelections })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to persist selections");
+      }
+    } catch (error) {
+      console.error("Error saving newbie selection", error);
+      setNewbieSelections(previousSelections);
+      addToast("No se pudo guardar tu selección. Inténtalo de nuevo.", "error");
+    } finally {
+      setIsSavingSelection(false);
+    }
+  };
 
   const handleRowClick = (candidateId: string) => {
     setExpandedRows((prev) =>
@@ -351,10 +448,13 @@ const FeedbackPage: React.FC = () => {
     <PageContainer>
       <h1>Feedback</h1>
       <CandidateTable>
-        <TableHeader $isMobile={isMobile}>
+        <TableHeader $isMobile={isMobile} $isNewbie={isNewbie}>
           <DataCell>Foto</DataCell>
           <DataCell>Nombre</DataCell>
-          {!isMobile && <DataCell>Comentarios Añadidos</DataCell>}
+          {!isMobile && !isNewbie && <DataCell>Comentarios Añadidos</DataCell>}
+          {!isMobile && isNewbie && (
+            <DataCell>Te gustaría que esta persona entre contigo a ESN UAM?</DataCell>
+          )}
           <DataCell>Acciones</DataCell>
         </TableHeader>
         {loading ? (
@@ -366,6 +466,7 @@ const FeedbackPage: React.FC = () => {
             );
             const isExpanded = expandedRows.includes(candidate._id);
             const hasFeedback = candidateFeedback.length > 0;
+            const isCandidateSelected = newbieSelections.includes(candidate._id);
 
             return (
               <div key={candidate._id}>
@@ -373,6 +474,8 @@ const FeedbackPage: React.FC = () => {
                   onClick={() => handleRowClick(candidate._id)}
                   $isTutor={candidate.tutor === session?.user?.email}
                   $isMobile={isMobile}
+                  $isNewbie={isNewbie}
+                  $isSelected={isCandidateSelected}
                 >
                   <DataCell>
                     <Avatar
@@ -389,7 +492,30 @@ const FeedbackPage: React.FC = () => {
                       <CandidateName>{candidate.name}</CandidateName>
                     )}
                   </DataCell>
-                  {!isMobile && <DataCell>{candidateFeedback.length}</DataCell>}
+                  {!isMobile && !isNewbie && <DataCell>{candidateFeedback.length}</DataCell>}
+                  {!isMobile && isNewbie && (
+                    <DataCell onClick={(event) => event.stopPropagation()}>
+                      <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+                        <Checkbox
+                          checked={isCandidateSelected}
+                          onChange={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            void handleNewbieSelectionToggle(candidate._id);
+                          }}
+                          onClick={(event) => event.stopPropagation()}
+                          disabled={
+                            !isCandidateSelected &&
+                            (isSavingSelection || newbieSelections.length >= maxNewbieSelections)
+                          }
+                          inputProps={{
+                            "aria-label": "Seleccionar candidato como preferido"
+                          }}
+                          disableRipple={true}
+                        />
+                      </div>
+                    </DataCell>
+                  )}
                   <ActionsCell>
                     {isExpanded ? (
                       <HideButton
@@ -410,11 +536,40 @@ const FeedbackPage: React.FC = () => {
                       ariaLabel="Añadir Comentario"
                       showSpinner={false}
                       iconSize={22}
+                      disabled={isNewbie && hasFeedback}
                     />
                   </ActionsCell>
                 </TableRow>
                 <AccordionContent $expanded={isExpanded} $hasFeedback={hasFeedback}>
                   <div>
+                    {isMobile && isNewbie && (
+                      <MobileSelectionWrapper>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={isCandidateSelected}
+                              onChange={() => {
+                                void handleNewbieSelectionToggle(candidate._id);
+                              }}
+                              disabled={
+                                !isCandidateSelected &&
+                                (isSavingSelection ||
+                                  newbieSelections.length >= maxNewbieSelections)
+                              }
+                              inputProps={{
+                                "aria-label": "Seleccionar candidato como preferido"
+                              }}
+                              disableRipple
+                            />
+                          }
+                          label={
+                            <MobileSelectionLabel>
+                              ¿Te gustaría que esta persona entre contigo a ESN UAM?
+                            </MobileSelectionLabel>
+                          }
+                        />
+                      </MobileSelectionWrapper>
+                    )}
                     {hasFeedback ? (
                       candidateFeedback.map((f) => (
                         <FeedbackItem key={f._id} $isMobile={isMobile}>
@@ -485,4 +640,3 @@ const FeedbackPage: React.FC = () => {
 };
 
 export default FeedbackPage;
-

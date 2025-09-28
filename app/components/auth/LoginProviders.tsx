@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-'use client'
+"use client";
 
 import { getProviders, signIn } from "next-auth/react";
 import React from "react";
 import LoadingSpinner from "../loaders/LoadingSpinner";
-import styled from 'styled-components';
+import styled from "styled-components";
 
 const StyledLoginButton = styled.button`
   background-color: #007bff;
@@ -46,8 +46,11 @@ export default function LoginProviders() {
     <div>
       {Object.values(providers).map((provider: any) => (
         <div key={provider.name}>
-          <StyledLoginButton disabled={isLoading} onClick={() => signIn(provider.id, { callbackUrl: "/" })}>
-            {isLoading ? 'Loading...' : `Iniciar sesión con ${provider.name}`}
+          <StyledLoginButton
+            disabled={isLoading}
+            onClick={() => signIn(provider.id, { callbackUrl: "/" })}
+          >
+            {isLoading ? "Loading..." : `Iniciar sesión con ${provider.name}`}
           </StyledLoginButton>
         </div>
       ))}

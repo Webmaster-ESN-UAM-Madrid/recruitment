@@ -67,4 +67,3 @@ export async function checkTutorAccess(
     return false;
   }
 }
-

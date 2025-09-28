@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import DashboardPage from '../../src/components/pages/DashboardPage';
-import LoadingSpinner from '../components/loaders/LoadingSpinner';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import DashboardPage from "../../src/components/pages/DashboardPage";
+import LoadingSpinner from "../components/loaders/LoadingSpinner";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -12,18 +12,18 @@ export default function Dashboard() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === "loading") return;
 
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
       return;
     }
 
     const checkAccess = async () => {
-      const response = await fetch('/api/access/recruiter');
+      const response = await fetch("/api/access/recruiter");
       const data = await response.json();
       if (!data.hasAccess) {
-        router.push('/auth/signin');
+        router.push("/auth/signin");
       } else {
         setHasAccess(true);
       }
@@ -32,7 +32,7 @@ export default function Dashboard() {
     checkAccess();
   }, [session, status, router]);
 
-  if (status === 'loading' || !hasAccess) {
+  if (status === "loading" || !hasAccess) {
     return <LoadingSpinner />;
   }
 

@@ -1,8 +1,7 @@
-
-import { Schema, model, models, Document } from 'mongoose';
+import { Schema, model, models, Document } from "mongoose";
 
 export interface IForm extends Document {
-  provider: 'GOOGLE_FORMS' | 'CUSTOM';
+  provider: "GOOGLE_FORMS" | "CUSTOM";
   appsScriptId?: string;
   structure: string;
   fieldMappings: Map<string, string>;
@@ -18,11 +17,11 @@ const formSchema = new Schema({
   fieldMappings: {
     type: Map,
     of: String,
-    default: {},
+    default: {}
   },
   canCreateUsers: { type: Boolean, default: false },
   formIdentifier: { type: String, unique: true, sparse: true }, // Make it unique but allow nulls
-  recruitmentProcessId: { type: String },
+  recruitmentProcessId: { type: String }
 });
 
-export default models.Form || model<IForm>('Form', formSchema);
+export default models.Form || model<IForm>("Form", formSchema);

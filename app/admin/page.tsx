@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import AdminPanelPage from '../../src/components/pages/AdminPanelPage';
-import LoadingSpinner from '../components/loaders/LoadingSpinner';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import AdminPanelPage from "../../src/components/pages/AdminPanelPage";
+import LoadingSpinner from "../components/loaders/LoadingSpinner";
 
 export default function Admin() {
   const { data: session, status } = useSession();
@@ -12,18 +12,18 @@ export default function Admin() {
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === "loading") return;
 
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
       return;
     }
 
     const checkAccess = async () => {
-      const response = await fetch('/api/access/admin');
+      const response = await fetch("/api/access/admin");
       const data = await response.json();
       if (!data.isAdmin) {
-        router.push('/auth/signin'); // Redirect to signin if not authorized
+        router.push("/auth/signin"); // Redirect to signin if not authorized
       } else {
         setHasAccess(true);
       }
@@ -32,7 +32,7 @@ export default function Admin() {
     checkAccess();
   }, [session, status, router]);
 
-  if (status === 'loading' || !hasAccess) {
+  if (status === "loading" || !hasAccess) {
     return <LoadingSpinner />;
   }
 

@@ -20,7 +20,7 @@ export const LaunchButton: React.FC<LaunchButtonProps> = ({
   iconSize = 24,
   color = "default",
   className,
-  style,
+  style
 }) => {
   const handleClick = () => {
     window.open(href, "_blank", "noopener,noreferrer");

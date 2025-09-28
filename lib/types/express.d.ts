@@ -1,6 +1,5 @@
-
-import { Document } from 'mongoose';
-import { IUser } from '../models/user'; // Assuming IUser is the interface for your User model
+import { Document } from "mongoose";
+import { IUser } from "../models/user"; // Assuming IUser is the interface for your User model
 
 declare global {
   namespace Express {

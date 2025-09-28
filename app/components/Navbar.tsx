@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-import styled from 'styled-components';
-import { useEffect, useState, useCallback } from 'react';
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import styled from "styled-components";
+import { useEffect, useState, useCallback } from "react";
 
 const NavContainer = styled.nav`
   background-color: var(--navbar-bg);
@@ -38,10 +38,10 @@ const NavLinks = styled.div`
 `;
 
 const NavLinkContainer = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
 `;
 
 const NavLink = styled(Link)`
@@ -76,24 +76,24 @@ const ProfilePicture = styled.img`
 `;
 
 const NotificationDot = styled.div`
-    background-color: var(--brand-primary);
-    color: white;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 10px;
-    font-weight: bold;
+  background-color: var(--brand-primary);
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 10px;
+  font-weight: bold;
 `;
 
 const WarningDot = styled(NotificationDot)`
-    background-color: var(--warning-color);
+  background-color: var(--warning-color);
 `;
 
 const ErrorDot = styled(NotificationDot)`
-    background-color: var(--error-color);
+  background-color: var(--error-color);
 `;
 
 const MenuButton = styled.button`
@@ -115,7 +115,7 @@ const SidePanel = styled.div<{ $isOpen: boolean }>`
   background-color: var(--navbar-bg);
   position: fixed;
   top: 0;
-  left: ${({ $isOpen }) => ($isOpen ? '0' : '-100%')}; /* Slide in from left */
+  left: ${({ $isOpen }) => ($isOpen ? "0" : "-100%")}; /* Slide in from left */
   width: 250px;
   height: 100%;
   padding: 20px;
@@ -154,7 +154,7 @@ const Overlay = styled.div<{ $isOpen: boolean }>`
   background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
   z-index: 999; /* Below the side panel, above other content */
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
-  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+  pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
   transition: opacity 0.3s ease-in-out;
 
   @media (min-width: 769px) {
@@ -172,39 +172,39 @@ const Navbar: React.FC = () => {
   const [incidentErrors, setIncidentErrors] = useState(0);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const defaultAvatar = '/default-avatar.jpg';
+  const defaultAvatar = "/default-avatar.jpg";
 
   const fetchTasksStatus = useCallback(async () => {
     if (isRecruiter) {
-        const res = await fetch('/api/tasks');
-        if (res.ok) {
-            const data = await res.json();
-            setPersonalTasks(data.personalTasks);
-            setHasGlobalTasks(data.hasGlobalTasks);
-        }
+      const res = await fetch("/api/tasks");
+      if (res.ok) {
+        const data = await res.json();
+        setPersonalTasks(data.personalTasks);
+        setHasGlobalTasks(data.hasGlobalTasks);
+      }
     }
   }, [isRecruiter]);
 
   const fetchIncidentsStatus = useCallback(async () => {
-      if (isRecruiter) {
-          const res = await fetch('/api/incidents?status=true');
-          if (res.ok) {
-              const data = await res.json();
-              setIncidentWarnings(data.warnings);
-              setIncidentErrors(data.errors);
-          }
+    if (isRecruiter) {
+      const res = await fetch("/api/incidents?status=true");
+      if (res.ok) {
+        const data = await res.json();
+        setIncidentWarnings(data.warnings);
+        setIncidentErrors(data.errors);
       }
+    }
   }, [isRecruiter]);
 
   useEffect(() => {
     const checkAccess = async () => {
-      if (status === 'authenticated') {
-        const adminRes = await fetch('/api/access/admin');
+      if (status === "authenticated") {
+        const adminRes = await fetch("/api/access/admin");
         const adminData = await adminRes.json();
         setIsAdmin(adminData.isAdmin);
 
         if (!adminData.isAdmin) {
-          const recruiterRes = await fetch('/api/access/recruiter');
+          const recruiterRes = await fetch("/api/access/recruiter");
           const recruiterData = await recruiterRes.json();
           setIsRecruiter(recruiterData.hasAccess);
         } else {
@@ -219,16 +219,16 @@ const Navbar: React.FC = () => {
     fetchTasksStatus();
     fetchIncidentsStatus();
 
-    window.addEventListener('updateTasksDot', fetchTasksStatus);
-    window.addEventListener('updateIncidentsDot', fetchIncidentsStatus);
+    window.addEventListener("updateTasksDot", fetchTasksStatus);
+    window.addEventListener("updateIncidentsDot", fetchIncidentsStatus);
 
     return () => {
-        window.removeEventListener('updateTasksDot', fetchTasksStatus);
-        window.removeEventListener('updateIncidentsDot', fetchIncidentsStatus);
+      window.removeEventListener("updateTasksDot", fetchTasksStatus);
+      window.removeEventListener("updateIncidentsDot", fetchIncidentsStatus);
     };
   }, [fetchIncidentsStatus, fetchTasksStatus, isRecruiter, session]);
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return null; // Or a loading spinner for the navbar
   }
 
@@ -236,9 +236,7 @@ const Navbar: React.FC = () => {
     <>
       <NavContainer>
         {/* Mobile Menu Button (visible on mobile, hidden on desktop) */}
-        <MenuButton onClick={() => setIsPanelOpen(true)}>
-          ☰
-        </MenuButton>
+        <MenuButton onClick={() => setIsPanelOpen(true)}>☰</MenuButton>
 
         {/* Desktop NavLinks (hidden on mobile) */}
         <NavLinks className="desktop-nav-links">
@@ -247,18 +245,18 @@ const Navbar: React.FC = () => {
           {isRecruiter && <NavLink href="/interviews">Entrevistas</NavLink>}
           {isRecruiter && <NavLink href="/stats">Estadísticas</NavLink>}
           {isRecruiter && (
-              <NavLinkContainer>
-                  <NavLink href="/tasks">Tareas</NavLink>
-                  {(personalTasks > 0 || hasGlobalTasks) && (
-                      <NotificationDot>{personalTasks > 0 ? personalTasks : '·'}</NotificationDot>
-                  )}
-              </NavLinkContainer>
+            <NavLinkContainer>
+              <NavLink href="/tasks">Tareas</NavLink>
+              {(personalTasks > 0 || hasGlobalTasks) && (
+                <NotificationDot>{personalTasks > 0 ? personalTasks : "·"}</NotificationDot>
+              )}
+            </NavLinkContainer>
           )}
           {isRecruiter && (
             <NavLinkContainer>
-                <NavLink href="/incidents">Incidencias</NavLink>
-                {incidentWarnings > 0 && <WarningDot>{incidentWarnings}</WarningDot>}
-                {incidentErrors > 0 && <ErrorDot>{incidentErrors}</ErrorDot>}
+              <NavLink href="/incidents">Incidencias</NavLink>
+              {incidentWarnings > 0 && <WarningDot>{incidentWarnings}</WarningDot>}
+              {incidentErrors > 0 && <ErrorDot>{incidentErrors}</ErrorDot>}
             </NavLinkContainer>
           )}
           {isAdmin && <NavLink href="/admin">Administración</NavLink>}
@@ -267,7 +265,11 @@ const Navbar: React.FC = () => {
         {/* UserInfo (visible on both desktop and mobile, styled via media queries) */}
         <UserInfo>
           {session?.user?.image ? (
-            <ProfilePicture src={session.user.image} onError={(e) => (e.currentTarget.src = defaultAvatar)} alt="Perfil" />
+            <ProfilePicture
+              src={session.user.image}
+              onError={(e) => (e.currentTarget.src = defaultAvatar)}
+              alt="Perfil"
+            />
           ) : session?.user?.name ? (
             <span>{session.user.name}</span>
           ) : (
@@ -279,30 +281,52 @@ const Navbar: React.FC = () => {
 
       {/* Side Panel for Mobile */}
       <SidePanel $isOpen={isPanelOpen}>
-        <CloseButton onClick={() => setIsPanelOpen(false)}>
-          &times;
-        </CloseButton>
+        <CloseButton onClick={() => setIsPanelOpen(false)}>&times;</CloseButton>
         <MobileNavLinks>
-          {session && <NavLink href="/feedback" onClick={() => setIsPanelOpen(false)}>Feedback</NavLink>}
-          {isRecruiter && <NavLink href="/dashboard" onClick={() => setIsPanelOpen(false)}>Dashboard</NavLink>}
-          {isRecruiter && <NavLink href="/interviews" onClick={() => setIsPanelOpen(false)}>Entrevistas</NavLink>}
-          {isRecruiter && <NavLink href="/stats" onClick={() => setIsPanelOpen(false)}>Estadísticas</NavLink>}
+          {session && (
+            <NavLink href="/feedback" onClick={() => setIsPanelOpen(false)}>
+              Feedback
+            </NavLink>
+          )}
           {isRecruiter && (
-              <NavLinkContainer>
-                  <NavLink href="/tasks" onClick={() => setIsPanelOpen(false)}>Tareas</NavLink>
-                  {(personalTasks > 0 || hasGlobalTasks) && (
-                      <NotificationDot>{personalTasks > 0 ? personalTasks : '·'}</NotificationDot>
-                  )}
-              </NavLinkContainer>
+            <NavLink href="/dashboard" onClick={() => setIsPanelOpen(false)}>
+              Dashboard
+            </NavLink>
+          )}
+          {isRecruiter && (
+            <NavLink href="/interviews" onClick={() => setIsPanelOpen(false)}>
+              Entrevistas
+            </NavLink>
+          )}
+          {isRecruiter && (
+            <NavLink href="/stats" onClick={() => setIsPanelOpen(false)}>
+              Estadísticas
+            </NavLink>
           )}
           {isRecruiter && (
             <NavLinkContainer>
-                <NavLink href="/incidents" onClick={() => setIsPanelOpen(false)}>Incidencias</NavLink>
-                {incidentWarnings > 0 && <WarningDot>{incidentWarnings}</WarningDot>}
-                {incidentErrors > 0 && <ErrorDot>{incidentErrors}</ErrorDot>}
+              <NavLink href="/tasks" onClick={() => setIsPanelOpen(false)}>
+                Tareas
+              </NavLink>
+              {(personalTasks > 0 || hasGlobalTasks) && (
+                <NotificationDot>{personalTasks > 0 ? personalTasks : "·"}</NotificationDot>
+              )}
             </NavLinkContainer>
           )}
-          {isAdmin && <NavLink href="/admin" onClick={() => setIsPanelOpen(false)}>Administración</NavLink>}
+          {isRecruiter && (
+            <NavLinkContainer>
+              <NavLink href="/incidents" onClick={() => setIsPanelOpen(false)}>
+                Incidencias
+              </NavLink>
+              {incidentWarnings > 0 && <WarningDot>{incidentWarnings}</WarningDot>}
+              {incidentErrors > 0 && <ErrorDot>{incidentErrors}</ErrorDot>}
+            </NavLinkContainer>
+          )}
+          {isAdmin && (
+            <NavLink href="/admin" onClick={() => setIsPanelOpen(false)}>
+              Administración
+            </NavLink>
+          )}
         </MobileNavLinks>
       </SidePanel>
 

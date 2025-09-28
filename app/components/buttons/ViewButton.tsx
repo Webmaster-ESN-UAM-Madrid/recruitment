@@ -20,7 +20,7 @@ export const ViewButton: React.FC<ViewButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

@@ -20,7 +20,7 @@ export const NextButton: React.FC<NextButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

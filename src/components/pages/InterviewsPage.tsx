@@ -49,7 +49,7 @@ const InterviewsPage = () => {
       const [interviewsRes, usersRes, candidatesRes] = await Promise.all([
         fetch("/api/interviews"),
         fetch("/api/users"),
-        fetch("/api/candidates"),
+        fetch("/api/candidates")
       ]);
 
       const interviewsData = await interviewsRes.json();
@@ -75,28 +75,31 @@ const InterviewsPage = () => {
   };
   const closeModal = () => {
     setEditingInterview(null);
-    setIsModalOpen(false)
+    setIsModalOpen(false);
   };
 
-  const handleSave = async (interviewData: Partial<IInterview>, events: Record<string, ICandidate["events"]>) => {
+  const handleSave = async (
+    interviewData: Partial<IInterview>,
+    events: Record<string, ICandidate["events"]>
+  ) => {
     const isEditing = !!editingInterview;
-    const url = isEditing ? `/api/interviews/${editingInterview?._id}` : '/api/interviews';
-    const method = isEditing ? 'PUT' : 'POST';
+    const url = isEditing ? `/api/interviews/${editingInterview?._id}` : "/api/interviews";
+    const method = isEditing ? "PUT" : "POST";
 
     try {
       const res = await fetch(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ interviewData, events }),
+        body: JSON.stringify({ interviewData, events })
       });
 
       if (res.ok) {
-        addToast(`Entrevista ${isEditing ? 'actualizada' : 'creada'} correctamente`, 'success');
+        addToast(`Entrevista ${isEditing ? "actualizada" : "creada"} correctamente`, "success");
         closeModal();
         fetchData();
-        window.dispatchEvent(new CustomEvent('updateTasksDot'));
+        window.dispatchEvent(new CustomEvent("updateTasksDot"));
       } else {
         addToast("Error al guardar la entrevista", "error");
       }
@@ -109,18 +112,18 @@ const InterviewsPage = () => {
   const handleDelete = async (interviewId: string) => {
     try {
       const res = await fetch(`/api/interviews/${interviewId}`, {
-        method: 'DELETE',
+        method: "DELETE"
       });
 
       if (res.ok) {
-        addToast('Entrevista eliminada correctamente', 'success');
-        setInterviews(interviews.filter(interview => interview._id !== interviewId));
+        addToast("Entrevista eliminada correctamente", "success");
+        setInterviews(interviews.filter((interview) => interview._id !== interviewId));
       } else {
-        addToast('Error al eliminar la entrevista', 'error');
+        addToast("Error al eliminar la entrevista", "error");
       }
     } catch (error) {
       console.error("Error al eliminar la entrevista:", error);
-      addToast('Error al eliminar la entrevista', 'error');
+      addToast("Error al eliminar la entrevista", "error");
     } finally {
       fetchData();
     }
@@ -137,12 +140,12 @@ const InterviewsPage = () => {
         <InterviewContainer>
           {interviews.map((interview) => (
             <InterviewCard
-            key={interview._id}
-            interview={interview}
-            users={users}
-            candidates={candidates}
-            onEdit={() => openModal(interview)}
-            onDelete={handleDelete}
+              key={interview._id}
+              interview={interview}
+              users={users}
+              candidates={candidates}
+              onEdit={() => openModal(interview)}
+              onDelete={handleDelete}
             />
           ))}
         </InterviewContainer>

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import Modal from '@/app/components/modals/Modal';
-import LoadingSpinner from '@/app/components/loaders/LoadingSpinner';
-import { AcceptButton } from '../buttons/AcceptButton';
-import { ICandidate } from '@/lib/models/candidate';
-import { CancelButton } from '../buttons/CancelButton';
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import Modal from "@/app/components/modals/Modal";
+import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
+import { AcceptButton } from "../buttons/AcceptButton";
+import { ICandidate } from "@/lib/models/candidate";
+import { CancelButton } from "../buttons/CancelButton";
 
 const CandidateGrid = styled.div`
   display: flex;
@@ -18,25 +18,29 @@ const CandidateGrid = styled.div`
 `;
 
 const CandidateCard = styled.div<{
-  isselected: boolean
+  isselected: boolean;
 }>`
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    border: 1px solid var(--border-primary);
-    border-radius: 16px;
-    background-color: var(--bg-primary);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    transition: box-shadow 0.3s ease, background-color 0.3s ease;
-    width: fit-content;
-    cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  background-color: var(--bg-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition:
+    box-shadow 0.3s ease,
+    background-color 0.3s ease;
+  width: fit-content;
+  cursor: pointer;
 
-    &:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
 
-    ${({ isselected }) => isselected && `
+  ${({ isselected }) =>
+    isselected &&
+    `
         background-color: var(--brand-primary);
         color: white;
     `}
@@ -61,18 +65,22 @@ interface AttachToCandidateModalProps {
   onAttach: (candidateId: string) => void;
 }
 
-const AttachToCandidateModal: React.FC<AttachToCandidateModalProps> = ({ isOpen, onClose, onAttach }) => {
+const AttachToCandidateModal: React.FC<AttachToCandidateModalProps> = ({
+  isOpen,
+  onClose,
+  onAttach
+}) => {
   const [candidates, setCandidates] = useState<ICandidate[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<string | null>(null);
-  const defaultAvatar = '/default-avatar.jpg';
+  const defaultAvatar = "/default-avatar.jpg";
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      fetch('/api/candidates')
-        .then(res => res.json())
-        .then(data => {
+      fetch("/api/candidates")
+        .then((res) => res.json())
+        .then((data) => {
           setCandidates(data.candidates);
           setLoading(false);
         });
@@ -91,7 +99,7 @@ const AttachToCandidateModal: React.FC<AttachToCandidateModalProps> = ({ isOpen,
     } else {
       setSelectedCandidate(candidateId);
     }
-  }
+  };
 
   return (
     <Modal isOpen={isOpen} title="Vincular a Candidato">
@@ -100,15 +108,26 @@ const AttachToCandidateModal: React.FC<AttachToCandidateModalProps> = ({ isOpen,
       ) : (
         <CandidateGrid>
           {candidates.map((candidate: ICandidate) => (
-            <CandidateCard key={candidate._id} onClick={() => handleSelect(candidate._id)} isselected={selectedCandidate === candidate._id}>
-              <Avatar src={candidate.photoUrl || defaultAvatar} onError={(e) => (e.currentTarget.src = defaultAvatar)} />
+            <CandidateCard
+              key={candidate._id}
+              onClick={() => handleSelect(candidate._id)}
+              isselected={selectedCandidate === candidate._id}
+            >
+              <Avatar
+                src={candidate.photoUrl || defaultAvatar}
+                onError={(e) => (e.currentTarget.src = defaultAvatar)}
+              />
               {candidate.name}
             </CandidateCard>
           ))}
         </CandidateGrid>
       )}
       <ButtonContainer>
-        <AcceptButton onClick={handleAttach} disabled={!selectedCandidate} showSpinner={true}></AcceptButton>
+        <AcceptButton
+          onClick={handleAttach}
+          disabled={!selectedCandidate}
+          showSpinner={true}
+        ></AcceptButton>
         <CancelButton onClick={onClose}></CancelButton>
       </ButtonContainer>
     </Modal>

@@ -15,7 +15,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
+  ResponsiveContainer
 } from "recharts";
 
 interface StatsData {
@@ -38,10 +38,18 @@ const COLORS = [
   "#8dd1e1",
   "#a4de6c",
   "#d0ed57",
-  "#ffc0cb",
+  "#ffc0cb"
 ];
 
-function StatCard({ title, value, icon }: { title: string; value: React.ReactNode; icon?: React.ReactNode }) {
+function StatCard({
+  title,
+  value,
+  icon
+}: {
+  title: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+}) {
   return (
     <Paper elevation={1} sx={{ p: 2 }}>
       <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -117,7 +125,12 @@ export default function RecruitmentStatsPage() {
       if (aIsGD !== bIsGD) return aIsGD ? 1 : -1; // place gda/gdt at the end
       return b.count - a.count; // sort descending within each group
     });
-  const eventData = Object.entries(stats.eventAttendance).map(([name, v]) => ({ name, yes: v.yes, maybe: v.maybe, no: v.no }));
+  const eventData = Object.entries(stats.eventAttendance).map(([name, v]) => ({
+    name,
+    yes: v.yes,
+    maybe: v.maybe,
+    no: v.no
+  }));
 
   const interviewRate = stats
     ? Math.round((stats.interviewedActiveCandidatesCount / (stats.totalCandidates || 1)) * 100)
@@ -129,7 +142,9 @@ export default function RecruitmentStatsPage() {
         <Typography variant="h4" fontWeight={700} gutterBottom>
           Estadísticas de reclutamiento
         </Typography>
-        <Typography color="text.secondary">Reclutamiento actual: {stats.currentRecruitmentId}</Typography>
+        <Typography color="text.secondary">
+          Reclutamiento actual: {stats.currentRecruitmentId}
+        </Typography>
       </Box>
 
       {/* Stats cards */}
@@ -137,7 +152,7 @@ export default function RecruitmentStatsPage() {
         sx={{
           display: "grid",
           gap: 2,
-          gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(7, 1fr)" },
+          gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(7, 1fr)" }
         }}
       >
         <Box>
@@ -153,7 +168,10 @@ export default function RecruitmentStatsPage() {
           <StatCard title="Entrevistados (totales)" value={stats.interviewedCandidatesCount} />
         </Box>
         <Box>
-          <StatCard title="Entrevistados (activos)" value={stats.interviewedActiveCandidatesCount} />
+          <StatCard
+            title="Entrevistados (activos)"
+            value={stats.interviewedActiveCandidatesCount}
+          />
         </Box>
         <Box>
           <StatCard title="Tasa entrevistas" value={`${interviewRate}%`} />
@@ -168,7 +186,7 @@ export default function RecruitmentStatsPage() {
           mt: 1,
           display: "grid",
           gap: 2,
-          gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
+          gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }
         }}
       >
         {/* Committee interests bar chart */}
@@ -197,7 +215,10 @@ export default function RecruitmentStatsPage() {
                 />
                 <Bar dataKey="count">
                   {committeeData.map((entry, index) => (
-                    <Cell key={`cell-committee-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-committee-${index}`}
+                      fill={entry.color || COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -225,7 +246,9 @@ export default function RecruitmentStatsPage() {
                   height={isXs ? 40 : 60}
                 />
                 <YAxis allowDecimals={false} />
-                <Tooltip labelFormatter={(label: string | number) => <strong>{String(label)}</strong>} />
+                <Tooltip
+                  labelFormatter={(label: string | number) => <strong>{String(label)}</strong>}
+                />
                 <Bar dataKey="yes" fill="#4caf50" name="Sí" />
                 <Bar dataKey="maybe" fill="#ff9800" name="Quizás" />
                 <Bar dataKey="no" fill="#f44336" name="No" />
@@ -244,12 +267,24 @@ export default function RecruitmentStatsPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Evento</th>
-                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Sí</th>
-                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Quizás</th>
-                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>No</th>
-                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>Total</th>
-                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>% Sí (de respuestas)</th>
+                <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e0e0e0" }}>
+                  Evento
+                </th>
+                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>
+                  Sí
+                </th>
+                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>
+                  Quizás
+                </th>
+                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>
+                  No
+                </th>
+                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>
+                  Total
+                </th>
+                <th style={{ textAlign: "center", padding: 8, borderBottom: "1px solid #e0e0e0" }}>
+                  % Sí (de respuestas)
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -259,11 +294,31 @@ export default function RecruitmentStatsPage() {
                 return (
                   <tr key={row.name}>
                     <td style={{ padding: 8, borderBottom: "1px solid #f0f0f0" }}>{row.name}</td>
-                    <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>{row.yes}</td>
-                    <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>{row.maybe}</td>
-                    <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>{row.no}</td>
-                    <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>{total}</td>
-                    <td style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}>{pctYes}%</td>
+                    <td
+                      style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+                    >
+                      {row.yes}
+                    </td>
+                    <td
+                      style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+                    >
+                      {row.maybe}
+                    </td>
+                    <td
+                      style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+                    >
+                      {row.no}
+                    </td>
+                    <td
+                      style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+                    >
+                      {total}
+                    </td>
+                    <td
+                      style={{ padding: 8, textAlign: "center", borderBottom: "1px solid #f0f0f0" }}
+                    >
+                      {pctYes}%
+                    </td>
                   </tr>
                 );
               })}

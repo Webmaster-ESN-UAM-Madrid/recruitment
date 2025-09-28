@@ -1,8 +1,7 @@
+"use client";
 
-'use client';
-
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import LoginProviders from "./components/auth/LoginProviders";
 
 export default function Home() {
@@ -10,7 +9,7 @@ export default function Home() {
 
   if (session) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '50px' }}>
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
         <h1>Bienvenido, {session.user?.name}</h1>
         <Link href="/api/auth/signout">Cerrar sesión</Link>
       </div>
@@ -18,9 +17,9 @@ export default function Home() {
   }
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>Recruitment ESN UAM</h1>
       <LoginProviders />
     </div>
   );
-  }
+}

@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from 'styled-components';
-import { Dialog, DialogTitle, DialogContent, Breakpoint } from '@mui/material';
-import { CancelButton } from '@/app/components/buttons/CancelButton';
+import React from "react";
+import styled from "styled-components";
+import { Dialog, DialogTitle, DialogContent, Breakpoint } from "@mui/material";
+import { CancelButton } from "@/app/components/buttons/CancelButton";
 
 const ModalContent = styled.div`
   padding: 20px;
@@ -15,7 +15,7 @@ interface ModalProps {
   width?: Breakpoint;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, width = 'md' }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, width = "md" }) => {
   if (!isOpen) return null;
 
   return (
@@ -27,17 +27,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, width =
             onClick={onClose}
             ariaLabel="Cerrar"
             style={{
-              position: 'absolute',
+              position: "absolute",
               right: 8,
-              top: 8,
+              top: 8
             }}
           />
         )}
       </DialogTitle>
       <DialogContent dividers>
-        <ModalContent>
-          {children}
-        </ModalContent>
+        <ModalContent>{children}</ModalContent>
       </DialogContent>
     </Dialog>
   );

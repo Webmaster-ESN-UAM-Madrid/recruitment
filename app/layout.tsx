@@ -8,25 +8,25 @@ import { ToastProvider } from "./components/toasts/ToastProvider";
 import StyledComponentsRegistry from "../lib/registry";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html lang="es">
-            <head>
-                <title>Recruitment ESN UAM</title>
-                <meta charSet="UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <meta name="description" content="Recruitment App for ESN UAM" />
-                <link rel="icon" href="/favicon.png" />
-            </head>
-            <body>
-                <StyledComponentsRegistry>
-                    <SessionProvider>
-                        <ToastProvider>
-                            <Navbar />
-                            <ButtonProvider>{children}</ButtonProvider>
-                        </ToastProvider>
-                    </SessionProvider>
-                </StyledComponentsRegistry>
-            </body>
-        </html>
-    );
+  return (
+    <html lang="es">
+      <head>
+        <title>Recruitment ESN UAM</title>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Recruitment App for ESN UAM" />
+        <link rel="icon" href="/favicon.png" />
+      </head>
+      <body>
+        <StyledComponentsRegistry>
+          <SessionProvider>
+            <ToastProvider>
+              <Navbar />
+              <ButtonProvider>{children}</ButtonProvider>
+            </ToastProvider>
+          </SessionProvider>
+        </StyledComponentsRegistry>
+      </body>
+    </html>
+  );
 }

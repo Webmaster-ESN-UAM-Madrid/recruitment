@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes } from "styled-components";
 
 const bounce = keyframes`
   0%, 80%, 100% { transform: scale(0); }

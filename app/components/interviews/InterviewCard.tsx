@@ -1,11 +1,11 @@
-import React from 'react';
-import styled from 'styled-components';
-import { IInterview } from '@/lib/models/interview';
-import { ICandidate } from '@/lib/models/candidate';
-import { IUser } from '@/lib/models/user';
-import { EditButton } from '../buttons/EditButton';
-import { DeleteButton } from '../buttons/DeleteButton';
-import { useToast } from '../toasts/ToastContext';
+import React from "react";
+import styled from "styled-components";
+import { IInterview } from "@/lib/models/interview";
+import { ICandidate } from "@/lib/models/candidate";
+import { IUser } from "@/lib/models/user";
+import { EditButton } from "../buttons/EditButton";
+import { DeleteButton } from "../buttons/DeleteButton";
+import { useToast } from "../toasts/ToastContext";
 
 interface InterviewCardProps {
   interview: IInterview;
@@ -73,20 +73,30 @@ const ClickableName = styled.span`
   }
 `;
 
-const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, users, onEdit, onDelete }) => {
+const InterviewCard: React.FC<InterviewCardProps> = ({
+  interview,
+  candidates,
+  users,
+  onEdit,
+  onDelete
+}) => {
   const { addToast } = useToast();
-  const getUserName = (id: string) => users.find(u => u._id === id)?.name || 'Unknown';
+  const getUserName = (id: string) => users.find((u) => u._id === id)?.name || "Unknown";
 
   const handleCopyEmail = (email: string) => {
-    navigator.clipboard.writeText(email)
-      .then(() => addToast('Email copiado al portapapeles', 'success'))
-      .catch(() => addToast('Error al copiar el email', 'error'));
+    navigator.clipboard
+      .writeText(email)
+      .then(() => addToast("Email copiado al portapapeles", "success"))
+      .catch(() => addToast("Error al copiar el email", "error"));
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Entrevista {interview.online ? "online" : "presencial"} del {new Date(interview.date).toLocaleDateString()}</CardTitle>
+        <CardTitle>
+          Entrevista {interview.online ? "online" : "presencial"} del{" "}
+          {new Date(interview.date).toLocaleDateString()}
+        </CardTitle>
         <CardActions>
           <EditButton onClick={() => onEdit(interview)} iconSize={20} />
           <DeleteButton onClick={() => onDelete(interview._id)} iconSize={20} />
@@ -94,21 +104,24 @@ const InterviewCard: React.FC<InterviewCardProps> = ({ interview, candidates, us
       </CardHeader>
       <InterviewDetails>
         <p>
-          <strong>Candidatos:</strong>{' '}
+          <strong>Candidatos:</strong>{" "}
           {interview.candidates.map((cId, idx) => {
-            const candidate = candidates.find(c => c._id === cId.toString());
-            if (!candidate) return 'Unknown';
+            const candidate = candidates.find((c) => c._id === cId.toString());
+            if (!candidate) return "Unknown";
             return (
               <React.Fragment key={candidate._id}>
                 <ClickableName onClick={() => handleCopyEmail(candidate.email)}>
                   {candidate.name}
                 </ClickableName>
-                {idx < interview.candidates.length - 1 ? ', ' : ''}
+                {idx < interview.candidates.length - 1 ? ", " : ""}
               </React.Fragment>
             );
           })}
         </p>
-        <p><strong>Entrevistadores:</strong> {interview.interviewers.map(i => getUserName(i.toString())).join(', ')}</p>
+        <p>
+          <strong>Entrevistadores:</strong>{" "}
+          {interview.interviewers.map((i) => getUserName(i.toString())).join(", ")}
+        </p>
       </InterviewDetails>
     </Card>
   );

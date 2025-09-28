@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
+import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
-import styled from 'styled-components';
-import { TextField, Autocomplete } from '@mui/material';
+import styled from "styled-components";
+import { TextField, Autocomplete } from "@mui/material";
 
-import { SaveButton } from '@/app/components/buttons/SaveButton';
-import { AddButton } from '@/app/components/buttons/AddButton';
-import { DeleteButton } from '@/app/components/buttons/DeleteButton';
-import { EditButton } from '@/app/components/buttons/EditButton';
-import { CancelButton } from '@/app/components/buttons/CancelButton';
-import { useToast } from '@/app/components/toasts/ToastContext';
-import Modal from '@/app/components/modals/Modal';
-import FormPreview from '@/app/components/FormPreview';
-import GoogleFormsConnect from './GoogleFormsConnect';
+import { SaveButton } from "@/app/components/buttons/SaveButton";
+import { AddButton } from "@/app/components/buttons/AddButton";
+import { DeleteButton } from "@/app/components/buttons/DeleteButton";
+import { EditButton } from "@/app/components/buttons/EditButton";
+import { CancelButton } from "@/app/components/buttons/CancelButton";
+import { useToast } from "@/app/components/toasts/ToastContext";
+import Modal from "@/app/components/modals/Modal";
+import FormPreview from "@/app/components/FormPreview";
+import GoogleFormsConnect from "./GoogleFormsConnect";
 
 interface Recruiter {
   _id: string;
@@ -59,14 +59,14 @@ const Container = styled.div`
 const Title = styled.h2`
   color: #333;
   margin-bottom: 20px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
 `;
 
 const Subtitle = styled.h3`
   color: #333;
   margin-top: 50px;
   margin-bottom: 15px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
 `;
 
 const ButtonContainer = styled.div`
@@ -81,7 +81,7 @@ const TableWrapper = styled.div`
 
 const TableHeader = styled.div<{ columns: string }>`
   display: grid;
-  grid-template-columns: ${props => props.columns};
+  grid-template-columns: ${(props) => props.columns};
   gap: 10px;
   align-items: center;
   padding: 10px 0;
@@ -91,7 +91,7 @@ const TableHeader = styled.div<{ columns: string }>`
 
 const TableRow = styled.div<{ columns: string }>`
   display: grid;
-  grid-template-columns: ${props => props.columns};
+  grid-template-columns: ${(props) => props.columns};
   gap: 10px;
   align-items: center;
   padding: 5px 0;
@@ -118,15 +118,15 @@ const DataCell = styled.div`
 `;
 
 const GlobalConfigManager = () => {
-  const [currentRecruitment, setCurrentRecruitment] = useState('');
-  const [recruitmentPhase, setRecruitmentPhase] = useState('');
+  const [currentRecruitment, setCurrentRecruitment] = useState("");
+  const [recruitmentPhase, setRecruitmentPhase] = useState("");
   const [recruiters, setRecruiters] = useState<Recruiter[]>([]);
   const [committees, setCommittees] = useState<Committee[]>([]);
-  const [newRecruiterEmail, setNewRecruiterEmail] = useState('');
+  const [newRecruiterEmail, setNewRecruiterEmail] = useState("");
   const [editingCommittee, setEditingCommittee] = useState<Committee | null>(null);
   const [isCommitteeModalOpen, setIsCommitteeModalOpen] = useState(false);
-  const [committeeName, setCommitteeName] = useState('');
-  const [committeeColor, setCommitteeColor] = useState('#000000');
+  const [committeeName, setCommitteeName] = useState("");
+  const [committeeColor, setCommitteeColor] = useState("#000000");
   const [users, setUsers] = useState<User[]>([]);
   const [connectedForms, setConnectedForms] = useState<ConnectedForm[]>([]);
   const [isFormPreviewModalOpen, setIsFormPreviewModalOpen] = useState(false);
@@ -137,7 +137,7 @@ const GlobalConfigManager = () => {
 
   const fetchConfig = useCallback(async () => {
     try {
-      const response = await fetch('/api/config');
+      const response = await fetch("/api/config");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -146,44 +146,44 @@ const GlobalConfigManager = () => {
       setRecruitmentPhase(data.recruitmentPhase);
       setRecruiters(data.recruiters);
     } catch (e) {
-      addToast(`Error al cargar la configuración: ${(e as Error).message}`, 'error');
+      addToast(`Error al cargar la configuración: ${(e as Error).message}`, "error");
     }
   }, [addToast]);
 
   const fetchCommittees = useCallback(async () => {
     try {
-      const response = await fetch('/api/committees');
+      const response = await fetch("/api/committees");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       setCommittees(data);
     } catch (e) {
-      addToast(`Error al cargar los comités: ${(e as Error).message}`, 'error');
+      addToast(`Error al cargar los comités: ${(e as Error).message}`, "error");
     }
   }, [addToast]);
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch("/api/users");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setUsers(data.filter((user: User) => user.email.endsWith('@esnuam.org')));
+      setUsers(data.filter((user: User) => user.email.endsWith("@esnuam.org")));
     } catch (err) {
-      console.error('No se pudieron cargar los usuarios', err);
+      console.error("No se pudieron cargar los usuarios", err);
     }
   }, []);
 
   const fetchConnectedForms = useCallback(async () => {
     try {
-      const response = await fetch('/api/forms');
+      const response = await fetch("/api/forms");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       setConnectedForms(data);
     } catch (e) {
-      addToast(`Error al cargar los formularios conectados: ${(e as Error).message}`, 'error');
+      addToast(`Error al cargar los formularios conectados: ${(e as Error).message}`, "error");
     }
   }, [addToast]);
 
@@ -196,63 +196,63 @@ const GlobalConfigManager = () => {
 
   const handleUpdateDetails = async () => {
     try {
-      const response = await fetch('/api/config/update-details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currentRecruitment, recruitmentPhase }),
+      const response = await fetch("/api/config/update-details", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentRecruitment, recruitmentPhase })
       });
       if (response.ok) {
-        addToast('Configuración actualizada correctamente', 'success');
+        addToast("Configuración actualizada correctamente", "success");
         fetchConfig();
-        window.dispatchEvent(new CustomEvent('updateTasksDot'));
-        window.dispatchEvent(new CustomEvent('updateIncidentsDot'));
+        window.dispatchEvent(new CustomEvent("updateTasksDot"));
+        window.dispatchEvent(new CustomEvent("updateIncidentsDot"));
       } else {
-        addToast('No se pudo actualizar la configuración', 'error');
+        addToast("No se pudo actualizar la configuración", "error");
       }
     } catch (e) {
-      addToast(`Error al actualizar la configuración: ${(e as Error).message}`, 'error');
+      addToast(`Error al actualizar la configuración: ${(e as Error).message}`, "error");
     }
   };
 
   const handleAddRecruiter = async () => {
     const sanitizedEmail = newRecruiterEmail.trim().toLowerCase();
     if (!isValidEmail(sanitizedEmail)) {
-      addToast('Correo electrónico inválido', 'error');
+      addToast("Correo electrónico inválido", "error");
       return;
     }
     try {
-      const response = await fetch('/api/config/recruiters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: sanitizedEmail }),
+      const response = await fetch("/api/config/recruiters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: sanitizedEmail })
       });
       if (response.ok) {
-        addToast('Reclutador añadido correctamente', 'success');
-        setNewRecruiterEmail('');
+        addToast("Reclutador añadido correctamente", "success");
+        setNewRecruiterEmail("");
         fetchConfig();
       } else {
-        addToast('No se pudo añadir el reclutador', 'error');
+        addToast("No se pudo añadir el reclutador", "error");
       }
     } catch (e) {
-      addToast(`Error al añadir reclutador: ${(e as Error).message}`, 'error');
+      addToast(`Error al añadir reclutador: ${(e as Error).message}`, "error");
     }
   };
 
   const handleRemoveRecruiter = async (email: string) => {
     try {
-      const response = await fetch('/api/config/recruiters', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+      const response = await fetch("/api/config/recruiters", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
       });
       if (response.ok) {
-        addToast('Reclutador eliminado correctamente', 'success');
+        addToast("Reclutador eliminado correctamente", "success");
         fetchConfig();
       } else {
-        addToast('No se pudo eliminar el reclutador', 'error');
+        addToast("No se pudo eliminar el reclutador", "error");
       }
     } catch (e) {
-      addToast(`Error al eliminar reclutador: ${(e as Error).message}`, 'error');
+      addToast(`Error al eliminar reclutador: ${(e as Error).message}`, "error");
     }
   };
 
@@ -260,27 +260,27 @@ const GlobalConfigManager = () => {
     const committeeData = {
       name: committeeName,
       color: committeeColor,
-      _id: editingCommittee?._id,
+      _id: editingCommittee?._id
     };
 
-    const url = committeeData._id ? `/api/committees/${committeeData._id}` : '/api/committees';
-    const method = committeeData._id ? 'PUT' : 'POST';
+    const url = committeeData._id ? `/api/committees/${committeeData._id}` : "/api/committees";
+    const method = committeeData._id ? "PUT" : "POST";
 
     try {
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: committeeData.name, color: committeeData.color }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: committeeData.name, color: committeeData.color })
       });
       if (response.ok) {
-        addToast('Comité guardado correctamente', 'success');
+        addToast("Comité guardado correctamente", "success");
         fetchCommittees();
         setIsCommitteeModalOpen(false);
       } else {
-        addToast('No se pudo guardar el comité', 'error');
+        addToast("No se pudo guardar el comité", "error");
       }
     } catch (e) {
-      addToast(`Error al guardar comité: ${(e as Error).message}`, 'error');
+      addToast(`Error al guardar comité: ${(e as Error).message}`, "error");
     }
   };
 
@@ -294,32 +294,32 @@ const GlobalConfigManager = () => {
   const handleDeleteCommittee = async (id: string) => {
     try {
       const response = await fetch(`/api/committees/${id}`, {
-        method: 'DELETE',
+        method: "DELETE"
       });
       if (response.ok) {
-        addToast('Comité eliminado correctamente', 'success');
+        addToast("Comité eliminado correctamente", "success");
         fetchCommittees();
       } else {
-        addToast('No se pudo eliminar el comité', 'error');
+        addToast("No se pudo eliminar el comité", "error");
       }
     } catch (e) {
-      addToast(`Error al eliminar comité: ${(e as Error).message}`, 'error');
+      addToast(`Error al eliminar comité: ${(e as Error).message}`, "error");
     }
   };
 
   const handleDeleteForm = async (id: string) => {
     try {
       const response = await fetch(`/api/forms/${id}`, {
-        method: 'DELETE',
+        method: "DELETE"
       });
       if (response.ok) {
-        addToast('Formulario eliminado correctamente', 'success');
+        addToast("Formulario eliminado correctamente", "success");
         fetchConnectedForms();
       } else {
-        addToast('No se pudo eliminar el formulario', 'error');
+        addToast("No se pudo eliminar el formulario", "error");
       }
     } catch (e) {
-      addToast(`Error al eliminar formulario: ${(e as Error).message}`, 'error');
+      addToast(`Error al eliminar formulario: ${(e as Error).message}`, "error");
     }
   };
 
@@ -328,23 +328,23 @@ const GlobalConfigManager = () => {
 
     try {
       const response = await fetch(`/api/forms/${selectedFormForPreview._id}/map`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) }),
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fieldMappings: Object.fromEntries(mappings) })
       });
 
       if (response.ok) {
-        addToast('Formulario actualizado correctamente', 'success');
+        addToast("Formulario actualizado correctamente", "success");
         setIsFormPreviewModalOpen(false);
       } else {
-        addToast('No se pudo actualizar el formulario', 'error');
+        addToast("No se pudo actualizar el formulario", "error");
       }
     } catch (e) {
-      addToast(`Error al actualizar el formulario: ${(e as Error).message}`, 'error');
+      addToast(`Error al actualizar el formulario: ${(e as Error).message}`, "error");
     }
   };
 
-  const recruitmentPhaseSuggestions = ['registro', 'entrevistas1', 'entrevistas2', 'welcome days'];
+  const recruitmentPhaseSuggestions = ["registro", "entrevistas1", "entrevistas2", "welcome days"];
 
   return (
     <Container>
@@ -361,8 +361,10 @@ const GlobalConfigManager = () => {
       <Autocomplete
         options={recruitmentPhaseSuggestions}
         value={recruitmentPhase}
-        onChange={(_, newValue) => setRecruitmentPhase(newValue || '')}
-        renderInput={(params) => <TextField {...params} label="Fase de Reclutamiento" fullWidth margin="normal" />}
+        onChange={(_, newValue) => setRecruitmentPhase(newValue || "")}
+        renderInput={(params) => (
+          <TextField {...params} label="Fase de Reclutamiento" fullWidth margin="normal" />
+        )}
       />
       <ButtonContainer style={{ marginTop: 5 }}>
         <SaveButton onClick={handleUpdateDetails} />
@@ -371,12 +373,14 @@ const GlobalConfigManager = () => {
       <Subtitle>Reclutadores</Subtitle>
       <RecruiterInputContainer>
         <Autocomplete
-          options={users.map(u => u.email)}
+          options={users.map((u) => u.email)}
           freeSolo
           value={newRecruiterEmail}
-          onChange={(_, newValue) => setNewRecruiterEmail(newValue || '')}
+          onChange={(_, newValue) => setNewRecruiterEmail(newValue || "")}
           onInputChange={(_, newInput) => setNewRecruiterEmail(newInput)}
-          renderInput={(params) => <TextField {...params} label="Añadir reclutador por correo" fullWidth margin="normal" />}
+          renderInput={(params) => (
+            <TextField {...params} label="Añadir reclutador por correo" fullWidth margin="normal" />
+          )}
           sx={{ flexGrow: 1 }}
         />
         <AddButton
@@ -398,7 +402,13 @@ const GlobalConfigManager = () => {
         {recruiters.map((recruiter) => (
           <TableRow key={recruiter._id} columns="50px 1fr 1.5fr 80px">
             <div>
-              <Image src={recruiter.image} alt="Profile" width="40" height="40" style={{ borderRadius: "100%" }} />
+              <Image
+                src={recruiter.image}
+                alt="Profile"
+                width="40"
+                height="40"
+                style={{ borderRadius: "100%" }}
+              />
             </div>
             <DataCell>{recruiter.name}</DataCell>
             <DataCell>{recruiter.email}</DataCell>
@@ -411,12 +421,14 @@ const GlobalConfigManager = () => {
 
       <Subtitle>Comités</Subtitle>
       <ButtonContainer>
-        <AddButton onClick={() => {
-          setEditingCommittee(null);
-          setCommitteeName('');
-          setCommitteeColor('#000000');
-          setIsCommitteeModalOpen(true);
-        }} />
+        <AddButton
+          onClick={() => {
+            setEditingCommittee(null);
+            setCommitteeName("");
+            setCommitteeColor("#000000");
+            setIsCommitteeModalOpen(true);
+          }}
+        />
       </ButtonContainer>
 
       <TableWrapper>
@@ -427,7 +439,14 @@ const GlobalConfigManager = () => {
         </TableHeader>
         {committees.map((committee) => (
           <TableRow key={committee._id} columns="50px 1fr 120px">
-            <DataCell style={{ backgroundColor: committee.color, width: '30px', height: '30px', borderRadius: '50%' }} />
+            <DataCell
+              style={{
+                backgroundColor: committee.color,
+                width: "30px",
+                height: "30px",
+                borderRadius: "50%"
+              }}
+            />
             <DataCell>{committee.name}</DataCell>
             <ButtonContainer>
               <EditButton onClick={() => handleEditCommittee(committee)} />
@@ -441,7 +460,7 @@ const GlobalConfigManager = () => {
       <AddButton onClick={() => setIsFormOnboardingModalOpen(true)} />
 
       <TableWrapper>
-        <TableHeader columns="minmax(150px, 1fr) 150px 120px" style={{ minWidth: 'max-content' }}>
+        <TableHeader columns="minmax(150px, 1fr) 150px 120px" style={{ minWidth: "max-content" }}>
           <DataCell>Identificador</DataCell>
           <DataCell>Crear Usuarios</DataCell>
           <DataCell>Acciones</DataCell>
@@ -449,12 +468,14 @@ const GlobalConfigManager = () => {
         {connectedForms.map((form) => (
           <TableRow key={form._id} columns="minmax(150px, 1fr) 150px 120px">
             <DataCell>{form.formIdentifier}</DataCell>
-            <DataCell>{form.canCreateUsers ? 'Sí' : 'No'}</DataCell>
+            <DataCell>{form.canCreateUsers ? "Sí" : "No"}</DataCell>
             <ButtonContainer>
-              <EditButton onClick={() => {
-                setSelectedFormForPreview(form);
-                setIsFormPreviewModalOpen(true);
-              }} />
+              <EditButton
+                onClick={() => {
+                  setSelectedFormForPreview(form);
+                  setIsFormPreviewModalOpen(true);
+                }}
+              />
               <DeleteButton onClick={() => handleDeleteForm(form._id)} />
             </ButtonContainer>
           </TableRow>
@@ -464,8 +485,8 @@ const GlobalConfigManager = () => {
       <Modal
         isOpen={isCommitteeModalOpen}
         onClose={() => setIsCommitteeModalOpen(false)}
-        title={editingCommittee ? 'Editar Comité' : 'Añadir Comité'}
-        width='xs'
+        title={editingCommittee ? "Editar Comité" : "Añadir Comité"}
+        width="xs"
       >
         <TextField
           label="Nombre del comité"
@@ -482,7 +503,7 @@ const GlobalConfigManager = () => {
           fullWidth
           margin="normal"
         />
-        <ButtonContainer style={{ marginTop: 20, justifyContent: 'flex-end' }}>
+        <ButtonContainer style={{ marginTop: 20, justifyContent: "flex-end" }}>
           <CancelButton onClick={() => setIsCommitteeModalOpen(false)} />
           <SaveButton onClick={handleSaveCommittee} />
         </ButtonContainer>

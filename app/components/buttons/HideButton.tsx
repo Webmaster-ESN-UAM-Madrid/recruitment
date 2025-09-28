@@ -20,7 +20,7 @@ export const HideButton: React.FC<HideButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

@@ -22,9 +22,15 @@ export async function GET() {
     const currentRecruitmentId = config.currentRecruitment;
 
     // Total active candidates in current recruitment
-    const totalCandidates = await Candidate.countDocuments({ recruitmentId: currentRecruitmentId, active: true });
+    const totalCandidates = await Candidate.countDocuments({
+      recruitmentId: currentRecruitmentId,
+      active: true
+    });
     // Total inactive candidates in current recruitment
-    const inactiveCandidates = await Candidate.countDocuments({ recruitmentId: currentRecruitmentId, active: false });
+    const inactiveCandidates = await Candidate.countDocuments({
+      recruitmentId: currentRecruitmentId,
+      active: false
+    });
 
     // Interview counts:
     // - totalInterviews: past interviews up to now (date < now), must have at least one candidate
@@ -33,12 +39,12 @@ export async function GET() {
     const totalInterviews = await Interview.countDocuments({
       recruitmentId: currentRecruitmentId,
       date: { $lt: now },
-      'candidates.0': { $exists: true },
+      "candidates.0": { $exists: true }
     });
     const pendingInterviews = await Interview.countDocuments({
       recruitmentId: currentRecruitmentId,
       date: { $gte: now },
-      'candidates.0': { $exists: true },
+      "candidates.0": { $exists: true }
     });
 
     // Number of interviewed candidates (present at least once)
@@ -48,7 +54,8 @@ export async function GET() {
       const opinions: any = interview.opinions;
       if (!opinions) continue;
       // opinions is stored as a Map in schema; when lean it may be a plain object
-      const entries: [string, any][] = opinions instanceof Map ? Array.from(opinions.entries()) : Object.entries(opinions);
+      const entries: [string, any][] =
+        opinions instanceof Map ? Array.from(opinions.entries()) : Object.entries(opinions);
       for (const [candidateId, opinion] of entries) {
         if (opinion?.status === "present") interviewedCandidateIds.add(candidateId as string);
       }
@@ -58,7 +65,7 @@ export async function GET() {
     const interviewedActiveCandidatesCount = await Candidate.countDocuments({
       recruitmentId: currentRecruitmentId,
       active: true,
-      _id: { $in: Array.from(interviewedCandidateIds) },
+      _id: { $in: Array.from(interviewedCandidateIds) }
     });
 
     // Committee interests distribution and expected event attendance
@@ -71,7 +78,7 @@ export async function GET() {
       "Welcome Meeting": { yes: 0, maybe: 0, no: 0 },
       "Welcome Days": { yes: 0, maybe: 0, no: 0 },
       "Integration Weekend": { yes: 0, maybe: 0, no: 0 },
-      "Plataforma Local": { yes: 0, maybe: 0, no: 0 },
+      "Plataforma Local": { yes: 0, maybe: 0, no: 0 }
     };
 
     for (const c of candidates as any[]) {
@@ -108,7 +115,7 @@ export async function GET() {
       eventAttendance,
       currentRecruitmentId,
       inactiveCandidates,
-      pendingInterviews,
+      pendingInterviews
     });
   } catch (err) {
     console.error("/api/stats/recruitment error", err);

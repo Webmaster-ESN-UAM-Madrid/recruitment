@@ -20,7 +20,7 @@ export const EditButton: React.FC<EditButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style,
+  style
 }) => {
   return (
     <IconButton

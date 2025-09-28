@@ -25,7 +25,7 @@ const accountSchema = new Schema<IAccount>({
   token_type: String,
   scope: String,
   id_token: String,
-  session_state: String,
+  session_state: String
 });
 
 export default models.Account || model<IAccount>("Account", accountSchema);

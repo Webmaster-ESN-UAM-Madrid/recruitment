@@ -6,25 +6,28 @@ import { getCandidates } from "@/lib/controllers/candidateController";
 import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
 
 export async function GET(req: NextRequest) {
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-    if (!session) {
-        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-    }
+  if (!session) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
 
-    const isRecruiter = await checkRecruiterAccess(session.user?.email);
-    const recruitmentDetails = await getCurrentRecruitmentDetails();
+  const isRecruiter = await checkRecruiterAccess(session.user?.email);
+  const recruitmentDetails = await getCurrentRecruitmentDetails();
 
-    if (isRecruiter) {
-        const candidates = await getCandidates();
-        return NextResponse.json({ candidates, currentPhase: recruitmentDetails.recruitmentPhase });
-    } else {
-        const candidates = await getCandidates(true);
-        const limitedCandidates = candidates.map((candidate) => ({
-            _id: candidate._id,
-            name: candidate.name,
-            photoUrl: candidate.photoUrl
-        }));
-        return NextResponse.json({ candidates: limitedCandidates, currentPhase: recruitmentDetails.recruitmentPhase });
-    }
+  if (isRecruiter) {
+    const candidates = await getCandidates();
+    return NextResponse.json({ candidates, currentPhase: recruitmentDetails.recruitmentPhase });
+  } else {
+    const candidates = await getCandidates(true);
+    const limitedCandidates = candidates.map((candidate) => ({
+      _id: candidate._id,
+      name: candidate.name,
+      photoUrl: candidate.photoUrl
+    }));
+    return NextResponse.json({
+      candidates: limitedCandidates,
+      currentPhase: recruitmentDetails.recruitmentPhase
+    });
+  }
 }
