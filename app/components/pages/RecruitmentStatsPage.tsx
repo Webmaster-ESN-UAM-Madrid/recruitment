@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import dynamic from "next/dynamic";
+import type {
+  ForceGraphMethods,
+  ForceGraphProps,
+  GraphData,
+  NodeObject,
+  LinkObject
+} from "react-force-graph-2d";
 import {
   Cell,
   BarChart,
@@ -28,7 +36,32 @@ interface StatsData {
   eventAttendance: Record<string, { yes: number; maybe: number; no: number }>;
   currentRecruitmentId: string;
   inactiveCandidates: number;
+  newbieVoteGraph?: {
+    nodes: VoteGraphNode[];
+    links: VoteGraphLink[];
+  };
 }
+
+interface VoteGraphNode {
+  id: string;
+  name: string;
+  photoUrl: string;
+  active: boolean;
+  votesReceived: number;
+  votesGiven: number;
+  hasOutgoingVotes: boolean;
+}
+
+interface VoteGraphLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+type VoteGraphNodeWithVal = VoteGraphNode & { val: number };
+type VoteGraphNodeObject = VoteGraphNodeWithVal & NodeObject;
+type VoteGraphLinkObject = VoteGraphLink & LinkObject;
+type ForceGraphRef = ForceGraphMethods<VoteGraphNodeObject, VoteGraphLinkObject>;
 
 const COLORS = [
   "#8884d8",
@@ -40,6 +73,13 @@ const COLORS = [
   "#d0ed57",
   "#ffc0cb"
 ];
+
+const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
+  ssr: false
+}) as unknown as React.ForwardRefExoticComponent<
+  React.PropsWithoutRef<ForceGraphProps<VoteGraphNodeObject, VoteGraphLinkObject>> &
+    React.RefAttributes<ForceGraphRef>
+>;
 
 function StatCard({
   title,
@@ -83,6 +123,148 @@ export default function RecruitmentStatsPage() {
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const isMd = useMediaQuery(theme.breakpoints.down("md"));
   const chartHeight = isXs ? 220 : isMd ? 260 : 320;
+  const graphRef = useRef<ForceGraphRef | null>(null);
+  const setGraphRef = useCallback((instance: ForceGraphRef | null) => {
+    graphRef.current = instance;
+  }, []);
+  const graphContainerRef = useRef<HTMLDivElement | null>(null);
+  const [graphSize, setGraphSize] = useState({ width: 0, height: 0 });
+  const imageCache = useRef(new Map<string, HTMLImageElement>());
+
+  const voteGraphData = useMemo<GraphData<VoteGraphNodeObject, VoteGraphLinkObject> | null>(() => {
+    if (!stats?.newbieVoteGraph) return null;
+    const nodes: VoteGraphNodeObject[] = stats.newbieVoteGraph.nodes.map((node) => ({
+      ...node,
+      val: Math.max(1, node.votesReceived + 1)
+    })) as VoteGraphNodeObject[];
+    const links: VoteGraphLinkObject[] = stats.newbieVoteGraph.links.map((link) => ({
+      ...link
+    })) as VoteGraphLinkObject[];
+    return { nodes, links };
+  }, [stats]);
+
+  const voteTotals = useMemo(() => {
+    if (!stats?.newbieVoteGraph) return { voters: 0, votes: 0 };
+    const voters = stats.newbieVoteGraph.nodes.filter((node) => node.votesGiven > 0).length;
+    const votes = stats.newbieVoteGraph.links.reduce((sum, link) => sum + link.value, 0);
+    return { voters, votes };
+  }, [stats]);
+
+  useEffect(() => {
+    const container = graphContainerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver((entries) => {
+      if (!entries.length) return;
+      const { width, height } = entries[0].contentRect;
+      setGraphSize({ width, height });
+    });
+    observer.observe(container);
+    setGraphSize({ width: container.clientWidth, height: container.clientHeight });
+    return () => observer.disconnect();
+  }, [voteGraphData, isXs, isMd]);
+
+  const getNodeRadius = useCallback((node: VoteGraphNodeObject) => {
+    const baseRadius = 30;
+    const scale = 10;
+    return baseRadius + Math.log2((node.votesReceived ?? 0) + 1) * scale;
+  }, []);
+
+  const getImage = useCallback((url: string) => {
+    if (!url) return null;
+    const cache = imageCache.current;
+    let image = cache.get(url);
+    if (!image) {
+      image = new Image();
+      image.src = url;
+      cache.set(url, image);
+    }
+    return image;
+  }, []);
+
+  const nodeCanvasObject = useCallback<
+    NonNullable<ForceGraphProps<VoteGraphNodeObject, VoteGraphLinkObject>["nodeCanvasObject"]>
+  >(
+    (nodeObj, ctx, _globalScale) => {
+      void _globalScale;
+      const radius = getNodeRadius(nodeObj);
+      const x = nodeObj.x ?? 0;
+      const y = nodeObj.y ?? 0;
+      const image = getImage(nodeObj.photoUrl);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.closePath();
+      ctx.clip();
+
+      if (image && image.complete && image.naturalWidth > 0) {
+        ctx.drawImage(image, x - radius, y - radius, radius * 2, radius * 2);
+      } else {
+        ctx.fillStyle = theme.palette.grey[300] ?? "#d1d1d1";
+        ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+      }
+
+      ctx.restore();
+
+      if (!nodeObj.active && nodeObj.votesGiven > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = theme.palette.mode === "dark" ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.5)";
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.strokeStyle = theme.palette.background.paper;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+    },
+    [getImage, getNodeRadius, theme]
+  );
+
+  const nodePointerAreaPaint = useCallback<
+    NonNullable<ForceGraphProps<VoteGraphNodeObject, VoteGraphLinkObject>["nodePointerAreaPaint"]>
+  >(
+    (nodeObj, color, ctx) => {
+      const radius = getNodeRadius(nodeObj);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(nodeObj.x ?? 0, nodeObj.y ?? 0, radius, 0, 2 * Math.PI);
+      ctx.fill();
+    },
+    [getNodeRadius]
+  );
+
+  useEffect(() => {
+    if (!graphRef.current || !voteGraphData || voteGraphData.nodes.length === 0) return;
+    const fg = graphRef.current;
+    const chargeForce = fg.d3Force("charge");
+    if (chargeForce?.strength) {
+      chargeForce.strength(-250);
+    }
+    const linkForce = fg.d3Force("link");
+    if (linkForce?.distance) {
+      linkForce.distance(150);
+    }
+    if (linkForce?.strength) {
+      linkForce.strength(0.05);
+    }
+    const timeout = window.setTimeout(() => {
+      fg.zoomToFit(600, 48);
+    }, 700);
+    return () => window.clearTimeout(timeout);
+  }, [voteGraphData]);
+
+  const nodeLabelAccessor = useCallback((node: VoteGraphNodeObject) => node.name, []);
+
+  const linkWidthAccessor = useCallback((link: VoteGraphLinkObject) => {
+    const value = link.value ?? 1;
+    return Math.min(6, 1 + (value - 1) * 0.8);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -325,6 +507,73 @@ export default function RecruitmentStatsPage() {
             </tbody>
           </table>
         </Box>
+      </Paper>
+
+      <Paper elevation={1} sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6" mb={2}>
+          Red de votos de newbies
+        </Typography>
+        {voteGraphData && voteGraphData.nodes.length > 0 ? (
+          <>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              {voteTotals.votes} votos emitidos por {voteTotals.voters} newbies. Arrastra los nodos
+              para explorar conexiones y pasa el ratón por encima para ver nombres.
+            </Typography>
+            <Box
+              ref={graphContainerRef}
+              sx={{
+                width: "100%",
+                height: { xs: 340, sm: 420, lg: 520 },
+                position: "relative",
+                "& canvas": {
+                  borderRadius: 1
+                }
+              }}
+            >
+              {graphSize.width > 0 && graphSize.height > 0 && voteGraphData && (
+                <ForceGraph2D
+                  ref={setGraphRef}
+                  graphData={voteGraphData}
+                  width={graphSize.width}
+                  height={graphSize.height}
+                  nodeCanvasObject={nodeCanvasObject}
+                  nodePointerAreaPaint={nodePointerAreaPaint}
+                  nodeLabel={
+                    nodeLabelAccessor as ForceGraphProps<
+                      VoteGraphNodeObject,
+                      VoteGraphLinkObject
+                    >["nodeLabel"]
+                  }
+                  backgroundColor={theme.palette.background.default}
+                  linkColor={() =>
+                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.28)"
+                  }
+                  linkWidth={
+                    linkWidthAccessor as ForceGraphProps<
+                      VoteGraphNodeObject,
+                      VoteGraphLinkObject
+                    >["linkWidth"]
+                  }
+                  linkDirectionalArrowLength={6}
+                  linkDirectionalArrowRelPos={3}
+                  linkDirectionalArrowColor={() =>
+                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.65)"
+                  }
+                  linkDirectionalParticles={2}
+                  linkDirectionalParticleSpeed={0.0035}
+                  cooldownTicks={140}
+                  onEngineStop={() => {
+                    graphRef.current?.zoomToFit(500, 40);
+                  }}
+                />
+              )}
+            </Box>
+          </>
+        ) : (
+          <Typography color="text.secondary">
+            Aún no hay votos registrados en el sistema.
+          </Typography>
+        )}
       </Paper>
     </Box>
   );

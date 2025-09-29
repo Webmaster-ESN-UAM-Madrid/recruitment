@@ -106,6 +106,8 @@ interface CategorizedFeedback {
   tutor: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   volunteers: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  newbies: any[];
 }
 
 interface FeedbackForCandidateProps {
@@ -124,7 +126,8 @@ const FeedbackForCandidate: React.FC<FeedbackForCandidateProps> = ({
     recruiters: boolean;
     tutor: boolean;
     volunteers: boolean;
-  }>({ recruiters: true, tutor: true, volunteers: true });
+    newbies: boolean;
+  }>({ recruiters: true, tutor: true, volunteers: true, newbies: true });
   const defaultAvatar = "/default-avatar.jpg";
 
   useEffect(() => {
@@ -221,6 +224,7 @@ const FeedbackForCandidate: React.FC<FeedbackForCandidateProps> = ({
       {renderFeedbackCategory("recruiters", "Reclutadores")}
       {renderFeedbackCategory("tutor", "Padrino")}
       {renderFeedbackCategory("volunteers", "Voluntarios")}
+      {renderFeedbackCategory("newbies", "Newbies")}
     </FeedbackContainer>
   );
 };

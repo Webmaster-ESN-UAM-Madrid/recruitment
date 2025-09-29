@@ -92,7 +92,7 @@ export const getFeedbackByCandidateId = async (candidateId: string) => {
   const recruitmentDetails = await getCurrentRecruitmentDetails();
   if (!recruitmentDetails.currentRecruitment) {
     console.error("Could not retrieve current recruitment details.");
-    return { recruiters: [], tutor: [], volunteers: [] };
+    return { recruiters: [], tutor: [], volunteers: [], newbies: [] };
   }
   const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
@@ -114,10 +114,13 @@ export const getFeedbackByCandidateId = async (candidateId: string) => {
     tutor: any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     volunteers: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    newbies: any[];
   } = {
     recruiters: [],
     tutor: [],
-    volunteers: []
+    volunteers: [],
+    newbies: []
   };
 
   for (const fb of feedback) {
@@ -125,6 +128,8 @@ export const getFeedbackByCandidateId = async (candidateId: string) => {
       categorizedFeedback.recruiters.push(fb.toObject());
     } else if (fb.givenBy.email === tutorEmail) {
       categorizedFeedback.tutor.push(fb.toObject());
+    } else if (fb.givenBy.newbie) {
+      categorizedFeedback.newbies.push(fb.toObject());
     } else {
       categorizedFeedback.volunteers.push(fb.toObject());
     }
@@ -171,6 +176,8 @@ export const getAllFeedbackWithCategories = async () => {
       tutor: any[];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       volunteers: any[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      newbies: any[];
     }
   > = {};
 
@@ -180,7 +187,8 @@ export const getAllFeedbackWithCategories = async () => {
       categorizedFeedback[candidateId] = {
         recruiters: [],
         tutor: [],
-        volunteers: []
+        volunteers: [],
+        newbies: []
       };
     }
     const tutorEmail = candidateTutorMap[candidateId];
@@ -188,6 +196,8 @@ export const getAllFeedbackWithCategories = async () => {
       categorizedFeedback[candidateId].tutor.push(fb.toObject());
     } else if (recruiters.includes(fb.givenBy.email)) {
       categorizedFeedback[candidateId].recruiters.push(fb.toObject());
+    } else if (fb.givenBy.newbie) {
+      categorizedFeedback[candidateId].newbies.push(fb.toObject());
     } else {
       categorizedFeedback[candidateId].volunteers.push(fb.toObject());
     }

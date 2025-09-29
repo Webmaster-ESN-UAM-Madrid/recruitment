@@ -6,7 +6,10 @@ import connectToDatabase from "@/lib/mongodb";
 import Candidate from "@/lib/models/candidate";
 import Interview from "@/lib/models/interview";
 import Config from "@/lib/models/config";
+import User from "@/lib/models/user";
 import "@/lib/models/committee"; // ensure Committee schema is registered for populate
+
+const normalizeEmail = (email?: string | null) => email?.trim().toLowerCase() ?? "";
 
 export async function GET() {
   try {
@@ -69,8 +72,15 @@ export async function GET() {
     });
 
     // Committee interests distribution and expected event attendance
-    const candidates = await Candidate.find({ recruitmentId: currentRecruitmentId, active: true })
+    const activeCandidates = await Candidate.find({
+      recruitmentId: currentRecruitmentId,
+      active: true
+    })
       .populate("interests", "name color")
+      .lean();
+
+    const allCandidatesRaw = await Candidate.find({ recruitmentId: currentRecruitmentId })
+      .select("_id name email alternateEmails photoUrl active")
       .lean();
 
     const committeeInterests: Record<string, { count: number; color?: string }> = {};
@@ -81,7 +91,7 @@ export async function GET() {
       "Plataforma Local": { yes: 0, maybe: 0, no: 0 }
     };
 
-    for (const c of candidates as any[]) {
+    for (const c of activeCandidates as any[]) {
       // interests is array of populated committee docs
       (c.interests || []).forEach((i: any) => {
         const key = i?.name || "Unknown";
@@ -106,6 +116,145 @@ export async function GET() {
       }
     }
 
+    const defaultAvatar = "/default-avatar.jpg";
+    const candidateById = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        photoUrl?: string;
+        active: boolean;
+      }
+    >();
+    const candidateIdByEmail = new Map<string, string>();
+
+    for (const rawCandidate of allCandidatesRaw as any[]) {
+      const id = String(rawCandidate._id);
+      const name = typeof rawCandidate.name === "string" ? rawCandidate.name : "Sin nombre";
+      const active = Boolean(rawCandidate.active);
+      const photoUrl =
+        typeof rawCandidate.photoUrl === "string" && rawCandidate.photoUrl.trim().length > 0
+          ? rawCandidate.photoUrl
+          : undefined;
+
+      const primaryEmail = normalizeEmail(rawCandidate.email);
+      if (primaryEmail) {
+        candidateIdByEmail.set(primaryEmail, id);
+      }
+
+      if (Array.isArray(rawCandidate.alternateEmails)) {
+        for (const alt of rawCandidate.alternateEmails) {
+          const normalizedAlt = normalizeEmail(alt);
+          if (normalizedAlt && !candidateIdByEmail.has(normalizedAlt)) {
+            candidateIdByEmail.set(normalizedAlt, id);
+          }
+        }
+      }
+
+      candidateById.set(id, {
+        id,
+        name,
+        active,
+        photoUrl
+      });
+    }
+
+    const votersRaw = await User.find({ "newbieCandidateSelections.0": { $exists: true } })
+      .select("email newbieCandidateSelections image")
+      .lean();
+
+    const votesReceived = new Map<string, number>();
+    const votesGiven = new Map<string, number>();
+    const hasOutgoingVotes = new Set<string>();
+    const linkWeights = new Map<string, { source: string; target: string; value: number }>();
+
+    for (const voter of votersRaw as any[]) {
+      const voterEmail = normalizeEmail(voter.email);
+      const voterCandidateId = candidateIdByEmail.get(voterEmail);
+      if (!voterCandidateId) continue;
+
+      const selectionsArray = Array.isArray(voter.newbieCandidateSelections)
+        ? voter.newbieCandidateSelections.map((sel: unknown) => String(sel))
+        : [];
+
+      const uniqueSelections = new Set<string>();
+      for (const selection of selectionsArray) {
+        if (candidateById.has(selection)) {
+          uniqueSelections.add(selection);
+        }
+      }
+
+      if (uniqueSelections.size === 0) continue;
+
+      const voterCandidate = candidateById.get(voterCandidateId);
+      if (voterCandidate && (!voterCandidate.photoUrl || voterCandidate.photoUrl.length === 0)) {
+        if (typeof voter.image === "string" && voter.image.trim().length > 0) {
+          voterCandidate.photoUrl = voter.image;
+        }
+      }
+
+      hasOutgoingVotes.add(voterCandidateId);
+      votesGiven.set(
+        voterCandidateId,
+        (votesGiven.get(voterCandidateId) ?? 0) + uniqueSelections.size
+      );
+
+      for (const targetId of uniqueSelections) {
+        votesReceived.set(targetId, (votesReceived.get(targetId) ?? 0) + 1);
+        const key = `${voterCandidateId}->${targetId}`;
+        const existing = linkWeights.get(key);
+        if (existing) {
+          existing.value += 1;
+        } else {
+          linkWeights.set(key, { source: voterCandidateId, target: targetId, value: 1 });
+        }
+      }
+    }
+
+    const nodeIdsToInclude = new Set<string>();
+    for (const candidateEntry of candidateById.values()) {
+      if (candidateEntry.active) {
+        nodeIdsToInclude.add(candidateEntry.id);
+      }
+    }
+    for (const { source, target } of linkWeights.values()) {
+      nodeIdsToInclude.add(source);
+      nodeIdsToInclude.add(target);
+    }
+
+    const voteGraphNodes = Array.from(nodeIdsToInclude)
+      .map((id) => {
+        const candidateEntry = candidateById.get(id);
+        if (!candidateEntry) return null;
+        return {
+          id,
+          name: candidateEntry.name,
+          photoUrl:
+            candidateEntry.photoUrl && candidateEntry.photoUrl.length > 0
+              ? candidateEntry.photoUrl
+              : defaultAvatar,
+          active: candidateEntry.active,
+          votesReceived: votesReceived.get(id) ?? 0,
+          votesGiven: votesGiven.get(id) ?? 0,
+          hasOutgoingVotes: hasOutgoingVotes.has(id)
+        };
+      })
+      .filter(
+        (
+          node
+        ): node is {
+          id: string;
+          name: string;
+          photoUrl: string;
+          active: boolean;
+          votesReceived: number;
+          votesGiven: number;
+          hasOutgoingVotes: boolean;
+        } => Boolean(node)
+      );
+
+    const voteGraphLinks = Array.from(linkWeights.values());
+
     return NextResponse.json({
       totalCandidates,
       totalInterviews,
@@ -115,7 +264,11 @@ export async function GET() {
       eventAttendance,
       currentRecruitmentId,
       inactiveCandidates,
-      pendingInterviews
+      pendingInterviews,
+      newbieVoteGraph: {
+        nodes: voteGraphNodes,
+        links: voteGraphLinks
+      }
     });
   } catch (err) {
     console.error("/api/stats/recruitment error", err);
