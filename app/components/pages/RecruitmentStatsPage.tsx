@@ -164,8 +164,8 @@ export default function RecruitmentStatsPage() {
   }, [voteGraphData, isXs, isMd]);
 
   const getNodeRadius = useCallback((node: VoteGraphNodeObject) => {
-    const baseRadius = 30;
-    const scale = 10;
+    const baseRadius = 9;
+    const scale = 3;
     return baseRadius + Math.log2((node.votesReceived ?? 0) + 1) * scale;
   }, []);
 
@@ -248,7 +248,7 @@ export default function RecruitmentStatsPage() {
     }
     const linkForce = fg.d3Force("link");
     if (linkForce?.distance) {
-      linkForce.distance(150);
+      linkForce.distance(125);
     }
     if (linkForce?.strength) {
       linkForce.strength(0.05);
