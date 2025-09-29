@@ -101,6 +101,8 @@ interface Candidate {
     tutor: any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     volunteers: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    newbies: any[];
   };
   rating?: {
     average: number;
