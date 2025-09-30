@@ -640,7 +640,7 @@ export default function RecruitmentStatsPage() {
                 border: "1px solid",
                 borderColor: "divider",
                 overflow: "hidden",
-                minWidth: 520
+                minWidth: "max-content"
               }}
             >
               <Box
@@ -739,7 +739,7 @@ export default function RecruitmentStatsPage() {
                       >
                         {detail.votesReceived}
                       </Typography>
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      <Box sx={{ display: "flex", gap: 1 }}>
                         {hasVoters ? (
                           detail.voters.map((voter) => (
                             <MuiTooltip key={voter.id} title={voter.name} arrow>
