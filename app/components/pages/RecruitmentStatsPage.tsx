@@ -309,7 +309,7 @@ export default function RecruitmentStatsPage() {
   }, [voteGraphData]);
 
   const nodeLabelAccessor = useCallback(
-    (node: VoteGraphNodeObject) => `${node.name}\nVotos recibidos: ${node.votesReceived}`,
+    (node: VoteGraphNodeObject) => `${node.name}<br>Votos recibidos: ${node.votesReceived}`,
     []
   );
 
