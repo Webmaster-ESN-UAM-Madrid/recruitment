@@ -297,7 +297,7 @@ export default function RecruitmentStatsPage() {
     }
     const linkForce = fg.d3Force("link");
     if (linkForce?.distance) {
-      linkForce.distance(140);
+      linkForce.distance(200);
     }
     if (linkForce?.strength) {
       linkForce.strength(0.05);
@@ -605,11 +605,6 @@ export default function RecruitmentStatsPage() {
                       VoteGraphNodeObject,
                       VoteGraphLinkObject
                     >["linkWidth"]
-                  }
-                  linkDirectionalArrowLength={6}
-                  linkDirectionalArrowRelPos={3}
-                  linkDirectionalArrowColor={() =>
-                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.65)"
                   }
                   linkDirectionalParticles={2}
                   linkDirectionalParticleSpeed={0.0035}
