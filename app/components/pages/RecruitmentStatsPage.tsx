@@ -213,8 +213,8 @@ export default function RecruitmentStatsPage() {
   }, [voteGraphData, isXs, isMd]);
 
   const getNodeRadius = useCallback((node: VoteGraphNodeObject) => {
-    const baseRadius = 9;
-    const scale = 2.25;
+    const baseRadius = 6;
+    const scale = 1.75;
     return baseRadius + Math.log2((node.votesReceived ?? 0) + 1) * scale;
   }, []);
 
@@ -297,7 +297,7 @@ export default function RecruitmentStatsPage() {
     }
     const linkForce = fg.d3Force("link");
     if (linkForce?.distance) {
-      linkForce.distance(200);
+      linkForce.distance(250);
     }
     if (linkForce?.strength) {
       linkForce.strength(0.05);
@@ -606,6 +606,7 @@ export default function RecruitmentStatsPage() {
                       VoteGraphLinkObject
                     >["linkWidth"]
                   }
+                  linkDirectionalArrowLength={0}
                   linkDirectionalParticles={2}
                   linkDirectionalParticleSpeed={0.0035}
                   cooldownTicks={140}
