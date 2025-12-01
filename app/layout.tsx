@@ -2,9 +2,9 @@
 
 import "../src/styles/globals.css"; // Import global styles
 import { SessionProvider } from "next-auth/react";
-import Navbar from "./components/Navbar";
-import { ButtonProvider } from "./components/buttons/IconButton";
-import { ToastProvider } from "./components/toasts/ToastProvider";
+import Navbar from "../src/components/Navbar";
+import { ButtonProvider } from "../src/components/buttons/IconButton";
+import { ToastProvider } from "../src/components/toasts/ToastProvider";
 import StyledComponentsRegistry from "../lib/registry";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

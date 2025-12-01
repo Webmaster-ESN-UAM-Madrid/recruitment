@@ -3,27 +3,27 @@ import styled from "styled-components";
 import Link from "next/link";
 import Tooltip from "@mui/material/Tooltip";
 
-import { NextSemIcon } from "../../../app/components/icons/tags/NextSemIcon";
-import { ErasmusIcon } from "../../../app/components/icons/tags/ErasmusIcon";
-import { FriendIcon } from "../../../app/components/icons/tags/FriendIcon";
-import { RedFlagIcon } from "../../../app/components/icons/tags/RedFlagIcon";
+import { NextSemIcon } from "../icons/tags/NextSemIcon";
+import { ErasmusIcon } from "../icons/tags/ErasmusIcon";
+import { FriendIcon } from "../icons/tags/FriendIcon";
+import { RedFlagIcon } from "../icons/tags/RedFlagIcon";
 
 const availableTags = [
   { tag: "nextSem", label: "Próximo Cuatri", Icon: NextSemIcon },
   { tag: "erasmus", label: "Erasmus", Icon: ErasmusIcon },
   { tag: "friend", label: "Amigo", Icon: FriendIcon },
-  { tag: "redFlag", label: "Red Flag", Icon: RedFlagIcon }
+  { tag: "redFlag", label: "Rechazado anteriormente", Icon: RedFlagIcon }
 ];
 
-import { AddButton } from "@/app/components/buttons/AddButton";
-import { HideButton } from "@/app/components/buttons/HideButton";
-import { UpButton } from "@/app/components/buttons/UpButton";
-import { ResetButton } from "@/app/components/buttons/ResetButton";
-import { DownButton } from "@/app/components/buttons/DownButton";
-import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
-import DashboardItem from "@/app/components/dashboard/DashboardItem";
-import Modal from "@/app/components/modals/Modal";
-import ColumnSelector from "@/app/components/dashboard/ColumnSelector";
+import { AddButton } from "@/src/components/buttons/AddButton";
+import { HideButton } from "@/src/components/buttons/HideButton";
+import { UpButton } from "@/src/components/buttons/UpButton";
+import { ResetButton } from "@/src/components/buttons/ResetButton";
+import { DownButton } from "@/src/components/buttons/DownButton";
+import LoadingSpinner from "@/src/components/loaders/LoadingSpinner";
+import DashboardItem from "@/src/components/dashboard/DashboardItem";
+import Modal from "@/src/components/modals/Modal";
+import ColumnSelector from "@/src/components/dashboard/ColumnSelector";
 
 const MAX_SELECTED_COLUMNS = 4;
 
@@ -309,10 +309,15 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
                         if (currentTag) {
                           const TagIconComponent = tagInfo.Icon;
                           const tooltipTitle = (
-                            <>
+                            <div style={{ whiteSpace: "pre-line" }}>
                               <strong>{tagInfo.label}</strong>
-                              {currentTag.comment && `: ${currentTag.comment}`}
-                            </>
+                              {currentTag.comment && (
+                                <>
+                                  :<br />
+                                  {currentTag.comment}
+                                </>
+                              )}
+                            </div>
                           );
                           return (
                             <Tooltip

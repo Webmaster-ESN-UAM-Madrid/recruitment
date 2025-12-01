@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Dialog, DialogTitle, DialogContent, Breakpoint } from "@mui/material";
-import { CancelButton } from "@/app/components/buttons/CancelButton";
+import { CancelButton } from "@/src/components/buttons/CancelButton";
 
 const ModalContent = styled.div`
   padding: 20px;

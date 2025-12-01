@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
         hostname: "img.freepik.com"
       }
     ]
+  },
+  experimental: {
+    turbopackFileSystemCacheForDev: true
   }
 };
 

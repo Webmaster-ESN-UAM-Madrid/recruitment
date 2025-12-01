@@ -3,6 +3,26 @@ import dbConnect from "@/lib/mongodb";
 import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
 import Interview from "@/lib/models/interview";
 
+export const checkForRedFlag = async (emails: string[]) => {
+  const rejectedCandidates = await Candidate.find({
+    $or: [{ email: { $in: emails } }, { alternateEmails: { $in: emails } }],
+    active: false
+  }).sort({ appliedAt: -1 });
+
+  if (rejectedCandidates.length > 0) {
+    const comments = rejectedCandidates.map((c) => {
+      const reasonPart = c.rejectedReason ? `: ${c.rejectedReason}` : "";
+      return `Rechazado en ${c.recruitmentId}${reasonPart}`;
+    });
+
+    return {
+      tag: "redFlag",
+      comment: comments.join("\n")
+    };
+  }
+  return null;
+};
+
 export const getCandidateById = async (id: string): Promise<ICandidate | null> => {
   await dbConnect();
   try {
@@ -52,8 +72,18 @@ export const createCandidate = async (
     const currentRecruitmentId = recruitmentDetails.currentRecruitment;
     const currentRecruitmentPhase = recruitmentDetails.recruitmentPhase;
 
+    const allEmails = [candidateData.email, ...(candidateData.alternateEmails || [])].filter(
+      (e): e is string => !!e
+    );
+    const redFlagTag = await checkForRedFlag(allEmails);
+    const tags = candidateData.tags || [];
+    if (redFlagTag) {
+      tags.push(redFlagTag);
+    }
+
     const candidate = await Candidate.create({
       ...candidateData,
+      tags,
       recruitmentId: currentRecruitmentId,
       recruitmentPhase: currentRecruitmentPhase
     });

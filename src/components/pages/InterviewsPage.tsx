@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AddButton } from "@/app/components/buttons/AddButton";
-import Modal from "@/app/components/modals/Modal";
+import { AddButton } from "@/src/components/buttons/AddButton";
+import Modal from "@/src/components/modals/Modal";
 import { IInterview } from "@/lib/models/interview";
 import { IUser } from "@/lib/models/user";
 import { ICandidate } from "@/lib/models/candidate";
-import InterviewCard from "@/app/components/interviews/InterviewCard";
-import InterviewModal from "@/app/components/modals/InterviewModal";
+import InterviewCard from "@/src/components/interviews/InterviewCard";
+import InterviewModal from "@/src/components/modals/InterviewModal";
 import styled from "styled-components";
-import { useToast } from "@/app/components/toasts/ToastContext";
+import { useToast } from "@/src/components/toasts/ToastContext";
 
 const Header = styled.div`
   display: flex;

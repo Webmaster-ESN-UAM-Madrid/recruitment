@@ -5,14 +5,14 @@ import { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { TextField, Autocomplete } from "@mui/material";
 
-import { SaveButton } from "@/app/components/buttons/SaveButton";
-import { AddButton } from "@/app/components/buttons/AddButton";
-import { DeleteButton } from "@/app/components/buttons/DeleteButton";
-import { EditButton } from "@/app/components/buttons/EditButton";
-import { CancelButton } from "@/app/components/buttons/CancelButton";
-import { useToast } from "@/app/components/toasts/ToastContext";
-import Modal from "@/app/components/modals/Modal";
-import FormPreview from "@/app/components/FormPreview";
+import { SaveButton } from "@/src/components/buttons/SaveButton";
+import { AddButton } from "@/src/components/buttons/AddButton";
+import { DeleteButton } from "@/src/components/buttons/DeleteButton";
+import { EditButton } from "@/src/components/buttons/EditButton";
+import { CancelButton } from "@/src/components/buttons/CancelButton";
+import { useToast } from "@/src/components/toasts/ToastContext";
+import Modal from "@/src/components/modals/Modal";
+import FormPreview from "@/src/components/FormPreview";
 import GoogleFormsConnect from "./GoogleFormsConnect";
 
 interface Recruiter {

@@ -3,16 +3,17 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { IFormResponse } from "@/lib/models/formResponse";
-import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
-import FormPreview from "@/app/components/FormPreview";
-import AttachToCandidateModal from "@/app/components/modals/AttachToCandidateModal";
-import { EditButton } from "@/app/components/buttons/EditButton";
-import { DeleteButton } from "@/app/components/buttons/DeleteButton";
+import LoadingSpinner from "@/src/components/loaders/LoadingSpinner";
+import FormPreview from "@/src/components/FormPreview";
+import AttachToCandidateModal from "@/src/components/modals/AttachToCandidateModal";
+import { EditButton } from "@/src/components/buttons/EditButton";
+import { DeleteButton } from "@/src/components/buttons/DeleteButton";
 import { IForm } from "@/lib/models/form";
-import Modal from "@/app/components/modals/Modal";
-import { AcceptButton } from "@/app/components/buttons/AcceptButton";
-import { useToast } from "@/app/components/toasts/ToastContext";
-import { CancelButton } from "@/app/components/buttons/CancelButton";
+import Modal from "@/src/components/modals/Modal";
+import { AcceptButton } from "@/src/components/buttons/AcceptButton";
+import { useToast } from "@/src/components/toasts/ToastContext";
+import { CancelButton } from "@/src/components/buttons/CancelButton";
+import { CreateCandidateButton } from "@/src/components/buttons/CreateCandidateButton";
 
 const PageContainer = styled.div`
   width: 100%;
@@ -165,6 +166,29 @@ const IncidentsPage: React.FC = () => {
     }
   };
 
+  const handleCreateCandidate = async (responseId: string) => {
+    try {
+      const res = await fetch("/api/forms/create-candidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ responseId })
+      });
+
+      if (res.ok) {
+        addToast("Candidato creado correctamente", "success");
+        fetchUnprocessedResponses();
+      } else {
+        const data = await res.json();
+        addToast(data.message || "Error al crear el candidato", "error");
+      }
+    } catch (error) {
+      console.error("Failed to create candidate:", error);
+      addToast("Error al crear el candidato", "error");
+    }
+  };
+
   const openErrors = unprocessedResponses.filter(
     (response) => (response.formId as IForm).canCreateUsers
   );
@@ -194,6 +218,13 @@ const IncidentsPage: React.FC = () => {
                   )}
                 </IncidentInfo>
                 <IncidentActions>
+                  <CreateCandidateButton
+                    onClick={() => handleCreateCandidate(response._id as string)}
+                    showSpinner={true}
+                    needsConfirmation={true}
+                    confirmationDuration={2000}
+                    ariaLabel="Crear Candidato"
+                  />
                   <EditButton
                     key={`edit-${response._id}`}
                     onClick={() => setSelectedResponse(response._id as string)}

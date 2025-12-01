@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
-import { useToast } from "@/app/components/toasts/ToastContext";
+import LoadingSpinner from "@/src/components/loaders/LoadingSpinner";
+import { useToast } from "@/src/components/toasts/ToastContext";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 const FeedbackContainer = styled.div`

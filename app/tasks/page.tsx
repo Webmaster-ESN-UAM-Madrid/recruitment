@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import TasksPage from "../../src/components/pages/TasksPage";
-import LoadingSpinner from "../components/loaders/LoadingSpinner";
+import LoadingSpinner from "../../src/components/loaders/LoadingSpinner";
 
 export default function Tasks() {
   const { data: session, status } = useSession();

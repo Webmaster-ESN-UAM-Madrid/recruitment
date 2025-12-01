@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 import { HexColorPicker } from "react-colorful";
 import styled from "styled-components";
-import { SaveButton } from "@/app/components/buttons/SaveButton";
-import { CancelButton } from "@/app/components/buttons/CancelButton";
+import { SaveButton } from "@/src/components/buttons/SaveButton";
+import { CancelButton } from "@/src/components/buttons/CancelButton";
 
 interface CommitteeModalProps {
   open: boolean;

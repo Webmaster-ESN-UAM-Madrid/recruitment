@@ -14,25 +14,26 @@ import {
 } from "@mui/material";
 import Rating from "@mui/material/Rating";
 
-import { AddButton } from "../../../app/components/buttons/AddButton";
-import { SaveButton } from "../../../app/components/buttons/SaveButton";
-import { EditButton } from "../../../app/components/buttons/EditButton";
-import { CancelButton } from "../../../app/components/buttons/CancelButton";
-import { DeleteButton } from "../../../app/components/buttons/DeleteButton";
-import { useToast } from "../../../app/components/toasts/ToastContext";
-import FormPreview from "../../../app/components/FormPreview";
+import { AddButton } from "../buttons/AddButton";
+import { SaveButton } from "../buttons/SaveButton";
+import { EditButton } from "../buttons/EditButton";
+import { CancelButton } from "../buttons/CancelButton";
+import { DeleteButton } from "../buttons/DeleteButton";
+import { useToast } from "../toasts/ToastContext";
+import FormPreview from "../FormPreview";
 import { FormStructure } from "@/lib/types/form";
-import FeedbackForCandidate from "@/app/components/FeedbackForCandidate";
-import Modal from "../../../app/components/modals/Modal";
-import { InfoButton } from "../../../app/components/buttons/InfoButton";
-import { AcceptButton } from "@/app/components/buttons/AcceptButton";
+import FeedbackForCandidate from "@/src/components/FeedbackForCandidate";
+import Modal from "../modals/Modal";
+import { InfoButton } from "../buttons/InfoButton";
+import { AcceptButton } from "@/src/components/buttons/AcceptButton";
 import { IInterview } from "@/lib/models/interview";
+import LoadingSpinner from "../loaders/LoadingSpinner";
 
 // Import tag icons
-import { NextSemIcon } from "../../../app/components/icons/tags/NextSemIcon";
-import { ErasmusIcon } from "../../../app/components/icons/tags/ErasmusIcon";
-import { FriendIcon } from "../../../app/components/icons/tags/FriendIcon";
-import { RedFlagIcon } from "../../../app/components/icons/tags/RedFlagIcon";
+import { NextSemIcon } from "../icons/tags/NextSemIcon";
+import { ErasmusIcon } from "../icons/tags/ErasmusIcon";
+import { FriendIcon } from "../icons/tags/FriendIcon";
+import { RedFlagIcon } from "../icons/tags/RedFlagIcon";
 
 interface User {
   _id: string;
@@ -258,6 +259,7 @@ const TagBadge = styled.div`
 const TagCommentDisplay = styled.span`
   font-size: 0.85rem;
   color: var(--text-secondary);
+  white-space: pre-wrap;
 `;
 
 const TagCommentInput = styled(TextField)`
@@ -343,7 +345,7 @@ const availableTags = [
   { tag: "nextSem", label: "Próximo Cuatri", Icon: NextSemIcon },
   { tag: "erasmus", label: "Erasmus", Icon: ErasmusIcon },
   { tag: "friend", label: "Amigo", Icon: FriendIcon },
-  { tag: "redFlag", label: "Red Flag", Icon: RedFlagIcon }
+  { tag: "redFlag", label: "Rechazado anteriormente", Icon: RedFlagIcon }
 ];
 
 export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
@@ -795,7 +797,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
     }
   };
 
-  if (!candidate) return <div>Cargando...</div>;
+  if (!candidate) return <LoadingSpinner />;
 
   const isDifferentPhase = candidate.recruitmentPhase !== currentPhase;
 

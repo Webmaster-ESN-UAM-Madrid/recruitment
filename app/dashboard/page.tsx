@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DashboardPage from "../../src/components/pages/DashboardPage";
-import LoadingSpinner from "../components/loaders/LoadingSpinner";
+import LoadingSpinner from "../../src/components/loaders/LoadingSpinner";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();

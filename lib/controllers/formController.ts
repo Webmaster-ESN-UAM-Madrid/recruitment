@@ -9,6 +9,7 @@ import { randomBytes } from "crypto";
 import { validateCandidateCreation, validateAssociatedUser } from "@/lib/validation/formRules";
 import { createIncident } from "@/lib/controllers/incidentController";
 import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController";
+import { checkForRedFlag } from "@/lib/controllers/candidateController";
 
 interface FormResponseItem {
   id: string;
@@ -28,6 +29,8 @@ function getMappingFromResponse(
 
   return response.responses.get(key) as string | undefined;
 }
+
+
 
 export const processFormResponse = async (formResponseId: string) => {
   try {
@@ -79,7 +82,8 @@ export const processFormResponse = async (formResponseId: string) => {
 
       if (name && allEmails.length > 0) {
         const existingCandidate = await Candidate.findOne({
-          $or: [{ email: { $in: allEmails } }, { alternateEmails: { $in: allEmails } }]
+          $or: [{ email: { $in: allEmails } }, { alternateEmails: { $in: allEmails } }],
+          recruitmentId: form.recruitmentProcessId
         });
 
         let candidateInstance;
@@ -98,12 +102,17 @@ export const processFormResponse = async (formResponseId: string) => {
           // Create new candidate
           const primaryEmail = formEmail || respondentEmail;
           const alternateEmails = allEmails.filter((e) => e !== primaryEmail);
+
+          const redFlagTag = await checkForRedFlag(allEmails);
+          const tags = redFlagTag ? [redFlagTag] : [];
+
           candidateInstance = await Candidate.create({
             recruitmentId: form.recruitmentProcessId,
             name,
             email: primaryEmail,
             alternateEmails,
-            recruitmentPhase: "registro"
+            recruitmentPhase: "registro",
+            tags
           });
           console.log(`Successfully created candidate from response ${response._id}`);
         }
@@ -571,6 +580,58 @@ export const attachResponseToCandidate = async (responseId: string, candidateId:
     };
   } catch (error) {
     console.error(`Error attaching response ${responseId} to candidate ${candidateId}:`, error);
+    return { status: 500, message: "Internal server error" };
+  }
+};
+
+export const forceCreateCandidateFromResponse = async (responseId: string) => {
+  await dbConnect();
+  try {
+    const response = await FormResponse.findById(responseId);
+    if (!response) {
+      return { status: 404, message: "FormResponse not found" };
+    }
+
+    const form = await Form.findById(response.formId);
+    if (!form) {
+      return { status: 404, message: "Form not found" };
+    }
+
+    if (!form.canCreateUsers) {
+      return { status: 400, message: "This form is not configured to create candidates" };
+    }
+
+    const name = getMappingFromResponse(response, form, "user.name");
+    const formEmail = getMappingFromResponse(response, form, "user.email")?.toLowerCase();
+    const respondentEmail = response.respondentEmail.toLowerCase();
+    const allEmails = [...new Set([formEmail, respondentEmail].filter(Boolean))];
+
+    if (!name || allEmails.length === 0) {
+      return { status: 400, message: "Missing name or email in form response" };
+    }
+
+    const primaryEmail = formEmail || respondentEmail;
+    const alternateEmails = allEmails.filter((e) => e !== primaryEmail);
+
+    const redFlagTag = await checkForRedFlag(allEmails);
+    const tags = redFlagTag ? [redFlagTag] : [];
+
+    const newCandidate = await Candidate.create({
+      recruitmentId: form.recruitmentProcessId,
+      name,
+      email: primaryEmail,
+      alternateEmails,
+      recruitmentPhase: "registro",
+      tags
+    });
+
+    response.candidateId = newCandidate._id;
+    response.processed = true;
+    await response.save();
+
+    return { status: 200, message: "Candidate created successfully", data: newCandidate };
+  } catch (error) {
+    console.error(`Error forcing candidate creation for response ${responseId}:`, error);
     return { status: 500, message: "Internal server error" };
   }
 };

@@ -2,62 +2,71 @@
 
 :root {
   /* Brand Colors */
-  --brand-primary: #007bff; /* #ec008c; */
-  --brand-primary-dark: #0056b3; /* #b3006b; */
-  --brand-secondary: #6c757d;
+  --brand-primary: #006FEE; /* Vibrant Blue */
+  --brand-primary-dark: #005BC4;
+  --brand-secondary: #71717A; /* Neutral Gray */
 
   /* Button Colors */
-  --button-primary-bg: #0070f0; /* var(--brand-primary) */
-  --button-secondary-bg: #7828c8;
-  --button-success-bg: #17c964;
-  --button-warning-bg: #f5a524;
-  --button-danger-bg: #f31260;
-  --button-disabled-bg: #999;
-
+  --button-primary-bg: var(--brand-primary);
+  --button-primary-hover-bg: var(--brand-primary-dark);
   --button-primary-text: #ffffff;
-  --button-primary-hover-bg: #0056b3;
-  --button-default-bg: #f0f0f0;
-  --button-default-bg: #333333;
-  --button-default-hover-bg: #e0e0e0;
+  
+  --button-secondary-bg: #9333EA; /* Purple */
+  --button-success-bg: #17C964; /* Green */
+  --button-warning-bg: #F5A524; /* Orange */
+  --button-danger-bg: #F31260; /* Red */
+  --button-disabled-bg: #E4E4E7;
+  --button-default-bg: #F4F4F5;
+  --button-default-hover-bg: #E4E4E7;
 
   /* Link Colors */
   --link-color: var(--brand-primary);
-  --link-hover-color: var(--brand-primary);
+  --link-hover-color: var(--brand-primary-dark);
 
   /* Incident Colors */
-  --warning-color: #ffb700;
-  --error-color: #ff2a00;
+  --warning-color: #F5A524;
+  --error-color: #F31260;
 
   /* Text Colors */
-  --text-primary: #333333;
-  --text-secondary: #666666;
+  --text-primary: #18181B; /* Zinc 900 */
+  --text-secondary: #52525B; /* Zinc 600 */
   --text-light: #ffffff;
+  --text-muted: #A1A1AA;
 
   /* Background Colors */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f0f0f0;
+  --bg-secondary: #F4F4F5; /* Zinc 100 */
+  --bg-tertiary: #FAFAFA; /* Zinc 50 */
 
   /* Border Colors */
-  --border-primary: #dddddd;
-  --border-secondary: #eeeeee;
+  --border-primary: #E4E4E7; /* Zinc 200 */
+  --border-secondary: #F4F4F5;
   --border-focus: var(--brand-primary);
 
   /* Component Specific */
-  --navbar-bg: var(--bg-primary);
+  --navbar-bg: rgba(255, 255, 255, 0.8); /* Glassmorphism base */
   --navbar-text: var(--text-primary);
-  --navbar-border: var(--border-secondary);
+  --navbar-border: var(--border-primary);
   --modal-bg: var(--bg-primary);
   --table-header-bg: var(--bg-tertiary);
-  --table-row-hover-bg: #e9e9e9;
-  --table-different-phase-row-bg: #fff6f0;
-  --tutor-row-bg: #f8efda;
-  --tutor-row-hover-bg: #f5e5cc;
-  --toast-success-bg: #4caf50;
-  --toast-error-bg: #f44336;
-  --toast-info-bg: #2196f3;
+  --table-row-hover-bg: var(--bg-secondary);
+  --table-different-phase-row-bg: #FFF7ED; /* Orange 50 */
+  --tutor-row-bg: #FEFCE8; /* Yellow 50 */
+  --tutor-row-hover-bg: #FEF9C3; /* Yellow 100 */
+  
+  --toast-success-bg: #17C964;
+  --toast-error-bg: #F31260;
+  --toast-info-bg: #006FEE;
 
-  --border-radius-md: 8px;
+  /* Spacing & Radius */
+  --border-radius-sm: 6px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 html,

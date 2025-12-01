@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import GlobalConfigManager from "@/app/components/admin/GlobalConfigManager";
+import GlobalConfigManager from "@/src/components/admin/GlobalConfigManager";
 import styled from "styled-components";
-import { DeleteButton as IconDeleteButton } from "@/app/components/buttons/DeleteButton";
+import { DeleteButton as IconDeleteButton } from "@/src/components/buttons/DeleteButton";
 import Image from "next/image";
+import LoadingSpinner from "../loaders/LoadingSpinner";
 
 const PageContainer = styled.div`
   padding: 20px;
@@ -166,7 +167,7 @@ const AdminPanelPage: React.FC = () => {
           <InnerContent>
             <Subtitle>Usuarios registrados</Subtitle>
             {loading ? (
-              <p>Cargando...</p>
+              <LoadingSpinner />
             ) : users.length === 0 ? (
               <p>No hay usuarios registrados.</p>
             ) : (

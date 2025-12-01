@@ -19,7 +19,7 @@ import {
   FormGroup
 } from "@mui/material";
 import { useSession } from "next-auth/react";
-import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
+import LoadingSpinner from "@/src/components/loaders/LoadingSpinner";
 import AutoSizingTextField from "../AutoSizingTextField";
 
 interface InterviewModalProps {

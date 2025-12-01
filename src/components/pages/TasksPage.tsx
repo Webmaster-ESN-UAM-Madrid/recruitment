@@ -5,19 +5,19 @@ import styled from "styled-components";
 import Link from "next/link";
 import Tooltip from "@mui/material/Tooltip";
 import { useSession } from "next-auth/react";
-import { NextSemIcon } from "../../../app/components/icons/tags/NextSemIcon";
-import { ErasmusIcon } from "../../../app/components/icons/tags/ErasmusIcon";
-import { FriendIcon } from "../../../app/components/icons/tags/FriendIcon";
-import { RedFlagIcon } from "../../../app/components/icons/tags/RedFlagIcon";
-import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
-import { AcceptButton } from "@/app/components/buttons/AcceptButton";
-import { useToast } from "@/app/components/toasts/ToastContext";
+import { NextSemIcon } from "../icons/tags/NextSemIcon";
+import { ErasmusIcon } from "../icons/tags/ErasmusIcon";
+import { FriendIcon } from "../icons/tags/FriendIcon";
+import { RedFlagIcon } from "../icons/tags/RedFlagIcon";
+import LoadingSpinner from "@/src/components/loaders/LoadingSpinner";
+import { AcceptButton } from "@/src/components/buttons/AcceptButton";
+import { useToast } from "@/src/components/toasts/ToastContext";
 import { IInterview } from "@/lib/models/interview";
 import { ICandidate } from "@/lib/models/candidate";
 import { IUser } from "@/lib/models/user";
-import Modal from "@/app/components/modals/Modal";
-import InterviewModal from "@/app/components/modals/InterviewModal";
-import { EditButton } from "@/app/components/buttons/EditButton";
+import Modal from "@/src/components/modals/Modal";
+import InterviewModal from "@/src/components/modals/InterviewModal";
+import { EditButton } from "@/src/components/buttons/EditButton";
 import { IForm } from "@/lib/models/form";
 import { IFormResponse } from "@/lib/models/formResponse";
 
@@ -25,7 +25,7 @@ const availableTags = [
   { tag: "nextSem", label: "Próximo Cuatri", Icon: NextSemIcon },
   { tag: "erasmus", label: "Erasmus", Icon: ErasmusIcon },
   { tag: "friend", label: "Amigo", Icon: FriendIcon },
-  { tag: "redFlag", label: "Red Flag", Icon: RedFlagIcon }
+  { tag: "redFlag", label: "Rechazado anteriormente", Icon: RedFlagIcon }
 ];
 
 const PageContainer = styled.div`

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import Modal from "@/app/components/modals/Modal";
-import LoadingSpinner from "@/app/components/loaders/LoadingSpinner";
+import Modal from "@/src/components/modals/Modal";
+import LoadingSpinner from "@/src/components/loaders/LoadingSpinner";
 import { AcceptButton } from "../buttons/AcceptButton";
 import { ICandidate } from "@/lib/models/candidate";
 import { CancelButton } from "../buttons/CancelButton";

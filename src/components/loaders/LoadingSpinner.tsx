@@ -15,19 +15,29 @@ const SpinnerContainer = styled.div`
   padding: 10px; /* Add some padding */
 `;
 
-const Spinner = styled.div`
+const Spinner = styled.div<{ size: number; color?: string }>`
   border: 4px solid #f3f3f3; /* Light grey */
-  border-top: 4px solid var(--brand-primary);
+  border-top: 4px solid ${(props) => props.color || "var(--brand-primary)"};
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: ${(props) => props.size}px;
+  height: ${(props) => props.size}px;
   animation: ${spin} 1s linear infinite;
 `;
 
-const LoadingSpinner = () => {
+interface LoadingSpinnerProps {
+  size?: number;
+  color?: string;
+  className?: string;
+}
+
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 40,
+  color,
+  className
+}) => {
   return (
-    <SpinnerContainer>
-      <Spinner />
+    <SpinnerContainer className={className}>
+      <Spinner size={size} color={color} />
     </SpinnerContainer>
   );
 };

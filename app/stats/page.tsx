@@ -3,8 +3,8 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import LoadingSpinner from "../components/loaders/LoadingSpinner";
-import RecruitmentStatsPage from "../components/pages/RecruitmentStatsPage";
+import LoadingSpinner from "../../src/components/loaders/LoadingSpinner";
+import RecruitmentStatsPage from "../../src/components/pages/RecruitmentStatsPage";
 
 export default function Stats() {
   const { status } = useSession();

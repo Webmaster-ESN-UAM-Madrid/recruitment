@@ -34,7 +34,8 @@ export async function validateCandidateCreation(
 
   // Find how many unique candidates are associated with the found emails
   const distinctCandidates = await Candidate.find({
-    $or: [{ email: { $in: emailsToCheck } }, { alternateEmails: { $in: emailsToCheck } }]
+    $or: [{ email: { $in: emailsToCheck } }, { alternateEmails: { $in: emailsToCheck } }],
+    recruitmentId: form.recruitmentProcessId
   }).distinct("_id");
 
   if (distinctCandidates.length > 0) {
@@ -66,7 +67,8 @@ export async function validateAssociatedUser(
 
   // Find how many unique candidates are associated with the found emails
   const candidates = await Candidate.find({
-    $or: [{ email: { $in: emailsToCheck } }, { alternateEmails: { $in: emailsToCheck } }]
+    $or: [{ email: { $in: emailsToCheck } }, { alternateEmails: { $in: emailsToCheck } }],
+    recruitmentId: form.recruitmentProcessId
   });
 
   if (candidates.length > 1) {

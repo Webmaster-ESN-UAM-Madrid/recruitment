@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import FeedbackPage from "../../src/components/pages/FeedbackPage";
-import LoadingSpinner from "../components/loaders/LoadingSpinner";
+import LoadingSpinner from "../../src/components/loaders/LoadingSpinner";
 
 const MAX_NEWBIE_SELECTIONS = 5;
 

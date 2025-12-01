@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import LoginProviders from "../../components/auth/LoginProviders";
+import LoginProviders from "../../../src/components/auth/LoginProviders";
 import React, { Suspense } from "react";
 
-import LoadingSpinner from "../../components/loaders/LoadingSpinner";
+import LoadingSpinner from "../../../src/components/loaders/LoadingSpinner";
 
 function ErrorContent() {
   const searchParams = useSearchParams();

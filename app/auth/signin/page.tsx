@@ -1,10 +1,33 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import LoginProviders from "../../components/auth/LoginProviders";
+import LoginProviders from "../../../src/components/auth/LoginProviders";
 import React, { Suspense } from "react";
+import LoadingSpinner from "../../../src/components/loaders/LoadingSpinner";
+import styled from "styled-components";
 
-import LoadingSpinner from "../../components/loaders/LoadingSpinner";
+const Title = styled.h1`
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+`;
+
+const Subtitle = styled.p`
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  font-size: 1rem;
+`;
+
+const ErrorMessage = styled.div`
+  background-color: #FEE2E2;
+  color: #DC2626;
+  padding: 12px;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  border: 1px solid #FECACA;
+`;
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -20,11 +43,12 @@ function SignInContent() {
   const errorMessage = error && (errors[error] || errors.Default);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Iniciar Sesión</h1>
-      {errorMessage && <p>{errorMessage}</p>}
+    <>
+      <Title>Bienvenido</Title>
+      <Subtitle>Inicia sesión para acceder al portal de reclutamiento</Subtitle>
+      {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
       <LoginProviders />
-    </div>
+    </>
   );
 }
 
