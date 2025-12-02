@@ -35,7 +35,8 @@ export const getGlobalConfig = async () => {
         currentRecruitment: globalConfig.currentRecruitment,
         recruitmentPhase: globalConfig.recruitmentPhase,
         recruiters: recruitersWithDetails,
-        committees: globalConfig.committees || []
+        committees: globalConfig.committees || [],
+        availability: globalConfig.availability
       }
     };
   } catch (error) {
@@ -46,7 +47,12 @@ export const getGlobalConfig = async () => {
 
 export const updateRecruitmentDetails = async (
   currentRecruitment: string,
-  recruitmentPhase: string
+  recruitmentPhase: string,
+  availability?: {
+    startDate: Date;
+    endDate: Date;
+    hourRanges: { start: number; end: number }[];
+  }
 ) => {
   await dbConnect();
   try {
@@ -134,6 +140,9 @@ export const updateRecruitmentDetails = async (
 
     globalConfig.currentRecruitment = currentRecruitment;
     globalConfig.recruitmentPhase = recruitmentPhase;
+    if (availability) {
+      globalConfig.availability = availability;
+    }
     await globalConfig.save();
 
     return { status: 200, message: "Config updated successfully" };

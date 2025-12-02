@@ -1,4 +1,4 @@
-import User from "../models/user";
+import User, { IUser } from "../models/user";
 import dbConnect from "@/lib/mongodb";
 
 export const getUsers = async () => {
@@ -9,6 +9,17 @@ export const getUsers = async () => {
   } catch (error) {
     console.error("Error fetching users:", error);
     return [];
+  }
+};
+
+export const getUserByEmail = async (email: string): Promise<IUser | null> => {
+  await dbConnect();
+  try {
+    const user = await User.findOne({ email });
+    return user;
+  } catch (error) {
+    console.error(`Error fetching user by email ${email}:`, error);
+    return null;
   }
 };
 

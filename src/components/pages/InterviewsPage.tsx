@@ -8,13 +8,14 @@ import { IUser } from "@/lib/models/user";
 import { ICandidate } from "@/lib/models/candidate";
 import InterviewCard from "@/src/components/interviews/InterviewCard";
 import InterviewModal from "@/src/components/modals/InterviewModal";
+import AvailabilitySection from "@/src/components/interviews/AvailabilitySection";
 import styled from "styled-components";
 import { useToast } from "@/src/components/toasts/ToastContext";
 
 const Header = styled.div`
   display: flex;
-  align-items: start;
-  gap: 24px;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 24px;
 `;
 
@@ -132,12 +133,13 @@ const InterviewsPage = () => {
 
   return (
     <PageContainer>
-      <Header>
-        <h1 style={{ marginBottom: 0 }}>Entrevistas</h1>
-        <AddButton onClick={() => openModal()} iconSize={20} />
-      </Header>
+      <AvailabilitySection />
 
       <Container>
+        <Header>
+          <h2 style={{ marginBottom: 0, color: "#333", fontFamily: "Montserrat, sans-serif" }}>Entrevistas Agendadas</h2>
+          <AddButton onClick={() => openModal()} iconSize={20} />
+        </Header>
         <InterviewContainer>
           {interviews.map((interview) => (
             <InterviewCard

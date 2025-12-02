@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!session || !checkAdminAccess(session.user?.email)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
-  const { currentRecruitment, recruitmentPhase } = await request.json();
-  const result = await updateRecruitmentDetails(currentRecruitment, recruitmentPhase);
+  const { currentRecruitment, recruitmentPhase, availability } = await request.json();
+  const result = await updateRecruitmentDetails(currentRecruitment, recruitmentPhase, availability);
   return NextResponse.json({ message: result.message }, { status: result.status });
 }

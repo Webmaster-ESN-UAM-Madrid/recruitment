@@ -133,6 +133,13 @@ const GlobalConfigManager = () => {
   const [isFormOnboardingModalOpen, setIsFormOnboardingModalOpen] = useState(false);
   const [selectedFormForPreview, setSelectedFormForPreview] = useState<ConnectedForm | null>(null);
 
+  // Availability State
+  const [availabilityStartDate, setAvailabilityStartDate] = useState("");
+  const [availabilityEndDate, setAvailabilityEndDate] = useState("");
+  const [hourRanges, setHourRanges] = useState<{ start: number; end: number }[]>([]);
+  const [newRangeStart, setNewRangeStart] = useState<number>(9);
+  const [newRangeEnd, setNewRangeEnd] = useState<number>(13);
+
   const { addToast } = useToast();
 
   const fetchConfig = useCallback(async () => {
@@ -145,6 +152,12 @@ const GlobalConfigManager = () => {
       setCurrentRecruitment(data.currentRecruitment);
       setRecruitmentPhase(data.recruitmentPhase);
       setRecruiters(data.recruiters);
+      
+      if (data.availability) {
+        setAvailabilityStartDate(data.availability.startDate ? new Date(data.availability.startDate).toISOString().split('T')[0] : "");
+        setAvailabilityEndDate(data.availability.endDate ? new Date(data.availability.endDate).toISOString().split('T')[0] : "");
+        setHourRanges(data.availability.hourRanges || []);
+      }
     } catch (e) {
       addToast(`Error al cargar la configuración: ${(e as Error).message}`, "error");
     }
@@ -199,7 +212,15 @@ const GlobalConfigManager = () => {
       const response = await fetch("/api/config/update-details", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentRecruitment, recruitmentPhase })
+        body: JSON.stringify({ 
+          currentRecruitment, 
+          recruitmentPhase,
+          availability: {
+            startDate: availabilityStartDate,
+            endDate: availabilityEndDate,
+            hourRanges
+          }
+        })
       });
       if (response.ok) {
         addToast("Configuración actualizada correctamente", "success");
@@ -369,6 +390,64 @@ const GlobalConfigManager = () => {
       <ButtonContainer style={{ marginTop: 5 }}>
         <SaveButton onClick={handleUpdateDetails} />
       </ButtonContainer>
+
+      <Subtitle>Configuración de Disponibilidad</Subtitle>
+      <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+        <TextField
+          label="Fecha Inicio"
+          type="date"
+          value={availabilityStartDate}
+          onChange={(e) => setAvailabilityStartDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+        />
+        <TextField
+          label="Fecha Fin"
+          type="date"
+          value={availabilityEndDate}
+          onChange={(e) => setAvailabilityEndDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+        />
+      </div>
+      
+      <div style={{ marginBottom: "20px" }}>
+        <h4>Rangos Horarios</h4>
+        {hourRanges.map((range, index) => (
+          <div key={index} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+            <span>{range.start}:00 - {range.end}:00</span>
+            <DeleteButton onClick={() => {
+              const newRanges = [...hourRanges];
+              newRanges.splice(index, 1);
+              setHourRanges(newRanges);
+            }} />
+          </div>
+        ))}
+        
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "10px" }}>
+          <TextField
+            label="Hora Inicio"
+            type="number"
+            value={newRangeStart}
+            onChange={(e) => setNewRangeStart(Number(e.target.value))}
+            style={{ width: "100px" }}
+          />
+          <TextField
+            label="Hora Fin"
+            type="number"
+            value={newRangeEnd}
+            onChange={(e) => setNewRangeEnd(Number(e.target.value))}
+            style={{ width: "100px" }}
+          />
+          <AddButton onClick={() => {
+            if (newRangeStart < newRangeEnd) {
+              setHourRanges([...hourRanges, { start: newRangeStart, end: newRangeEnd }]);
+            } else {
+              addToast("La hora de inicio debe ser menor a la hora de fin", "error");
+            }
+          }} />
+        </div>
+      </div>
 
       <Subtitle>Reclutadores</Subtitle>
       <RecruiterInputContainer>

@@ -16,8 +16,9 @@
   --button-warning-bg: #F5A524; /* Orange */
   --button-danger-bg: #F31260; /* Red */
   --button-disabled-bg: #E4E4E7;
-  --button-default-bg: #F4F4F5;
-  --button-default-hover-bg: #E4E4E7;
+  --button-default-bg: #333333;
+  --button-default-hover-bg: #e0e0e0;
+  
 
   /* Link Colors */
   --link-color: var(--brand-primary);
