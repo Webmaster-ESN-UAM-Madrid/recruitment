@@ -12,7 +12,7 @@ export const checkForRedFlag = async (emails: string[]) => {
   if (rejectedCandidates.length > 0) {
     const comments = rejectedCandidates.map((c) => {
       const reasonPart = c.rejectedReason ? `: ${c.rejectedReason}` : "";
-      return `Rechazado en ${c.recruitmentId}${reasonPart}`;
+      return `${c.recruitmentId}${reasonPart}`;
     });
 
     return {

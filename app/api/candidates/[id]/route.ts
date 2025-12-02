@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCandidateById, updateCandidate } from "@/lib/controllers/candidateController";
+import {
+  getCandidateById,
+  updateCandidate,
+  deleteCandidate
+} from "@/lib/controllers/candidateController";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess, checkTutorAccess } from "@/lib/utils/authUtils";
@@ -36,4 +40,17 @@ export async function PUT(req: NextRequest, context: any) {
     return NextResponse.json({ message: "Failed to update candidate" }, { status: 500 });
   }
   return NextResponse.json(updatedCandidate);
+}
+
+export async function DELETE(req: NextRequest, context: any) {
+  const session = await getServerSession(authOptions);
+  if (!session || !(await checkRecruiterAccess(session.user?.email))) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
+  const params = await context.params;
+  const deletedCandidate = await deleteCandidate(params.id);
+  if (!deletedCandidate) {
+    return NextResponse.json({ message: "Failed to delete candidate" }, { status: 500 });
+  }
+  return NextResponse.json({ message: "Candidate deleted successfully" });
 }
