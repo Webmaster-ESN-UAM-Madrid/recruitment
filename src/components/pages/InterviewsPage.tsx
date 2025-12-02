@@ -118,6 +118,7 @@ const InterviewsPage = () => {
       if (res.ok) {
         addToast("Entrevista eliminada correctamente", "success");
         setInterviews(interviews.filter((interview) => interview._id !== interviewId));
+        window.dispatchEvent(new CustomEvent("updateTasksDot"));
       } else {
         addToast("Error al eliminar la entrevista", "error");
       }

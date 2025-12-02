@@ -151,6 +151,9 @@ const nonFeedbackStatuses = ["cancelled", "absent"];
 export const getTasksStatus = async (userId: string) => {
   await dbConnect();
   try {
+    const recruitmentDetails = await getCurrentRecruitmentDetails();
+    const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
     const now = new Date();
     // Single query to get all interviews
     const allInterviews = await Interview.find({
@@ -165,6 +168,9 @@ export const getTasksStatus = async (userId: string) => {
       if (!isInterviewer || !isPastInterview) return false;
 
       for (const candidate of interview.candidates) {
+        // Check if candidate belongs to current recruitment
+        if (candidate.recruitmentId !== currentRecruitmentId) continue;
+
         const candidateId = candidate._id.toString();
         if (
           !interview.opinions.get(candidateId)?.interviewers.get(userId)?.opinion &&
@@ -183,6 +189,7 @@ export const getTasksStatus = async (userId: string) => {
     const unnotifiedInterviews = allInterviews.some((interview) =>
       interview.candidates.some(
         (candidate: ICandidate) =>
+          candidate.recruitmentId === currentRecruitmentId &&
           !interview.opinions.get(candidate._id.toString())?.interviewNotified
       )
     );

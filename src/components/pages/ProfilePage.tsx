@@ -253,6 +253,7 @@ const TagBadge = styled.div`
   @media (max-width: 768px) {
     padding: 6px 10px;
     font-size: 0.9rem;
+    flex-wrap: wrap;
   }
 `;
 
@@ -260,6 +261,7 @@ const TagCommentDisplay = styled.span`
   font-size: 0.85rem;
   color: var(--text-secondary);
   white-space: pre-wrap;
+  word-break: break-word;
 `;
 
 const TagCommentInput = styled(TextField)`
@@ -275,6 +277,12 @@ const TagCommentInput = styled(TextField)`
     }
     .MuiInputLabel-shrink {
       transform: translate(14px, -7px) scale(0.75);
+    }
+
+    @media (max-width: 768px) {
+      margin-left: 0;
+      margin-top: 8px;
+      width: 100%;
     }
   }
 `;
@@ -1097,8 +1105,8 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                 max={5}
                 onChangeActive={(_, hover) => setHoverRating(hover)}
                 sx={{
-                  gap: "8px",
-                  fontSize: 48,
+                  gap: isMobile ? "4px" : "8px",
+                  fontSize: isMobile ? 32 : 48,
                   color: "var(--button-primary-bg)",
                   "& .MuiRating-iconEmpty": {
                     color: "color-mix(in srgb, var(--button-primary-bg), transparent 70%)"
@@ -1110,7 +1118,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                 {hoverRating ? labels[hoverRating] : rating ? labels[rating] : "Sin selección"}
               </span>
             </div>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: isMobile ? "4px" : "8px" }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <div
                   key={n}
@@ -1118,10 +1126,17 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                     display: "flex",
                     justifyContent: "center",
                     overflow: "visible",
-                    width: 48
+                    width: isMobile ? 32 : 48
                   }}
                 >
-                  <small style={{ color: "var(--text-secondary)" }}>
+                  <small
+                    style={{
+                      color: "var(--text-secondary)",
+                      fontSize: isMobile ? "0.7rem" : "0.8rem",
+                      textAlign: "center",
+                      lineHeight: 1.2
+                    }}
+                  >
                     {labels[n as 1 | 2 | 3 | 4 | 5]}
                   </small>
                 </div>

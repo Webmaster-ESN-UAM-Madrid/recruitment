@@ -121,6 +121,7 @@ const IncidentsPage: React.FC = () => {
         } else {
           addToast("Respuesta vinculada correctamente", "success");
           fetchUnprocessedResponses();
+          window.dispatchEvent(new CustomEvent("updateIncidentsDot"));
         }
       } else {
         addToast("Error al vincular la respuesta", "error");
@@ -157,6 +158,7 @@ const IncidentsPage: React.FC = () => {
       if (res.ok) {
         addToast("Respuesta eliminada correctamente", "success");
         fetchUnprocessedResponses();
+        window.dispatchEvent(new CustomEvent("updateIncidentsDot"));
       } else {
         addToast("No se pudo eliminar la respuesta", "error");
       }
@@ -179,6 +181,7 @@ const IncidentsPage: React.FC = () => {
       if (res.ok) {
         addToast("Candidato creado correctamente", "success");
         fetchUnprocessedResponses();
+        window.dispatchEvent(new CustomEvent("updateIncidentsDot"));
       } else {
         const data = await res.json();
         addToast(data.message || "Error al crear el candidato", "error");
