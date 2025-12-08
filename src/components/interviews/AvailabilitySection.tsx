@@ -15,7 +15,8 @@ const Container = styled.div`
   max-width: 100%;
   display: flex;
   gap: 20px;
-  
+  overflow-x: auto;
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
@@ -23,12 +24,14 @@ const Container = styled.div`
 
 const MainContent = styled.div`
   flex: 1;
+  min-width: 0;
+  overflow-x: auto;
 `;
 
 const Sidebar = styled.div`
   width: 250px;
   flex-shrink: 0;
-  
+
   @media (max-width: 768px) {
     width: 100%;
   }
@@ -82,12 +85,12 @@ const AvailabilitySection = () => {
         const configData = await configRes.json();
         setConfig(configData);
       }
-      
+
       if (availabilitiesRes.ok) {
         const availabilitiesData = await availabilitiesRes.json();
         setAvailabilities(availabilitiesData);
       }
-      
+
       if (usersRes.ok) {
         const usersData = await usersRes.json();
         setUsers(usersData);
@@ -142,14 +145,14 @@ const AvailabilitySection = () => {
         <AvailabilityTimetable
           config={config.availability}
           availabilities={availabilities}
-          currentUserSlots={currentUserAvailability?.slots.map(s => new Date(s)) || []}
+          currentUserSlots={currentUserAvailability?.slots.map((s) => new Date(s)) || []}
           onSave={handleSaveAvailability}
           hoveredUserId={hoveredUserId}
         />
       </MainContent>
       <Sidebar>
         <RecruiterList
-          users={users.filter(u => config?.recruiters?.some(r => r.email === u.email))}
+          users={users.filter((u) => config?.recruiters?.some((r) => r.email === u.email))}
           availabilities={availabilities}
           onHoverUser={setHoveredUserId}
         />

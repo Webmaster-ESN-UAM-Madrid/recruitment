@@ -6,6 +6,7 @@ const TimetableContainer = styled.div`
   user-select: none;
   position: relative;
   padding-bottom: 20px;
+  width: 100%;
 `;
 
 const Grid = styled.div<{ cols: number; rows: number }>`
@@ -15,12 +16,13 @@ const Grid = styled.div<{ cols: number; rows: number }>`
   gap: 1px;
   background-color: #e5e7eb;
   border: 1px solid #e5e7eb;
-  min-width: 800px;
+  min-width: max-content;
+  width: fit-content;
 `;
 
 const HeaderCell = styled.div`
   background-color: #f9fafb;
-  padding: 8px;
+  padding: 2px;
   text-align: center;
   font-weight: 600;
   font-size: 12px;
@@ -56,8 +58,10 @@ const TimeLabel = styled.div<{ $isStartOfRange?: boolean }>`
   justify-content: flex-end;
   padding-right: 8px;
   height: 30px;
-  
-  ${(props) => props.$isStartOfRange && `
+
+  ${(props) =>
+    props.$isStartOfRange &&
+    `
     margin-top: 20px;
     position: relative;
     
@@ -73,13 +77,20 @@ const TimeLabel = styled.div<{ $isStartOfRange?: boolean }>`
   `}
 `;
 
-const Cell = styled.div<{ $selected: boolean; $isHoveredUser: boolean; opacity?: number; $isStartOfRange?: boolean }>`
+const Cell = styled.div<{
+  $selected: boolean;
+  $isHoveredUser: boolean;
+  opacity?: number;
+  $isStartOfRange?: boolean;
+}>`
   background-color: #ffffff;
   position: relative;
   cursor: pointer;
   height: 30px;
-  
-  ${(props) => props.$isStartOfRange && `
+
+  ${(props) =>
+    props.$isStartOfRange &&
+    `
     margin-top: 20px;
     position: relative;
     
@@ -93,7 +104,7 @@ const Cell = styled.div<{ $selected: boolean; $isHoveredUser: boolean; opacity?:
       background-color: #d1d5db;
     }
   `}
-  
+
   ${(props) =>
     props.$selected &&
     `
@@ -105,15 +116,39 @@ const Cell = styled.div<{ $selected: boolean; $isHoveredUser: boolean; opacity?:
   }
 `;
 
-const Overlay = styled.div<{ opacity: number }>`
+const UserOverlay = styled.div<{ opacity: number }>`
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(59, 130, 246, ${(props) => props.opacity});
+  background-color: rgba(
+    16,
+    185,
+    129,
+    ${(props) => props.opacity}
+  ); /* Green for user's own selections */
   pointer-events: none;
-  mix-blend-mode: multiply;
+`;
+
+const OthersOverlay = styled.div<{ opacity: number }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(59, 130, 246, ${(props) => props.opacity}); /* Blue for others only */
+  pointer-events: none;
+`;
+
+const OverlapOverlay = styled.div<{ opacity: number }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(139, 92, 246, ${(props) => props.opacity}); /* Purple for overlaps */
+  pointer-events: none;
 `;
 
 const HoverOverlay = styled.div`
@@ -169,7 +204,9 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
-  const [dragCurrent, setDragCurrent] = useState<{ dayIndex: number; timeIndex: number } | null>(null);
+  const [dragCurrent, setDragCurrent] = useState<{ dayIndex: number; timeIndex: number } | null>(
+    null
+  );
   const [initialSelectedState, setInitialSelectedState] = useState(false); // Was the start cell selected?
 
   // Parse dates and ranges
@@ -202,7 +239,7 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
     const slots: { hour: number; minute: number; label: string; isStartOfRange: boolean }[] = [];
     // Sort ranges
     const sortedRanges = [...config.hourRanges].sort((a, b) => a.start - b.start);
-    
+
     sortedRanges.forEach((range, index) => {
       for (let h = range.start; h < range.end; h++) {
         const isStart = h === range.start && index > 0;
@@ -229,7 +266,8 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
   };
 
   const getSlotFromIndices = (dayIndex: number, timeIndex: number) => {
-    if (dayIndex < 0 || dayIndex >= dates.length || timeIndex < 0 || timeIndex >= timeSlots.length) return null;
+    if (dayIndex < 0 || dayIndex >= dates.length || timeIndex < 0 || timeIndex >= timeSlots.length)
+      return null;
     return getSlotId(dates[dayIndex], timeSlots[timeIndex]);
   };
 
@@ -240,21 +278,21 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
     // but represent a time jump.
     // However, the requirement says "The click and drag shouldn't go into a different time range".
     // Let's check the actual time difference.
-    
+
     const minIndex = Math.min(index1, index2);
     const maxIndex = Math.max(index1, index2);
-    
+
     for (let i = minIndex; i < maxIndex; i++) {
-        const current = timeSlots[i];
-        const next = timeSlots[i+1];
-        
-        // Check if next slot is exactly 30 mins after current
-        const currentTime = current.hour * 60 + current.minute;
-        const nextTime = next.hour * 60 + next.minute;
-        
-        if (nextTime - currentTime > 30) {
-            return false; // Gap detected
-        }
+      const current = timeSlots[i];
+      const next = timeSlots[i + 1];
+
+      // Check if next slot is exactly 30 mins after current
+      const currentTime = current.hour * 60 + current.minute;
+      const nextTime = next.hour * 60 + next.minute;
+
+      if (nextTime - currentTime > 30) {
+        return false; // Gap detected
+      }
     }
     return true;
   };
@@ -263,46 +301,46 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
     setIsDragging(true);
     setDragStart({ dayIndex, timeIndex });
     setDragCurrent({ dayIndex, timeIndex });
-    
+
     const slotId = getSlotFromIndices(dayIndex, timeIndex);
     if (slotId) {
-        setInitialSelectedState(selectedSlots.has(slotId));
+      setInitialSelectedState(selectedSlots.has(slotId));
     }
   };
 
   const handleMouseEnter = (dayIndex: number, timeIndex: number) => {
     if (isDragging && dragStart) {
-        // Check if we are crossing time ranges
-        if (areInSameRange(dragStart.timeIndex, timeIndex)) {
-             setDragCurrent({ dayIndex, timeIndex });
-        }
+      // Check if we are crossing time ranges
+      if (areInSameRange(dragStart.timeIndex, timeIndex)) {
+        setDragCurrent({ dayIndex, timeIndex });
+      }
     }
   };
 
   const handleMouseUp = () => {
     if (isDragging && dragStart && dragCurrent) {
-        const newSelected = new Set(selectedSlots);
-        
-        const minDay = Math.min(dragStart.dayIndex, dragCurrent.dayIndex);
-        const maxDay = Math.max(dragStart.dayIndex, dragCurrent.dayIndex);
-        const minTime = Math.min(dragStart.timeIndex, dragCurrent.timeIndex);
-        const maxTime = Math.max(dragStart.timeIndex, dragCurrent.timeIndex);
-        
-        for (let d = minDay; d <= maxDay; d++) {
-            for (let t = minTime; t <= maxTime; t++) {
-                const slotId = getSlotFromIndices(d, t);
-                if (slotId) {
-                    if (initialSelectedState) {
-                        newSelected.delete(slotId); // Deselect if started on selected
-                    } else {
-                        newSelected.add(slotId); // Select if started on unselected
-                    }
-                }
+      const newSelected = new Set(selectedSlots);
+
+      const minDay = Math.min(dragStart.dayIndex, dragCurrent.dayIndex);
+      const maxDay = Math.max(dragStart.dayIndex, dragCurrent.dayIndex);
+      const minTime = Math.min(dragStart.timeIndex, dragCurrent.timeIndex);
+      const maxTime = Math.max(dragStart.timeIndex, dragCurrent.timeIndex);
+
+      for (let d = minDay; d <= maxDay; d++) {
+        for (let t = minTime; t <= maxTime; t++) {
+          const slotId = getSlotFromIndices(d, t);
+          if (slotId) {
+            if (initialSelectedState) {
+              newSelected.delete(slotId); // Deselect if started on selected
+            } else {
+              newSelected.add(slotId); // Select if started on unselected
             }
+          }
         }
-        
-        setSelectedSlots(newSelected);
-        onSave(Array.from(newSelected).map(s => new Date(s)));
+      }
+
+      setSelectedSlots(newSelected);
+      onSave(Array.from(newSelected).map((s) => new Date(s)));
     }
     setIsDragging(false);
     setDragStart(null);
@@ -310,37 +348,40 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
   };
 
   // Calculate aggregate availability for visualization
-  const getAggregateOpacity = (slotId: string) => {
-    let count = 0;
-    availabilities.forEach(a => {
-        if (a.slots.includes(slotId)) count++;
+  const getAvailabilityCounts = (slotId: string) => {
+    let othersCount = 0;
+    let userHasIt = selectedSlots.has(slotId);
+
+    availabilities.forEach((a) => {
+      if (a.slots.includes(slotId)) othersCount++;
     });
-    
+
+    return { othersCount, userHasIt, totalCount: othersCount + (userHasIt ? 1 : 0) };
+  };
+
+  const calculateOpacity = (count: number) => {
     if (count === 0) return 0;
-    // Cap alpha at 0.8. Normalize based on total users? Or just raw count?
-    // "more opaque the more people there are". Let's assume max 10 people for 0.8 opacity for now, or dynamic.
-    // Let's use a simple linear scale capped at 0.8.
-    const maxUsers = Math.max(availabilities.length, 1);
+    const maxUsers = Math.max(availabilities.length + 1, 1); // +1 for current user
     const opacity = Math.min((count / maxUsers) * 0.8, 0.8);
     return opacity;
   };
 
   const isHoveredUserAvailable = (slotId: string) => {
     if (!hoveredUserId) return false;
-    const userAvail = availabilities.find(a => a.userId === hoveredUserId);
+    const userAvail = availabilities.find((a) => a.userId === hoveredUserId);
     return userAvail?.slots.includes(slotId);
   };
 
   // Helper to determine if a cell is currently being dragged over
   const isInDragArea = (dayIndex: number, timeIndex: number) => {
-      if (!isDragging || !dragStart || !dragCurrent) return false;
-      
-      const minDay = Math.min(dragStart.dayIndex, dragCurrent.dayIndex);
-      const maxDay = Math.max(dragStart.dayIndex, dragCurrent.dayIndex);
-      const minTime = Math.min(dragStart.timeIndex, dragCurrent.timeIndex);
-      const maxTime = Math.max(dragStart.timeIndex, dragCurrent.timeIndex);
-      
-      return dayIndex >= minDay && dayIndex <= maxDay && timeIndex >= minTime && timeIndex <= maxTime;
+    if (!isDragging || !dragStart || !dragCurrent) return false;
+
+    const minDay = Math.min(dragStart.dayIndex, dragCurrent.dayIndex);
+    const maxDay = Math.max(dragStart.dayIndex, dragCurrent.dayIndex);
+    const minTime = Math.min(dragStart.timeIndex, dragCurrent.timeIndex);
+    const maxTime = Math.max(dragStart.timeIndex, dragCurrent.timeIndex);
+
+    return dayIndex >= minDay && dayIndex <= maxDay && timeIndex >= minTime && timeIndex <= maxTime;
   };
 
   return (
@@ -353,7 +394,6 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
             {month.label}
           </MonthCell>
         ))}
-
         {/* Header Row */}
         <div /> {/* Top-left empty cell for date row */}
         {dates.map((date, i) => (
@@ -361,7 +401,6 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
             {date.toLocaleDateString("es-ES", { weekday: "short", day: "2-digit" })}
           </HeaderCell>
         ))}
-
         {/* Time Rows */}
         {timeSlots.map((time, tIndex) => (
           <React.Fragment key={tIndex}>
@@ -370,20 +409,27 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
               const slotId = getSlotId(date, time);
               const isSelected = selectedSlots.has(slotId);
               const isDragActive = isInDragArea(dIndex, tIndex);
-              
+
               // Determine visual state
               // If dragging, we show the PREDICTED state
               let visuallySelected = isSelected;
               if (isDragActive) {
-                  visuallySelected = !initialSelectedState;
+                visuallySelected = !initialSelectedState;
               }
 
-              const aggregateOpacity = getAggregateOpacity(slotId);
+              const { othersCount, userHasIt, totalCount } = getAvailabilityCounts(slotId);
               const isHovered = isHoveredUserAvailable(slotId);
-              
-              // When hovering a user, hide everything else
-              const showSelected = hoveredUserId ? false : visuallySelected;
-              const showAggregate = hoveredUserId ? false : true;
+
+              // Determine which overlays to show
+              const showAggregate = !hoveredUserId;
+              const showSelected = false; // Never show solid background when using overlays
+
+              // Calculate opacities for different layers
+              const userOnlyOpacity = userHasIt && othersCount === 0 ? 0.6 : 0;
+              const othersOnlyOpacity =
+                !userHasIt && othersCount > 0 ? calculateOpacity(othersCount) : 0;
+              const overlapOpacity =
+                userHasIt && othersCount > 0 ? calculateOpacity(totalCount) : 0;
 
               return (
                 <Cell
@@ -394,8 +440,14 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
                   onMouseDown={() => handleMouseDown(dIndex, tIndex)}
                   onMouseEnter={() => handleMouseEnter(dIndex, tIndex)}
                 >
-                  {showAggregate && aggregateOpacity > 0 && (
-                      <Overlay opacity={aggregateOpacity} />
+                  {showAggregate && userOnlyOpacity > 0 && (
+                    <UserOverlay opacity={userOnlyOpacity} />
+                  )}
+                  {showAggregate && othersOnlyOpacity > 0 && (
+                    <OthersOverlay opacity={othersOnlyOpacity} />
+                  )}
+                  {showAggregate && overlapOpacity > 0 && (
+                    <OverlapOverlay opacity={overlapOpacity} />
                   )}
                   {isHovered && <HoverOverlay />}
                 </Cell>
