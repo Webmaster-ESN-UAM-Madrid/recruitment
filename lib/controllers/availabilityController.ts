@@ -24,7 +24,8 @@ export const getAvailabilities = async (): Promise<IAvailability[]> => {
 
 export const updateUserAvailability = async (
   userId: string,
-  slots: Date[]
+  slots: Date[],
+  type: "presencial" | "online" = "presencial"
 ): Promise<IAvailability | null> => {
   await dbConnect();
   try {
@@ -35,9 +36,11 @@ export const updateUserAvailability = async (
     }
     const currentRecruitmentId = recruitmentDetails.currentRecruitment;
 
+    const updateField = type === "online" ? "onlineSlots" : "slots";
+
     const availability = await Availability.findOneAndUpdate(
       { userId, recruitmentId: currentRecruitmentId },
-      { slots },
+      { [updateField]: slots },
       { new: true, upsert: true }
     );
     return availability;

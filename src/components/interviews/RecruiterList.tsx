@@ -61,6 +61,7 @@ interface User {
 interface Availability {
   userId: string;
   slots: string[];
+  onlineSlots?: string[];
 }
 
 interface RecruiterListProps {
@@ -79,7 +80,7 @@ const RecruiterList: React.FC<RecruiterListProps> = ({ users, availabilities, on
       <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#333" }}>Reclutadores</h3>
       {users.map((user) => {
         const hasAvailability = availabilities.some(
-          (a) => a.userId === user._id && a.slots.length > 0
+          (a) => a.userId === user._id && ((a.slots && a.slots.length > 0) || (a.onlineSlots && a.onlineSlots.length > 0))
         );
         
         return (

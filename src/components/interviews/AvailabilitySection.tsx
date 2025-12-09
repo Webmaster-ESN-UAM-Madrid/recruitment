@@ -55,6 +55,7 @@ interface Config {
 interface Availability {
   userId: string;
   slots: string[]; // ISO strings
+  onlineSlots?: string[]; // ISO strings
 }
 
 interface User {
@@ -85,12 +86,12 @@ const AvailabilitySection = () => {
         const configData = await configRes.json();
         setConfig(configData);
       }
-
+      
       if (availabilitiesRes.ok) {
         const availabilitiesData = await availabilitiesRes.json();
         setAvailabilities(availabilitiesData);
       }
-
+      
       if (usersRes.ok) {
         const usersData = await usersRes.json();
         setUsers(usersData);
@@ -107,29 +108,29 @@ const AvailabilitySection = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleSaveAvailability = async (slots: Date[]) => {
+  const handleSaveAvailability = async (slots: Date[], type: "presencial" | "online") => {
     try {
       const res = await fetch("/api/availability", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ slots })
+        body: JSON.stringify({ slots, type })
       });
 
       if (res.ok) {
-        addToast("Disponibilidad guardada correctamente", "success");
+        addToast(`Disponibilidad ${type} guardada correctamente`, "success");
         fetchData();
       } else {
-        addToast("Error al guardar disponibilidad", "error");
+        addToast(`Error al guardar disponibilidad ${type}`, "error");
       }
     } catch (error) {
-      console.error("Error saving availability:", error);
-      addToast("Error al guardar disponibilidad", "error");
+      console.error(`Error saving ${type} availability:`, error);
+      addToast(`Error al guardar disponibilidad ${type}`, "error");
     }
   };
 
-  if (loading) return <div>Cargando disponibilidad...</div>;
+  if (loading) return <></>;
   if (!config?.availability || !config.availability.startDate || !config.availability.endDate) {
     return null; // Or show a message that availability is not configured
   }
@@ -138,21 +139,38 @@ const AvailabilitySection = () => {
     (a) => users.find((u) => u._id === a.userId)?.email === session?.user?.email
   );
 
+  // Transform availabilities for online to match the expected format for the timetable component
+  const onlineAvailabilities = availabilities.map(a => ({
+    ...a,
+    slots: a.onlineSlots || []
+  }));
+
   return (
     <Container>
       <MainContent>
-        <Title>Disponibilidad para Entrevistas</Title>
+        <Title>Disponibilidad Presencial</Title>
         <AvailabilityTimetable
           config={config.availability}
           availabilities={availabilities}
-          currentUserSlots={currentUserAvailability?.slots.map((s) => new Date(s)) || []}
-          onSave={handleSaveAvailability}
+          recruiters={users.filter(u => config?.recruiters?.some(r => r.email === u.email))}
+          currentUserSlots={currentUserAvailability?.slots.map(s => new Date(s)) || []}
+          onSave={(slots) => handleSaveAvailability(slots, "presencial")}
+          hoveredUserId={hoveredUserId}
+        />
+        
+        <Title style={{ marginTop: '40px' }}>Disponibilidad Online</Title>
+        <AvailabilityTimetable
+          config={config.availability}
+          availabilities={onlineAvailabilities}
+          recruiters={users.filter(u => config?.recruiters?.some(r => r.email === u.email))}
+          currentUserSlots={currentUserAvailability?.onlineSlots?.map(s => new Date(s)) || []}
+          onSave={(slots) => handleSaveAvailability(slots, "online")}
           hoveredUserId={hoveredUserId}
         />
       </MainContent>
       <Sidebar>
         <RecruiterList
-          users={users.filter((u) => config?.recruiters?.some((r) => r.email === u.email))}
+          users={users.filter(u => config?.recruiters?.some(r => r.email === u.email))}
           availabilities={availabilities}
           onHoverUser={setHoveredUserId}
         />

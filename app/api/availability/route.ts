@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const { slots } = await req.json();
+    const { slots, type } = await req.json();
     
     const user = await getUserByEmail(session.user.email);
     
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const updatedAvailability = await updateUserAvailability(user._id, slots);
+    const updatedAvailability = await updateUserAvailability(user._id, slots, type);
     
     if (updatedAvailability) {
       return NextResponse.json(updatedAvailability);

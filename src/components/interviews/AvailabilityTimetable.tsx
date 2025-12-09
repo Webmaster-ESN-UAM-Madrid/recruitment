@@ -182,6 +182,40 @@ const SaveButton = styled.button`
   }
 `;
 
+const Tooltip = styled.div`
+  position: fixed;
+  background-color: #ffffff;
+  color: #1f2937;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  min-width: 150px;
+  transform: translate(-50%, 20px); /* Centered horizontally, below cursor */
+`;
+
+const TooltipHeader = styled.div`
+  font-weight: 600;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+`;
+
+const TooltipList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  
+  li {
+    margin-bottom: 2px;
+  }
+`;
+
 interface AvailabilityTimetableProps {
   config: {
     startDate: string;
@@ -189,6 +223,7 @@ interface AvailabilityTimetableProps {
     hourRanges: { start: number; end: number }[];
   };
   availabilities: { userId: string; slots: string[] }[];
+  recruiters: { _id: string; name: string }[];
   currentUserSlots: Date[];
   onSave: (slots: Date[]) => void;
   hoveredUserId: string | null;
@@ -197,9 +232,10 @@ interface AvailabilityTimetableProps {
 const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
   config,
   availabilities,
+  recruiters,
   currentUserSlots,
   onSave,
-  hoveredUserId
+  hoveredUserId,
 }) => {
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -207,7 +243,58 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
   const [dragCurrent, setDragCurrent] = useState<{ dayIndex: number; timeIndex: number } | null>(
     null
   );
-  const [initialSelectedState, setInitialSelectedState] = useState(false); // Was the start cell selected?
+  const [initialSelectedState, setInitialSelectedState] = useState(false);
+  
+  // Tooltip state
+  const [tooltipData, setTooltipData] = useState<{
+    x: number;
+    y: number;
+    count: number;
+    total: number;
+    names: string[];
+    slotId: string;
+  } | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCellMouseEnter = (e: React.MouseEvent, slotId: string) => {
+    // Clear existing timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    
+    // Hide current tooltip
+    setTooltipData(null);
+    
+    // Get coordinates relative to viewport for fixed positioning
+    const x = e.clientX;
+    const y = e.clientY;
+
+    // Start 1s timer
+    hoverTimeoutRef.current = setTimeout(() => {
+      const availableRecruiters = recruiters.filter(recruiter => {
+        const avail = availabilities.find(a => a.userId === recruiter._id);
+        return avail?.slots.includes(slotId);
+      });
+
+      if (availableRecruiters.length > 0) {
+        setTooltipData({
+          x,
+          y,
+          slotId,
+          count: availableRecruiters.length,
+          total: recruiters.length,
+          names: availableRecruiters.map(r => r.name)
+        });
+      }
+    }, 1000);
+  };
+
+  const handleCellMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setTooltipData(null);
+  };
 
   // Parse dates and ranges
   const dates = useMemo(() => {
@@ -437,8 +524,19 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
                   $selected={showSelected}
                   $isHoveredUser={!!isHovered}
                   $isStartOfRange={time.isStartOfRange}
-                  onMouseDown={() => handleMouseDown(dIndex, tIndex)}
-                  onMouseEnter={() => handleMouseEnter(dIndex, tIndex)}
+                  onMouseDown={() => {
+                    handleMouseDown(dIndex, tIndex);
+                    // Hide tooltip immediately on interaction
+                    setTooltipData(null);
+                    if (hoverTimeoutRef.current) {
+                      clearTimeout(hoverTimeoutRef.current);
+                    }
+                  }}
+                  onMouseEnter={(e) => {
+                    handleMouseEnter(dIndex, tIndex);
+                    handleCellMouseEnter(e, slotId);
+                  }}
+                  onMouseLeave={handleCellMouseLeave}
                 >
                   {showAggregate && userOnlyOpacity > 0 && (
                     <UserOverlay opacity={userOnlyOpacity} />
@@ -456,6 +554,24 @@ const AvailabilityTimetable: React.FC<AvailabilityTimetableProps> = ({
           </React.Fragment>
         ))}
       </Grid>
+      
+      {tooltipData && (
+        <Tooltip
+          style={{
+            top: tooltipData.y,
+            left: tooltipData.x,
+          }}
+        >
+          <TooltipHeader>
+            Disponibilidad: {tooltipData.count}/{tooltipData.total}
+          </TooltipHeader>
+          <TooltipList>
+            {tooltipData.names.map((name, i) => (
+              <li key={i}>{name}</li>
+            ))}
+          </TooltipList>
+        </Tooltip>
+      )}
     </TimetableContainer>
   );
 };
