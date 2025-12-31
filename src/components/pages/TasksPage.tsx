@@ -331,10 +331,18 @@ const TasksPage: React.FC = () => {
     return false;
   });
 
-  const scheduledCandidateIds = new Set(interviews.flatMap((i) => i.candidates));
-  const unscheduledCandidates = candidates.filter(
-    (c) => c.active && !scheduledCandidateIds.has(c._id)
-  );
+  const nonEffectiveStatuses = ["cancelled", "absent"];
+  const unscheduledCandidates = candidates.filter((c) => {
+    if (!c.active) return false;
+
+    const candidateInterviews = interviews.filter((i) => i.candidates.includes(c._id));
+    if (candidateInterviews.length === 0) return true;
+
+    // A candidate is unscheduled if ALL their interviews are non-effective (absent or cancelled)
+    return candidateInterviews.every((i) =>
+      nonEffectiveStatuses.includes(i.opinions[c._id]?.status)
+    );
+  });
 
   const interviewFormIds = new Set(
     forms

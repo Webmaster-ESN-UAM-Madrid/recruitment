@@ -148,6 +148,9 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
   const [opinions, setOpinions] = useState<IInterview["opinions"]>({});
   const [events, setEvents] = useState<Record<string, ICandidate["events"]>>({});
   const [loading, setLoading] = useState(false);
+  
+  const filteredCandidates = candidates.filter(c => !c.email.toLowerCase().endsWith("@esnuam.org"));
+  const filteredInterviewers = users.filter(u => u.email.toLowerCase().endsWith("@esnuam.org"));
 
   const eventNames = [
     "Welcome Meeting",
@@ -440,7 +443,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
           <FormField>
             <Autocomplete
               multiple
-              options={candidates}
+              options={filteredCandidates}
               getOptionLabel={(o) => o.name}
               value={selectedCandidates}
               onChange={(_, v) => setSelectedCandidates(v)}
@@ -453,7 +456,7 @@ const InterviewModal: React.FC<InterviewModalProps> = ({
           <FormField>
             <Autocomplete
               multiple
-              options={users}
+              options={filteredInterviewers}
               getOptionLabel={(o) => o.name}
               value={selectedInterviewers}
               onChange={(_, v) => setSelectedInterviewers(v)}
