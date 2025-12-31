@@ -3,8 +3,7 @@ import { getCurrentRecruitmentDetails } from "@/lib/controllers/adminController"
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(req: NextRequest, context: any) {
-  const { params } = context;
-  const { id } = params;
+  const { id } = await context.params;
 
   try {
     const body = await req.json();

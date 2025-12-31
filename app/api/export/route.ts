@@ -13,6 +13,7 @@ import Form from "@/lib/models/form";
 import FormConnection from "@/lib/models/formConnection";
 import FormResponse from "@/lib/models/formResponse";
 import Incident from "@/lib/models/incident";
+import Availability from "@/lib/models/availability";
 import JSZip from "jszip";
 import { Types } from "mongoose";
 
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
   const formconnections = await FormConnection.find({}).lean({ getters: true });
   const formresponses = await FormResponse.find({}).lean({ getters: true });
   const incidents = await Incident.find({}).lean({ getters: true });
+  const availabilities = await Availability.find({}).lean({ getters: true });
 
   // Create zip with transformed data
   const zip = new JSZip();
@@ -92,6 +94,7 @@ export async function GET(req: NextRequest) {
   zip.file("formconnections.json", stringifyExtendedJSON(formconnections));
   zip.file("formresponses.json", stringifyExtendedJSON(formresponses));
   zip.file("incidents.json", stringifyExtendedJSON(incidents));
+  zip.file("availabilities.json", stringifyExtendedJSON(availabilities));
 
   const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 

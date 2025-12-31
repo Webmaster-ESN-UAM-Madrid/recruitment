@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest, context: any) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     if (!id) {
       return NextResponse.json({ message: "Committee ID is required" }, { status: 400 });
     }
@@ -34,7 +34,7 @@ export async function DELETE(req: NextRequest, context: any) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     if (!id) {
       return NextResponse.json({ message: "Committee ID is required" }, { status: 400 });
     }

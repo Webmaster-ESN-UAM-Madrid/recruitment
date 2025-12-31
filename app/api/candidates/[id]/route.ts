@@ -14,13 +14,13 @@ export async function GET(req: NextRequest, context: any) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
   }
   let isTutor = false;
+  const params = await context.params;
   if (!(await checkRecruiterAccess(session.user?.email))) {
-    isTutor = await checkTutorAccess(session.user?.email, context.params.id);
+    isTutor = await checkTutorAccess(session.user?.email, params.id);
     if (!isTutor) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
   }
-  const params = await context.params;
   const candidate = await getCandidateById(params.id);
   if (!candidate) {
     return NextResponse.json({ message: "Candidate not found" }, { status: 404 });

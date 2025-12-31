@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateFormMappings } from "@/lib/controllers/formController";
 
 export async function PATCH(req: NextRequest, context: any) {
-  const { formId } = context.params;
+  const { formId } = await context.params;
   const { fieldMappings } = await req.json();
 
   const result = await updateFormMappings(formId, fieldMappings);

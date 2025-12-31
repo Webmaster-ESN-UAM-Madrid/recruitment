@@ -119,14 +119,10 @@ const AvailabilitySection = () => {
       });
 
       if (res.ok) {
-        addToast(`Disponibilidad ${type} guardada correctamente`, "success");
         fetchData();
-      } else {
-        addToast(`Error al guardar disponibilidad ${type}`, "error");
       }
     } catch (error) {
       console.error(`Error saving ${type} availability:`, error);
-      addToast(`Error al guardar disponibilidad ${type}`, "error");
     }
   };
 
