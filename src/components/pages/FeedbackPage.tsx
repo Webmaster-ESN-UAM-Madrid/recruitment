@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import LoadingSpinner from "../loaders/LoadingSpinner";
 import Link from "next/link";
 import { DeleteButton } from "../buttons/DeleteButton";
@@ -10,6 +11,7 @@ import { CancelButton } from "../buttons/CancelButton";
 import { SaveButton } from "../buttons/SaveButton";
 import { ViewButton } from "../buttons/ViewButton";
 import { HideButton } from "../buttons/HideButton";
+import { BackButton } from "../buttons/BackButton";
 import { useToast } from "../toasts/ToastContext";
 import Modal from "../modals/Modal";
 import TextField from "@mui/material/TextField";
@@ -209,6 +211,13 @@ const MobileSelectionLabel = styled.span`
   line-height: 1.4;
 `;
 
+const BackContainer = styled.div`
+  max-width: 1000px;
+  margin: 0 auto;
+  margin-bottom: 20px;
+  margin-top: -20px;
+`;
+
 interface Candidate {
   _id: string;
   name: string;
@@ -246,6 +255,10 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ maxNewbieSelections = 3 }) 
   const [isSavingSelection, setIsSavingSelection] = useState(false);
   const defaultAvatar = "/default-avatar.jpg";
   const isNewbie = session?.user?.newbie;
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activitySlug = searchParams.get("activity");
+  const [activityDetails, setActivityDetails] = useState<{ title: string; candidates: string[] } | null>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -259,6 +272,30 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ maxNewbieSelections = 3 }) 
       window.removeEventListener("resize", checkMobile);
     };
   }, []);
+
+  useEffect(() => {
+    if (!activitySlug) {
+      setActivityDetails(null);
+      return;
+    }
+
+    const fetchActivity = async () => {
+      try {
+        const res = await fetch(`/api/activities/${activitySlug}`);
+        if (res.ok) {
+          const data = await res.json();
+          setActivityDetails(data);
+        } else {
+          addToast("Actividad no encontrada", "error");
+          router.push("/feedback");
+        }
+      } catch (error) {
+        console.error("Error fetching activity", error);
+      }
+    };
+
+    fetchActivity();
+  }, [activitySlug, addToast, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -418,10 +455,14 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ maxNewbieSelections = 3 }) 
     }
   };
 
-  const tutorCandidates = candidates.filter(
+  const filteredCandidates = activityDetails
+    ? candidates.filter((c) => activityDetails.candidates.includes(c._id))
+    : candidates;
+
+  const tutorCandidates = filteredCandidates.filter(
     (candidate) => candidate.tutor === session?.user?.email
   );
-  const otherCandidates = candidates.filter(
+  const otherCandidates = filteredCandidates.filter(
     (candidate) => candidate.tutor !== session?.user?.email
   );
 
@@ -446,7 +487,14 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ maxNewbieSelections = 3 }) 
 
   return (
     <PageContainer>
-      <h1>Feedback</h1>
+      <h1>{activityDetails ? `Feedback: ${activityDetails.title}` : "Feedback"}</h1>
+        {activityDetails && (
+          <BackContainer>
+            <BackButton onClick={() => router.push("/feedback")} iconSize={20}>
+              Volver a todos los candidatos
+            </BackButton>
+          </BackContainer>
+        )}
       <CandidateTable>
         <TableHeader $isMobile={isMobile} $isNewbie={isNewbie}>
           <DataCell>Foto</DataCell>

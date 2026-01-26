@@ -10,6 +10,7 @@ interface BackButtonProps {
   className?: string;
   iconSize?: number;
   style?: React.CSSProperties;
+  children?: React.ReactNode;
 }
 
 export const BackButton: React.FC<BackButtonProps> = ({
@@ -20,7 +21,8 @@ export const BackButton: React.FC<BackButtonProps> = ({
   showSpinner = false,
   className,
   iconSize = 24,
-  style
+  style,
+  children
 }) => {
   return (
     <IconButton
@@ -34,6 +36,8 @@ export const BackButton: React.FC<BackButtonProps> = ({
       className={className}
       iconSize={iconSize}
       style={style}
-    />
+    >
+      {children}
+    </IconButton>
   );
 };

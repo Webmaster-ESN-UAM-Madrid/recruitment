@@ -162,59 +162,60 @@ const AdminPanelPage: React.FC = () => {
     <PageContainer>
       <h1>Panel de Administración</h1>
       <GlobalConfigManager />
-      <Card>
-        <TableWrapper>
-          <InnerContent>
-            <Subtitle>Usuarios registrados</Subtitle>
-            {loading ? (
-              <LoadingSpinner />
-            ) : users.length === 0 ? (
-              <p>No hay usuarios registrados.</p>
-            ) : (
-              <>
-                <UsersHeader>
-                  <div />
-                  <HeaderCell>Nombre</HeaderCell>
-                  <HeaderCell>Correo</HeaderCell>
-                  <HeaderCell>Acciones</HeaderCell>
-                </UsersHeader>
-                {users.map((u) => (
-                  <UsersRow key={u._id}>
-                    <AvatarCell>
-                      {u.image ? (
-                        <Image
-                          src={u.image}
-                          alt="Profile"
-                          width={40}
-                          height={40}
-                          style={{ borderRadius: "100%" }}
-                        />
-                      ) : (
-                        <AvatarPlaceholder>
-                          {(u.name || u.email || "?").slice(0, 2)}
-                        </AvatarPlaceholder>
-                      )}
-                    </AvatarCell>
-                    <NameCell>
-                      <DataCell>{u.name}</DataCell>
-                    </NameCell>
-                    <DataCell>{u.email}</DataCell>
-                    <div>
-                      <IconDeleteButton
-                        onClick={() => handleDelete(u._id)}
-                        disabled={deletingId === u._id}
-                        iconSize={20}
-                      />
-                    </div>
-                  </UsersRow>
-                ))}
-              </>
-            )}
-          </InnerContent>
-        </TableWrapper>
-      </Card>
     </PageContainer>
   );
 };
 
 export default AdminPanelPage;
+
+// <Card>
+//   <TableWrapper>
+//     <InnerContent>
+//       <Subtitle>Usuarios registrados</Subtitle>
+//       {loading ? (
+//         <LoadingSpinner />
+//       ) : users.length === 0 ? (
+//         <p>No hay usuarios registrados.</p>
+//       ) : (
+//         <>
+//           <UsersHeader>
+//             <div />
+//             <HeaderCell>Nombre</HeaderCell>
+//             <HeaderCell>Correo</HeaderCell>
+//             <HeaderCell>Acciones</HeaderCell>
+//           </UsersHeader>
+//           {users.map((u) => (
+//             <UsersRow key={u._id}>
+//               <AvatarCell>
+//                 {u.image ? (
+//                   <Image
+//                     src={u.image}
+//                     alt="Profile"
+//                     width={40}
+//                     height={40}
+//                     style={{ borderRadius: "100%" }}
+//                   />
+//                 ) : (
+//                   <AvatarPlaceholder>
+//                     {(u.name || u.email || "?").slice(0, 2)}
+//                   </AvatarPlaceholder>
+//                 )}
+//               </AvatarCell>
+//               <NameCell>
+//                 <DataCell>{u.name}</DataCell>
+//               </NameCell>
+//               <DataCell>{u.email}</DataCell>
+//               <div>
+//                 <IconDeleteButton
+//                   onClick={() => handleDelete(u._id)}
+//                   disabled={deletingId === u._id}
+//                   iconSize={20}
+//                 />
+//               </div>
+//             </UsersRow>
+//           ))}
+//         </>
+//       )}
+//     </InnerContent>
+//   </TableWrapper>
+// </Card>

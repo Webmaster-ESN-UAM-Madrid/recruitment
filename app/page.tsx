@@ -107,10 +107,10 @@ export default function Home() {
   return (
     <Container>
       <HeroTitle>Recruitment ESN UAM</HeroTitle>
-      <HeroSubtitle>
+      {/* <HeroSubtitle>
         Plataforma de gestión de procesos de selección y entrevistas.
         Accede para gestionar candidatos o consultar el estado.
-      </HeroSubtitle>
+      </HeroSubtitle> */}
       <Card>
         <WelcomeMessage>Iniciar Sesión</WelcomeMessage>
         <LoginProviders />

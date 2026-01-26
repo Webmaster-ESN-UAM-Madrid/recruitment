@@ -14,57 +14,85 @@ import styled, { keyframes } from "styled-components";
 import Tooltip from "@mui/material/Tooltip";
 
 // Define a styled component for the button to apply custom styles
-const StyledButton = styled(Button)<{
-  iconSize: number;
-  $holdProgress: number;
-  $buttonColor: string;
+export const StyledButton = styled(Button)<{
+    iconSize: number;
+    $holdProgress: number;
+    $buttonColor: string;
+    $hoverColor?: string;
+    $noBackground?: boolean;
+    $borderRadius?: number;
+    $canClick: boolean;
+    $hasBorder: boolean;
+    $isSlim: boolean;
+    $disableHover: boolean;
+    $fullWidth: boolean;
+    $justify: "center" | "flex-start" | "flex-end" | "space-between" | "space-around";
 }>`
-  background-color: rgba(0, 0, 0, 0.035);
-  width: ${({ iconSize }) => iconSize * 2}px;
-  height: ${({ iconSize }) => iconSize * 2}px;
-  min-width: ${({ iconSize }) => iconSize * 2}px;
-  min-height: ${({ iconSize }) => iconSize * 2}px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-  transition:
-    background-color 0.2s ease-in-out,
-    border-radius 0.2s ease-in-out;
-
-  &:not(:disabled):hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-  }
-
-  .nextui-ripple {
-    display: none !important;
-  }
-
-  & .nextui-button-icon {
-    color: currentColor;
-  }
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: ${({ $holdProgress }) => $holdProgress}%;
-    height: 100%;
-    background-color: color-mix(in srgb, ${({ $buttonColor }) => $buttonColor}, transparent 75%);
-    transition: width 0.1s linear;
-    z-index: 1;
-  }
-
-  & > svg {
+    background-color: ${({ $noBackground, $buttonColor }) => ($noBackground ? "transparent" : `color-mix(in srgb, ${$buttonColor}, transparent 92.5%)`)};
+    min-width: ${({ iconSize }) => iconSize * 2}px;
+    ${({ $fullWidth }) => $fullWidth && `width: 100%;`}
+    height: fit-content;
+    min-height: ${({ $isSlim, iconSize }) => ($isSlim ? iconSize : iconSize * 2)}px;
+    color: ${({ $buttonColor }) => $buttonColor};
+    gap: ${({ iconSize }) => iconSize / 2}px;
+    padding: ${({ $isSlim, iconSize }) => ($isSlim ? `${iconSize / 2.5}px ${iconSize / 2}px` : `${iconSize / 2}px`)};
+    border: ${({ $hasBorder, $buttonColor }) => ($hasBorder ? `3px color-mix(in srgb, ${$buttonColor}, transparent 75%) solid` : "none")};
+    border-radius: ${({ $borderRadius }) => $borderRadius}px;
+    box-sizing: border-box;
+    font-weight: 600;
+    display: flex;
+    justify-content: ${({ $justify }) => $justify};
+    align-items: center;
     position: relative;
-    z-index: 2;
-  }
+    overflow: hidden;
+    pointer-events: ${({ $canClick }) => ($canClick ? "auto" : "none")};
+    transition:
+        background-color 0.2s ease-in-out,
+        border-radius 0.2s ease-in-out;
+
+    ${({ $disableHover, $noBackground, $buttonColor }) =>
+        !$disableHover &&
+        `
+    &:not(:disabled):hover {
+      background-color: ${$noBackground ? `color-mix(in srgb, ${$buttonColor}, transparent 95%)` : `color-mix(in srgb, ${$buttonColor}, transparent 87.5%)`};
+    }
+  `}
+
+    .nextui-ripple {
+        display: none !important;
+    }
+
+    & .nextui-button-icon {
+        color: currentColor;
+    }
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: ${({ $holdProgress }) => $holdProgress}%;
+        height: 100%;
+        background-color: color-mix(in srgb, ${({ $buttonColor }) => $buttonColor}, transparent 75%);
+        transition: width 0.1s linear;
+        z-index: 1;
+    }
+
+    & > svg {
+        position: relative;
+        z-index: 2;
+        transition: fill 0.2s ease-in-out;
+    }
+
+    ${({ $disableHover, $hoverColor }) =>
+        !$disableHover && $hoverColor
+            ? `
+        &:hover > svg {
+          fill: ${$hoverColor};
+          color: ${$hoverColor};
+        }
+      `
+            : ""}
 `;
 
 const spin = keyframes`
@@ -120,6 +148,7 @@ interface IconButtonProps {
   className?: string;
   iconSize?: number;
   style?: React.CSSProperties;
+  children?: React.ReactNode;
 }
 
 interface ButtonContextType {
@@ -158,7 +187,8 @@ export const IconButton: React.FC<IconButtonProps> = ({
   confirmationDuration = 750,
   className,
   iconSize = 24,
-  style
+  style,
+  children
 }) => {
   const [loading, setLoading] = useState(isLoading);
   const [isHolding, setIsHolding] = useState(false);
@@ -280,6 +310,15 @@ export const IconButton: React.FC<IconButtonProps> = ({
         style={style}
         $holdProgress={holdProgress}
         $buttonColor={buttonColor}
+        $justify="center"
+        $fullWidth={false}
+        $hasBorder={false}
+        $isSlim={false}
+        $disableHover={false}
+        $borderRadius={8}
+        $noBackground={false}
+        $hoverColor={undefined}
+        $canClick={true}
       >
         {loading && showSpinner ? (
           <CustomSpinner size={iconSize} color={color} />
@@ -294,6 +333,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
             <path d={path} />
           </svg>
         )}
+        {children}
       </StyledButton>
     </Tooltip>
   );

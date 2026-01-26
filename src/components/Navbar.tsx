@@ -287,6 +287,7 @@ const Navbar: React.FC = () => {
           {session && <NavLink href="/feedback">Feedback</NavLink>}
           {isRecruiter && <NavLink href="/dashboard">Dashboard</NavLink>}
           {isRecruiter && <NavLink href="/interviews">Entrevistas</NavLink>}
+          {isRecruiter && <NavLink href="/activities">Actividades</NavLink>}
           {isRecruiter && <NavLink href="/stats">Estadísticas</NavLink>}
           {isRecruiter && (
             <NavLinkContainer>
@@ -360,6 +361,11 @@ const Navbar: React.FC = () => {
           {isRecruiter && (
             <NavLink href="/interviews" onClick={() => setIsPanelOpen(false)}>
               Entrevistas
+            </NavLink>
+          )}
+          {isRecruiter && (
+            <NavLink href="/activities" onClick={() => setIsPanelOpen(false)}>
+              Actividades
             </NavLink>
           )}
           {isRecruiter && (
