@@ -524,7 +524,7 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
         >
           <span>{label}</span>
-          <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} />
+          <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} disabled={count === 0} />
         </div>
         <Modal
           title={`Calendario de ${candidate.name}`}
