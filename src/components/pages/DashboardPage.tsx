@@ -452,7 +452,7 @@ const DashboardPage: React.FC = () => {
       { key: "notes", header: "Notas", fixed: false, width: "130px" },
       { key: "tutor", header: "Tutor", fixed: false, width: "1fr" },
       { key: "interests", header: "Intereses", fixed: false, width: "1fr" },
-      { key: "activities", header: "Actividades", fixed: false, width: "180px" },
+      { key: "activities", header: "Actividades", fixed: false, width: "140px" },
       ...formStructure.flatMap((section) => {
         const [formName] = section.title.split(": ", 2);
         return section.questions.map((question) => ({
