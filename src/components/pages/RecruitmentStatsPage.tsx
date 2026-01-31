@@ -564,6 +564,24 @@ export default function RecruitmentStatsPage() {
         </Box>
       </Paper>
 
+      {/* Activity Calendar Section */}
+      <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h5" fontWeight={700} mb={3}>
+          Calendario de Actividades
+        </Typography>
+        <ActivityCalendar 
+          activities={stats.activities.map(a => ({
+            ...a,
+            date: a.date ? new Date(a.date).toISOString() : undefined
+          }))} 
+          candidates={stats.allCandidates} 
+          mode="stats"
+          committeeColors={Object.fromEntries(
+            Object.entries(stats.committeeInterests).map(([name, d]) => [name, d.color || ""])
+          )}
+        />
+      </Paper>
+
       <Paper elevation={1} sx={{ p: 2, mt: 2 }}>
         <Typography variant="h6" mb={2}>
           Red de votos de newbies
@@ -801,24 +819,6 @@ export default function RecruitmentStatsPage() {
           )}
         </Paper>
       )}
-
-      {/* Activity Calendar Section */}
-      <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h5" fontWeight={700} mb={3}>
-          Calendario de Actividades
-        </Typography>
-        <ActivityCalendar 
-          activities={stats.activities.map(a => ({
-            ...a,
-            date: a.date ? new Date(a.date).toISOString() : undefined
-          }))} 
-          candidates={stats.allCandidates} 
-          mode="stats"
-          committeeColors={Object.fromEntries(
-            Object.entries(stats.committeeInterests).map(([name, d]) => [name, d.color || ""])
-          )}
-        />
-      </Paper>
     </Box>
   );
 }

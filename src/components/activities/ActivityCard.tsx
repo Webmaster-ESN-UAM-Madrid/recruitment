@@ -147,13 +147,6 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, color, onEdit, on
                   month: "short"
                 })}</>
               )}
-              <TimeText>
-                {new Date(activity.date).toLocaleTimeString("es-ES", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false
-                })}
-              </TimeText>
             </DateText>
           )}
         </InfoRow>
