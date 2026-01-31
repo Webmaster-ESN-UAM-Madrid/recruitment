@@ -6,6 +6,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { JSX } from "react/jsx-runtime";
 import FeedbackForCandidate from "../FeedbackForCandidate";
 import Rating from "@mui/material/Rating";
+import ActivityCalendar from "../calendar/ActivityCalendar";
 
 const ItemContainer = styled.div<{ $isOverflowing: boolean }>`
   padding: 0 5px;
@@ -113,6 +114,7 @@ interface Candidate {
     count: number;
     entries: { userId: string; name: string; image?: string }[];
   };
+  activitiesCount?: number;
 }
 
 interface FormQuestion {
@@ -130,6 +132,16 @@ interface Committee {
   _id: string;
   name: string;
   color: string;
+}
+
+interface Activity {
+  _id: string;
+  title: string;
+  slug: string;
+  candidates: string[];
+  committee?: string;
+  date?: string | Date;
+  endDate?: string | Date;
 }
 
 const InterestBadge = styled.div<{ color: string }>`
@@ -159,6 +171,7 @@ interface DashboardItemProps {
   gridTemplateColumns?: string;
   question?: FormQuestion;
   availableCommittees: Committee[];
+  activities?: Activity[];
 }
 
 const DashboardItem: React.FC<DashboardItemProps> = ({
@@ -168,7 +181,8 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
   formResponses,
   gridTemplateColumns,
   question,
-  availableCommittees
+  availableCommittees,
+  activities = []
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -496,6 +510,39 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
             <NoteContainer>{data}</NoteContainer>
           </Modal>
         )}
+      </ItemContainer>
+    );
+  }
+
+  if (columnKey === "activities") {
+    const count = candidate.activitiesCount || 0;
+    const label = count === 1 ? "1 acti" : `${count} actis`;
+
+    return (
+      <ItemContainer $isOverflowing={false}>
+        <div
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}
+        >
+          <span>{label}</span>
+          <ReadButton onClick={() => setIsModalOpen(true)} iconSize={20} />
+        </div>
+        <Modal
+          title={`Calendario de ${candidate.name}`}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        >
+          <div style={{ marginLeft: "-24px", marginRight: "-24px" }}>
+            <ActivityCalendar
+              activities={activities}
+              candidates={[{ id: candidate._id, name: candidate.name, photoUrl: candidate.photoUrl }]}
+              mode="candidate"
+              candidateId={candidate._id}
+              committeeColors={Object.fromEntries(
+                availableCommittees.map((c) => [c.name, c.color])
+              )}
+              />
+            </div>
+        </Modal>
       </ItemContainer>
     );
   }

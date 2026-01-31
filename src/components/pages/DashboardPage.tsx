@@ -161,6 +161,16 @@ interface FormQuestion {
   columns?: string[];
 }
 
+interface Activity {
+  _id: string;
+  title: string;
+  slug: string;
+  candidates: string[];
+  committee?: string;
+  date?: string | Date;
+  endDate?: string | Date;
+}
+
 interface FormSection {
   title: string;
   questions: FormQuestion[];
@@ -191,8 +201,9 @@ interface SelectableTableProps {
   loading: boolean;
   maxSelectableColumns: number;
   isInactiveTable: boolean;
-  isMobile: boolean; // Added isMobile prop
+  isMobile: boolean;
   currentPhase: string;
+  activities: Activity[];
 }
 
 const SelectableTable: React.FC<SelectableTableProps> = ({
@@ -207,7 +218,8 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
   maxSelectableColumns,
   isInactiveTable,
   isMobile,
-  currentPhase
+  currentPhase,
+  activities
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const defaultAvatar = "/default-avatar.jpg";
@@ -386,6 +398,7 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
                           return undefined;
                         })()}
                         availableCommittees={availableCommittees}
+                        activities={activities}
                       />
                     )}
                 </DataCell>
@@ -408,7 +421,8 @@ const DashboardPage: React.FC = () => {
   const [availableCommittees, setAvailableCommittees] = useState<Committee[]>([]);
   const [loading, setLoading] = useState(true);
   const [formStructure, setFormStructure] = useState<FormSection[]>([]);
-  const [isMobile, setIsMobile] = useState(false); // Add isMobile state
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   const [columnsInitialized, setColumnsInitialized] = useState(false);
 
   useEffect(() => {
@@ -438,6 +452,7 @@ const DashboardPage: React.FC = () => {
       { key: "notes", header: "Notas", fixed: false, width: "130px" },
       { key: "tutor", header: "Tutor", fixed: false, width: "1fr" },
       { key: "interests", header: "Intereses", fixed: false, width: "1fr" },
+      { key: "activities", header: "Actividades", fixed: false, width: "180px" },
       ...formStructure.flatMap((section) => {
         const [formName] = section.title.split(": ", 2);
         return section.questions.map((question) => ({
@@ -524,14 +539,15 @@ const DashboardPage: React.FC = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [candidatesRes, formsRes, committeesRes, feedbackRes, notesRes, usersRes] =
+        const [candidatesRes, formsRes, committeesRes, feedbackRes, notesRes, usersRes, activitiesRes] =
           await Promise.all([
             fetch("/api/candidates"),
             fetch("/api/forms"),
             fetch("/api/committees"),
             fetch("/api/feedback/all"),
             fetch("/api/users/notes"),
-            fetch("/api/users")
+            fetch("/api/users"),
+            fetch("/api/activities")
           ]);
 
         let notesData = new Map();
@@ -559,19 +575,26 @@ const DashboardPage: React.FC = () => {
           // Build ratings map from users
           // users endpoint returns array of users with possible ratings object keyed by candidateId
           const usersJson: unknown = usersRes.ok ? await usersRes.json() : [];
-          const usersArr: unknown[] = Array.isArray(usersJson) ? usersJson : [];
-          type UserWithSelectionsAndRatings = {
-            _id: string;
-            name?: string | null;
-            image?: string | null;
-            ratings?: Record<string, unknown>;
-            newbieCandidateSelections?: unknown;
-            newbie?: boolean;
-          };
-          const isUser = (u: unknown): u is UserWithSelectionsAndRatings =>
-            typeof u === "object" && u !== null && typeof (u as { _id?: unknown })._id === "string";
+      const usersArr: unknown[] = Array.isArray(usersJson) ? usersJson : [];
+      type UserWithSelectionsAndRatings = {
+        _id: string;
+        name?: string | null;
+        image?: string | null;
+        ratings?: Record<string, unknown>;
+        newbieCandidateSelections?: unknown;
+        newbie?: boolean;
+      };
+      const isUser = (u: unknown): u is UserWithSelectionsAndRatings =>
+        typeof u === "object" && u !== null && typeof (u as { _id?: unknown })._id === "string";
 
-          const users: UserWithSelectionsAndRatings[] = usersArr.filter(isUser);
+      const users: UserWithSelectionsAndRatings[] = usersArr.filter(isUser);
+
+          // Fetch activities data first for the map
+          let allActivities: Activity[] = [];
+          if (activitiesRes.ok) {
+            allActivities = await activitiesRes.json();
+            setActivities(allActivities);
+          }
 
           const candidatesWithData = candidatesData.map((candidate: Candidate) => {
             const candidateResponses = allFormResponses.filter(
@@ -606,6 +629,8 @@ const DashboardPage: React.FC = () => {
               image?: string;
               rating: number;
             }[];
+
+            const attendedCount = allActivities.filter(a => a.candidates.includes(candidate._id)).length;
             const ratingCount = ratingEntries.length;
             const average =
               ratingCount > 0
@@ -630,7 +655,8 @@ const DashboardPage: React.FC = () => {
               feedback: candidateFeedback,
               notes: note,
               rating: { average, count: ratingCount, entries: ratingEntries },
-              selectedBy: { count: selectionEntries.length, entries: selectionEntries }
+              selectedBy: { count: selectionEntries.length, entries: selectionEntries },
+              activitiesCount: attendedCount
             };
           });
           setCandidates(candidatesWithData);
@@ -664,6 +690,8 @@ const DashboardPage: React.FC = () => {
           const committeesData = await committeesRes.json();
           setAvailableCommittees(committeesData);
         }
+
+        // setActivities already called above
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -731,8 +759,9 @@ const DashboardPage: React.FC = () => {
         loading={loading}
         maxSelectableColumns={MAX_SELECTED_COLUMNS}
         isInactiveTable={false}
-        isMobile={isMobile} // Pass isMobile prop
+        isMobile={isMobile}
         currentPhase={currentPhase}
+        activities={activities}
       />
       <SelectableTable
         title="Candidatos Inactivos"
@@ -746,8 +775,9 @@ const DashboardPage: React.FC = () => {
         loading={loading}
         maxSelectableColumns={MAX_SELECTED_COLUMNS - 1}
         isInactiveTable={true}
-        isMobile={isMobile} // Pass isMobile prop
+        isMobile={isMobile}
         currentPhase={currentPhase}
+        activities={activities}
       />
     </PageContainer>
   );

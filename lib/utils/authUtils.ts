@@ -12,10 +12,7 @@ const adminEmails = [
 export async function getRecruiterEmailsFromDB(): Promise<string[]> {
   try {
     await connectToDatabase();
-    const globalConfig: IConfig | null = await Config.findById("globalConfig").populate(
-      "recruiters",
-      "email"
-    );
+    const globalConfig: IConfig | null = await Config.findById("globalConfig");
     if (globalConfig && globalConfig.recruiters) {
       return globalConfig.recruiters;
     }

@@ -34,6 +34,7 @@ import { NextSemIcon } from "../icons/tags/NextSemIcon";
 import { ErasmusIcon } from "../icons/tags/ErasmusIcon";
 import { FriendIcon } from "../icons/tags/FriendIcon";
 import { RedFlagIcon } from "../icons/tags/RedFlagIcon";
+import ActivityCalendar from "../calendar/ActivityCalendar";
 
 interface User {
   _id: string;
@@ -385,6 +386,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
     "Integration Weekend": false,
     "Plataforma Local": false
   });
+  const [activities, setActivities] = useState<any[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
   const defaultAvatar = "/default-avatar.jpg";
@@ -539,10 +541,22 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
     }
   }, [addToast]);
 
+  const fetchActivities = useCallback(async () => {
+    try {
+      const res = await fetch("/api/activities");
+      if (res.ok) {
+        setActivities(await res.json());
+      }
+    } catch (err) {
+      console.error("Error fetching activities", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchCommittees();
     fetchCurrentPhase();
-  }, [fetchCommittees, fetchCurrentPhase]);
+    fetchActivities();
+  }, [fetchCommittees, fetchCurrentPhase, fetchActivities]);
 
   useEffect(() => {
     if (id) {
@@ -1237,6 +1251,20 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
           </ModalButtons>
         )}
       </Modal>
+
+      {/* Activity Calendar Section */}
+      <Section>
+        <SubTitle>Calendario de Actividades</SubTitle>
+        <ActivityCalendar
+          activities={activities}
+          candidates={candidate ? [{ id: candidate._id, name: candidate.name, photoUrl: candidate.photoUrl }] : []}
+          mode="candidate"
+          candidateId={candidate?._id}
+          committeeColors={Object.fromEntries(
+            availableCommittees.map((c) => [c.name, c.color])
+          )}
+        />
+      </Section>
     </Container>
   );
 }

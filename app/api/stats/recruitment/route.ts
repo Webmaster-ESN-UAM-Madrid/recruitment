@@ -7,6 +7,7 @@ import Candidate from "@/lib/models/candidate";
 import Interview from "@/lib/models/interview";
 import Config from "@/lib/models/config";
 import User from "@/lib/models/user";
+import Activity from "@/lib/models/activity";
 import "@/lib/models/committee"; // ensure Committee schema is registered for populate
 
 const normalizeEmail = (email?: string | null) => email?.trim().toLowerCase() ?? "";
@@ -265,6 +266,8 @@ export async function GET() {
       currentRecruitmentId,
       inactiveCandidates,
       pendingInterviews,
+      activities: await Activity.find({ recruitmentId: currentRecruitmentId }).sort({ date: 1 }),
+      allCandidates: Array.from(candidateById.values()),
       newbieVoteGraph: {
         nodes: voteGraphNodes,
         links: voteGraphLinks

@@ -27,6 +27,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer
 } from "recharts";
+import ActivityCalendar from "../calendar/ActivityCalendar";
 
 interface StatsData {
   totalCandidates: number;
@@ -38,6 +39,8 @@ interface StatsData {
   eventAttendance: Record<string, { yes: number; maybe: number; no: number }>;
   currentRecruitmentId: string;
   inactiveCandidates: number;
+  activities: any[];
+  allCandidates: any[];
   newbieVoteGraph?: {
     nodes: VoteGraphNode[];
     links: VoteGraphLink[];
@@ -798,6 +801,24 @@ export default function RecruitmentStatsPage() {
           )}
         </Paper>
       )}
+
+      {/* Activity Calendar Section */}
+      <Paper elevation={1} sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h5" fontWeight={700} mb={3}>
+          Calendario de Actividades
+        </Typography>
+        <ActivityCalendar 
+          activities={stats.activities.map(a => ({
+            ...a,
+            date: a.date ? new Date(a.date).toISOString() : undefined
+          }))} 
+          candidates={stats.allCandidates} 
+          mode="stats"
+          committeeColors={Object.fromEntries(
+            Object.entries(stats.committeeInterests).map(([name, d]) => [name, d.color || ""])
+          )}
+        />
+      </Paper>
     </Box>
   );
 }

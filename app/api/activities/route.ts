@@ -6,8 +6,8 @@ import { getActivities, createActivity } from "@/lib/controllers/activityControl
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.email?.endsWith("@esnuam.org")) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  if (!session?.user?.email?.endsWith("@esnuam.org")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
