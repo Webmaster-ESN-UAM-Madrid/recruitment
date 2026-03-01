@@ -25,7 +25,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  LabelList
 } from "recharts";
 import ActivityCalendar from "../calendar/ActivityCalendar";
 
@@ -198,6 +199,96 @@ export default function RecruitmentStatsPage() {
         };
       })
       .sort((a, b) => b.votesReceived - a.votesReceived || a.node.name.localeCompare(b.node.name));
+  }, [stats]);
+
+  // ── Candidate Activity Stacked Bar Chart data ──
+  const { candidateActivityData, activityCommittees } = useMemo(() => {
+    if (!stats) return { candidateActivityData: [], activityCommittees: [] as string[] };
+    const committeeColorMap: Record<string, string> = {};
+    for (const [name, d] of Object.entries(stats.committeeInterests)) {
+      if (d.color) committeeColorMap[name] = d.color;
+    }
+
+    const candidateMap = new Map<string, { name: string; photoUrl: string }>();
+    for (const c of stats.allCandidates as any[]) {
+      candidateMap.set(String(c.id), {
+        name: c.name ?? "Sin nombre",
+        photoUrl: c.photoUrl || DEFAULT_AVATAR
+      });
+    }
+
+    const dataMap = new Map<
+      string,
+      {
+        _name: string;
+        _photoUrl: string;
+        _total: number;
+        _tooltips: Record<string, string[]>;
+        [committee: string]: any;
+      }
+    >();
+    const committeeSet = new Set<string>();
+
+    for (const activity of stats.activities as any[]) {
+      const committee = activity.committee || "Sin comité";
+      committeeSet.add(committee);
+      for (const candidateId of activity.candidates ?? []) {
+        const id = String(candidateId);
+        const candidateInfo = candidateMap.get(id);
+        if (!candidateInfo) continue;
+        if (!dataMap.has(id)) {
+          dataMap.set(id, {
+            _name: candidateInfo.name,
+            _photoUrl: candidateInfo.photoUrl,
+            _total: 0,
+            _tooltips: {}
+          });
+        }
+        const entry = dataMap.get(id)!;
+        entry[committee] = (entry[committee] || 0) + 1;
+        entry._total += 1;
+        if (!entry._tooltips[committee]) entry._tooltips[committee] = [];
+        entry._tooltips[committee].push(activity.title || "Actividad");
+      }
+    }
+
+    const sorted = Array.from(dataMap.values()).sort((a, b) => b._total - a._total);
+    const committees = Array.from(committeeSet);
+    return { candidateActivityData: sorted, activityCommittees: committees };
+  }, [stats]);
+
+  // ── Popular Committees Horizontal Bar data ──
+  const popularCommitteeData = useMemo(() => {
+    if (!stats) return [];
+    const committeeColorMap: Record<string, string> = {};
+    for (const [name, d] of Object.entries(stats.committeeInterests)) {
+      if (d.color) committeeColorMap[name] = d.color;
+    }
+
+    const countMap = new Map<string, number>();
+    for (const activity of stats.activities as any[]) {
+      const committee = activity.committee || "Sin comité";
+      const candidatesCount = (activity.candidates ?? []).length;
+      countMap.set(committee, (countMap.get(committee) ?? 0) + candidatesCount);
+    }
+
+    return Array.from(countMap.entries())
+      .map(([committee, count]) => ({
+        committee,
+        count,
+        color: committeeColorMap[committee] || COLORS[0]
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [stats]);
+
+  // Committee color lookup for the stacked bars
+  const committeeColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (!stats) return map;
+    for (const [name, d] of Object.entries(stats.committeeInterests)) {
+      if (d.color) map[name] = d.color;
+    }
+    return map;
   }, [stats]);
 
   const hasMoreVotes = voteSummary.length > MAX_VISIBLE_RANKING_ROWS;
@@ -450,7 +541,7 @@ export default function RecruitmentStatsPage() {
                   formatter={(value: number) => [value, "Total"]}
                   labelFormatter={(label: string | number) => <strong>{String(label)}</strong>}
                 />
-                <Bar dataKey="count">
+                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {committeeData.map((entry, index) => (
                     <Cell
                       key={`cell-committee-${index}`}
@@ -486,9 +577,9 @@ export default function RecruitmentStatsPage() {
                 <RechartsTooltip
                   labelFormatter={(label: string | number) => <strong>{String(label)}</strong>}
                 />
-                <Bar dataKey="yes" fill="#4caf50" name="Sí" />
-                <Bar dataKey="maybe" fill="#ff9800" name="Quizás" />
-                <Bar dataKey="no" fill="#f44336" name="No" />
+                <Bar dataKey="yes" fill="#4caf50" name="Sí" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="maybe" fill="#ff9800" name="Quizás" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="no" fill="#f44336" name="No" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
@@ -581,6 +672,219 @@ export default function RecruitmentStatsPage() {
           )}
         />
       </Paper>
+
+      {/* ── Candidate Activity & Popular Committees Charts ── */}
+      {candidateActivityData.length > 0 && (
+        <Box
+          sx={{
+            mt: 2,
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }
+          }}
+        >
+          {/* Left: Candidates by activities (stacked) */}
+          <Paper elevation={1} sx={{ p: 2 }}>
+            <Typography variant="h6" mb={2}>
+              Asistencia de candidato
+            </Typography>
+            <ResponsiveContainer width="100%" height={Math.max(chartHeight, 360)}>
+              <BarChart
+                data={candidateActivityData}
+                margin={{ top: 48, right: 10, left: isXs ? 0 : 10, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="_name"
+                  tick={false}
+                  height={5}
+                />
+                <YAxis allowDecimals={false} />
+                <RechartsTooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload || payload.length === 0) return null;
+                    const data = payload[0]?.payload;
+                    if (!data) return null;
+                    return (
+                      <Paper
+                        elevation={3}
+                        sx={{
+                          p: 1.5,
+                          maxWidth: 280,
+                          bgcolor: "background.paper"
+                        }}
+                      >
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                          <Avatar
+                            src={data._photoUrl !== DEFAULT_AVATAR ? data._photoUrl : undefined}
+                            alt={data._name}
+                            sx={{ width: 28, height: 28, fontSize: 13, fontWeight: 700 }}
+                          >
+                            {data._name?.charAt(0)?.toUpperCase()}
+                          </Avatar>
+                          <Typography variant="subtitle2" fontWeight={700}>
+                            {data._name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            ({data._total})
+                          </Typography>
+                        </Box>
+                        {Object.entries(data._tooltips as Record<string, string[]>).map(
+                          ([committee, activities]) => (
+                            <Box key={committee} mb={0.5}>
+                              <Typography
+                                variant="caption"
+                                fontWeight={700}
+                                sx={{ color: committeeColorMap[committee] || "text.primary" }}
+                              >
+                                {committee}
+                              </Typography>
+                              {(activities as string[]).map((actName, i) => (
+                                <Typography
+                                  key={i}
+                                  variant="caption"
+                                  display="block"
+                                  sx={{ pl: 1, color: "text.secondary" }}
+                                >
+                                  • {actName}
+                                </Typography>
+                              ))}
+                            </Box>
+                          )
+                        )}
+                      </Paper>
+                    );
+                  }}
+                />
+
+                {activityCommittees.map((committee, idx) => (
+                  <Bar
+                    key={committee}
+                    dataKey={committee}
+                    stackId="activities"
+                    fill={committeeColorMap[committee] || COLORS[idx % COLORS.length]}
+                    name={committee}
+                    shape={((props: any) => {
+                      const { x, y, width, height, fill: barFill, payload } = props;
+                      if (!width || !height) return null;
+                      // Check if this is the topmost segment: no later committee has a value
+                      const isTop = activityCommittees
+                        .slice(idx + 1)
+                        .every((c) => !payload?.[c]);
+                      const r = isTop ? 4 : 0;
+                      if (r === 0) {
+                        return <rect x={x} y={y} width={width} height={height} fill={barFill} />;
+                      }
+                      const clampedR = Math.min(r, width / 2, height);
+                      return (
+                        <path
+                          d={`M${x},${y + clampedR}
+                              Q${x},${y} ${x + clampedR},${y}
+                              L${x + width - clampedR},${y}
+                              Q${x + width},${y} ${x + width},${y + clampedR}
+                              L${x + width},${y + height}
+                              L${x},${y + height}Z`}
+                          fill={barFill}
+                        />
+                      );
+                    }) as any}
+                  >
+                    {/* Show profile pic on top of the last stacked segment */}
+                    {idx === activityCommittees.length - 1 && (
+                      <LabelList
+                        content={(props: any) => {
+                          const { x, width, y, index } = props;
+                          if (index == null || !candidateActivityData[index]) return null;
+                          const entry = candidateActivityData[index];
+                          const imgSize = 28;
+                          const cx = (x ?? 0) + (width ?? 0) / 2;
+                          const cy = (y ?? 0) - imgSize / 2 - 4;
+                          const hasPhoto = entry._photoUrl && entry._photoUrl !== DEFAULT_AVATAR;
+                          return (
+                            <foreignObject
+                              x={cx - imgSize / 2}
+                              y={cy - imgSize / 2}
+                              width={imgSize}
+                              height={imgSize}
+                            >
+                              {hasPhoto ? (
+                                <img
+                                  src={entry._photoUrl}
+                                  alt={entry._name}
+                                  style={{
+                                    width: imgSize,
+                                    height: imgSize,
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    border: `2px solid ${theme.palette.background.paper}`
+                                  }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: imgSize,
+                                    height: imgSize,
+                                    borderRadius: "50%",
+                                    backgroundColor: theme.palette.grey[400],
+                                    color: "#fff",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 13,
+                                    fontWeight: 700,
+                                    border: `2px solid ${theme.palette.background.paper}`
+                                  }}
+                                >
+                                  {entry._name?.charAt(0)?.toUpperCase() || "?"}
+                                </div>
+                              )}
+                            </foreignObject>
+                          );
+                        }}
+                      />
+                    )}
+                  </Bar>
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+
+          {/* Right: Most popular committees */}
+          <Paper elevation={1} sx={{ p: 2 }}>
+            <Typography variant="h6" mb={2}>
+              Comités con mayor asistencia
+            </Typography>
+            <ResponsiveContainer
+              width="100%"
+              height={Math.max(chartHeight, popularCommitteeData.length * 44 + 40)}
+            >
+              <BarChart
+                data={popularCommitteeData}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: isXs ? 10 : 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" allowDecimals={false} />
+                <YAxis
+                  type="category"
+                  dataKey="committee"
+                  width={isXs ? 80 : 120}
+                  tick={{ fontSize: 12 }}
+                />
+                <RechartsTooltip
+                  formatter={(value: number) => [value, "Participaciones"]}
+                  labelFormatter={(label: string | number) => <strong>{String(label)}</strong>}
+                />
+                <Bar dataKey="count" name="Participaciones" radius={[0, 4, 4, 0]}>
+                  {popularCommitteeData.map((entry, index) => (
+                    <Cell key={`cell-pop-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Box>
+      )}
 
       <Paper elevation={1} sx={{ p: 2, mt: 2 }}>
         <Typography variant="h6" mb={2}>
