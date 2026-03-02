@@ -686,7 +686,7 @@ export default function RecruitmentStatsPage() {
           {/* Left: Candidates by activities (stacked) */}
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h6" mb={2}>
-              Asistencia de candidato
+              Asistencia de candidatos
             </Typography>
             <ResponsiveContainer width="100%" height={Math.max(chartHeight, 360)}>
               <BarChart

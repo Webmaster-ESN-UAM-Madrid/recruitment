@@ -83,7 +83,7 @@ const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 // Styled Components
 const Container = styled.div`
   padding: 32px;
-  max-width: 1000px;
+  max-width: min(100vw, 1000px);
   margin: 0 auto;
 
   @media (max-width: 768px) {
@@ -238,6 +238,11 @@ const TagsContainer = styled.div`
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 10px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 8px;
+  }
 `;
 
 const TagBadge = styled.div`
@@ -252,9 +257,11 @@ const TagBadge = styled.div`
   color: var(--text-primary);
 
   @media (max-width: 768px) {
-    padding: 6px 10px;
+    padding: 8px 12px;
     font-size: 0.9rem;
     flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
   }
 `;
 
@@ -347,6 +354,11 @@ const PhaseBanner = styled.div`
 
   @media (max-width: 768px) {
     margin: 0 0 15px 0;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 0.9rem;
   }
 `;
 
@@ -877,7 +889,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
           </InfoGroup>
         </ProfileCard>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "row" : "column", alignItems: isMobile ? "center" : "flex-end", justifyContent: isMobile ? "center" : undefined, gap: 12 }}>
           {isEditing ? (
             <>
               <SaveButton onClick={handleSave} />
@@ -1111,7 +1123,8 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
         <Section>
           <SubTitle>Valoración</SubTitle>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", gap: 12 }}> */}
+            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 12 }}>
               <Rating
                 name="candidate-rating"
                 value={rating}
@@ -1120,7 +1133,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                 onChangeActive={(_, hover) => setHoverRating(hover)}
                 sx={{
                   gap: isMobile ? "4px" : "8px",
-                  fontSize: isMobile ? 32 : 48,
+                  fontSize: isMobile ? 28 : 48,
                   color: "var(--button-primary-bg)",
                   "& .MuiRating-iconEmpty": {
                     color: "color-mix(in srgb, var(--button-primary-bg), transparent 70%)"
@@ -1132,7 +1145,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                 {hoverRating ? labels[hoverRating] : rating ? labels[rating] : "Sin selección"}
               </span>
             </div>
-            <div style={{ display: "flex", gap: isMobile ? "4px" : "8px" }}>
+            {!isMobile && <div style={{ display: "flex", gap: "8px" }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <div
                   key={n}
@@ -1140,13 +1153,13 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                     display: "flex",
                     justifyContent: "center",
                     overflow: "visible",
-                    width: isMobile ? 32 : 48
+                    width: 48
                   }}
                 >
                   <small
                     style={{
                       color: "var(--text-secondary)",
-                      fontSize: isMobile ? "0.7rem" : "0.8rem",
+                      fontSize: "0.8rem",
                       textAlign: "center",
                       lineHeight: 1.2
                     }}
@@ -1155,7 +1168,7 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
                   </small>
                 </div>
               ))}
-            </div>
+            </div>}
           </div>
         </Section>
       )}
