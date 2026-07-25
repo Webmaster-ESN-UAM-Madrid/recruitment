@@ -152,6 +152,48 @@ export const updateRecruitmentDetails = async (
   }
 };
 
+// Availability is saved on its own so the admin panel can persist it instantly,
+// without going through updateRecruitmentDetails and its phase-transition side
+// effects (which rewrite candidate phases and reset emailSent).
+export const updateAvailabilityConfig = async (availability: {
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  hourRanges?: { start: number; end: number }[];
+}) => {
+  await dbConnect();
+  try {
+    const globalConfig = await Config.findById("globalConfig");
+    if (!globalConfig) {
+      return { status: 404, message: "Global config not found" };
+    }
+
+    const parseDate = (value?: string | Date | null) => {
+      if (!value) return undefined;
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? undefined : date;
+    };
+
+    const hourRanges = (availability?.hourRanges || []).filter(
+      (range) =>
+        typeof range?.start === "number" &&
+        typeof range?.end === "number" &&
+        range.start < range.end
+    );
+
+    globalConfig.availability = {
+      startDate: parseDate(availability?.startDate),
+      endDate: parseDate(availability?.endDate),
+      hourRanges
+    };
+    await globalConfig.save();
+
+    return { status: 200, message: "Availability updated successfully" };
+  } catch (error) {
+    console.error("Error updating availability config:", error);
+    return { status: 500, message: "Internal server error" };
+  }
+};
+
 export const addRecruiter = async (email: string) => {
   await dbConnect();
   try {

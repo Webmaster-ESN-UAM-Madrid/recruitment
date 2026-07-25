@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import styled from "styled-components";
-import { TextField, Autocomplete } from "@mui/material";
+import { TextField, Autocomplete, Switch } from "@mui/material";
 
 import { SaveButton } from "@/src/components/buttons/SaveButton";
 import { AddButton } from "@/src/components/buttons/AddButton";
@@ -117,6 +117,13 @@ const DataCell = styled.div`
   text-overflow: ellipsis;
 `;
 
+const SectionHint = styled.p`
+  color: #666;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  margin: -10px 0 15px;
+`;
+
 const GlobalConfigManager = () => {
   const [currentRecruitment, setCurrentRecruitment] = useState("");
   const [recruitmentPhase, setRecruitmentPhase] = useState("");
@@ -212,15 +219,7 @@ const GlobalConfigManager = () => {
       const response = await fetch("/api/config/update-details", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          currentRecruitment, 
-          recruitmentPhase,
-          availability: {
-            startDate: availabilityStartDate,
-            endDate: availabilityEndDate,
-            hourRanges
-          }
-        })
+        body: JSON.stringify({ currentRecruitment, recruitmentPhase })
       });
       if (response.ok) {
         addToast("Configuración actualizada correctamente", "success");
@@ -233,6 +232,70 @@ const GlobalConfigManager = () => {
     } catch (e) {
       addToast(`Error al actualizar la configuración: ${(e as Error).message}`, "error");
     }
+  };
+
+  // Availability persists on its own endpoint the moment it changes, so it no
+  // longer depends on the "Detalles de Reclutamiento" save button above it.
+  const persistAvailability = useCallback(
+    async (payload: {
+      startDate: string;
+      endDate: string;
+      hourRanges: { start: number; end: number }[];
+    }) => {
+      try {
+        const response = await fetch("/api/config/availability", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ availability: payload })
+        });
+        if (response.ok) {
+          addToast("Disponibilidad guardada", "success");
+        } else {
+          addToast("No se pudo guardar la disponibilidad", "error");
+        }
+      } catch (e) {
+        addToast(`Error al guardar la disponibilidad: ${(e as Error).message}`, "error");
+      }
+    },
+    [addToast]
+  );
+
+  const availabilitySaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearPendingAvailabilitySave = () => {
+    if (availabilitySaveTimeoutRef.current) {
+      clearTimeout(availabilitySaveTimeoutRef.current);
+      availabilitySaveTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => clearPendingAvailabilitySave, []);
+
+  // Dates are debounced so picking a day doesn't fire a request per keystroke.
+  const handleAvailabilityDateChange = (field: "startDate" | "endDate", value: string) => {
+    const next = {
+      startDate: field === "startDate" ? value : availabilityStartDate,
+      endDate: field === "endDate" ? value : availabilityEndDate,
+      hourRanges
+    };
+    if (field === "startDate") {
+      setAvailabilityStartDate(value);
+    } else {
+      setAvailabilityEndDate(value);
+    }
+    clearPendingAvailabilitySave();
+    availabilitySaveTimeoutRef.current = setTimeout(() => persistAvailability(next), 800);
+  };
+
+  // Adding/removing a range is a deliberate action, so save it right away.
+  const handleHourRangesChange = (nextRanges: { start: number; end: number }[]) => {
+    setHourRanges(nextRanges);
+    clearPendingAvailabilitySave();
+    persistAvailability({
+      startDate: availabilityStartDate,
+      endDate: availabilityEndDate,
+      hourRanges: nextRanges
+    });
   };
 
   const handleAddRecruiter = async () => {
@@ -344,6 +407,29 @@ const GlobalConfigManager = () => {
     }
   };
 
+  // Saved on toggle instead of requiring a re-connection of the whole form.
+  const handleToggleCanCreateUsers = async (form: ConnectedForm, canCreateUsers: boolean) => {
+    setConnectedForms((prev) =>
+      prev.map((f) => (f._id === form._id ? { ...f, canCreateUsers } : f))
+    );
+    try {
+      const response = await fetch(`/api/forms/${form._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ canCreateUsers })
+      });
+      if (response.ok) {
+        addToast("Formulario actualizado correctamente", "success");
+      } else {
+        addToast("No se pudo actualizar el formulario", "error");
+        fetchConnectedForms(); // roll back the optimistic update
+      }
+    } catch (e) {
+      addToast(`Error al actualizar el formulario: ${(e as Error).message}`, "error");
+      fetchConnectedForms();
+    }
+  };
+
   const handleSaveMappings = async (mappings: Map<string, string>) => {
     if (!selectedFormForPreview) return;
 
@@ -392,12 +478,13 @@ const GlobalConfigManager = () => {
       </ButtonContainer>
 
       <Subtitle>Configuración de Disponibilidad</Subtitle>
+      <SectionHint>Los cambios se guardan automáticamente.</SectionHint>
       <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
         <TextField
           label="Fecha Inicio"
           type="date"
           value={availabilityStartDate}
-          onChange={(e) => setAvailabilityStartDate(e.target.value)}
+          onChange={(e) => handleAvailabilityDateChange("startDate", e.target.value)}
           InputLabelProps={{ shrink: true }}
           fullWidth
         />
@@ -405,7 +492,7 @@ const GlobalConfigManager = () => {
           label="Fecha Fin"
           type="date"
           value={availabilityEndDate}
-          onChange={(e) => setAvailabilityEndDate(e.target.value)}
+          onChange={(e) => handleAvailabilityDateChange("endDate", e.target.value)}
           InputLabelProps={{ shrink: true }}
           fullWidth
         />
@@ -419,7 +506,7 @@ const GlobalConfigManager = () => {
             <DeleteButton onClick={() => {
               const newRanges = [...hourRanges];
               newRanges.splice(index, 1);
-              setHourRanges(newRanges);
+              handleHourRangesChange(newRanges);
             }} />
           </div>
         ))}
@@ -441,7 +528,7 @@ const GlobalConfigManager = () => {
           />
           <AddButton onClick={() => {
             if (newRangeStart < newRangeEnd) {
-              setHourRanges([...hourRanges, { start: newRangeStart, end: newRangeEnd }]);
+              handleHourRangesChange([...hourRanges, { start: newRangeStart, end: newRangeEnd }]);
             } else {
               addToast("La hora de inicio debe ser menor a la hora de fin", "error");
             }
@@ -547,7 +634,13 @@ const GlobalConfigManager = () => {
         {connectedForms.map((form) => (
           <TableRow key={form._id} columns="minmax(150px, 1fr) 150px 120px">
             <DataCell>{form.formIdentifier}</DataCell>
-            <DataCell>{form.canCreateUsers ? "Sí" : "No"}</DataCell>
+            <DataCell>
+              <Switch
+                checked={form.canCreateUsers}
+                onChange={(e) => handleToggleCanCreateUsers(form, e.target.checked)}
+                inputProps={{ "aria-label": "Puede crear usuarios" }}
+              />
+            </DataCell>
             <ButtonContainer>
               <EditButton
                 onClick={() => {

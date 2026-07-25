@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkRecruiterAccess } from "@/lib/utils/authUtils";
-import { getFormById, deleteForm } from "@/lib/controllers/formController";
+import { checkAdminAccess } from "@/lib/utils/authUtils";
+import { getFormById, deleteForm, updateFormSettings } from "@/lib/controllers/formController";
 
 export async function GET(request: Request, context: any) {
   const session = await getServerSession(authOptions);
@@ -12,6 +13,17 @@ export async function GET(request: Request, context: any) {
   const { formId } = await context.params;
   const result = await getFormById(formId);
   return NextResponse.json(result.data, { status: result.status });
+}
+
+export async function PATCH(request: Request, context: any) {
+  const session = await getServerSession(authOptions);
+  if (!session || !checkAdminAccess(session.user?.email)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
+  const { formId } = await context.params;
+  const { canCreateUsers } = await request.json();
+  const result = await updateFormSettings(formId, { canCreateUsers });
+  return NextResponse.json({ message: result.message }, { status: result.status });
 }
 
 export async function DELETE(request: Request, context: any) {

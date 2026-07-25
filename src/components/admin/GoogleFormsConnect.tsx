@@ -8,6 +8,7 @@ import { useToast } from "@/src/components/toasts/ToastContext";
 import { BackButton } from "../buttons/BackButton";
 import { NextButton } from "../buttons/NextButton";
 import { SaveButton } from "../buttons/SaveButton";
+import { normalizeFormIdentifier, finalizeFormIdentifier } from "@/lib/utils/formIdentifier";
 
 type FormSection = [string, any[]];
 
@@ -53,6 +54,13 @@ const StyledCheckbox = styled.input`
 
 const StyledLabel = styled.label`
   font-family: "Inter", sans-serif;
+`;
+
+const StyledHelperText = styled.p`
+  color: #666;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  margin: -12px 0 15px;
 `;
 
 const CodeWrapper = styled.div`
@@ -324,10 +332,18 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
   };
 
   const submitCode = async () => {
+    const normalizedIdentifier = finalizeFormIdentifier(formIdentifier);
+    setFormIdentifier(normalizedIdentifier);
+
     const response = await fetch("/api/forms/connect/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, code: code.join(""), formIdentifier, canCreateUsers })
+      body: JSON.stringify({
+        key,
+        code: code.join(""),
+        formIdentifier: normalizedIdentifier,
+        canCreateUsers
+      })
     });
 
     const data = await response.json();
@@ -342,7 +358,9 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
       addToast("Formulario conectado correctamente", "success");
       onFormConnected();
     } else {
-      addToast("Error al validar el código", "error");
+      // Surface the server's reason (duplicate identifier, expired key, ...)
+      // rather than always blaming the code.
+      addToast(data?.message || "Error al validar el código", "error");
     }
   };
 
@@ -426,8 +444,16 @@ const GoogleFormsConnect = ({ onClose, onFormConnected }: GoogleFormsConnectProp
               id="formIdentifier"
               type="text"
               value={formIdentifier}
-              onChange={(e) => setFormIdentifier(e.target.value)}
+              placeholder="ej: entrevista-1"
+              // Rewrite as the user types instead of rejecting input, so an
+              // identifier typed as "Entrevista 1" still ends up usable.
+              onChange={(e) => setFormIdentifier(normalizeFormIdentifier(e.target.value))}
+              onBlur={(e) => setFormIdentifier(finalizeFormIdentifier(e.target.value))}
             />
+            <StyledHelperText>
+              Solo minúsculas, números y guiones. Los espacios y mayúsculas se corrigen
+              automáticamente. Puedes reutilizar identificadores de reclutamientos anteriores.
+            </StyledHelperText>
           </div>
           <StyledCheckboxContainer>
             <StyledCheckbox

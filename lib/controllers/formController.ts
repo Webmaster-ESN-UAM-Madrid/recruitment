@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/mongodb";
-import Form, { IForm } from "@/lib/models/form";
+import Form, { IForm, ensureFormIndexes } from "@/lib/models/form";
+import { finalizeFormIdentifier } from "@/lib/utils/formIdentifier";
 import FormResponse, { IFormResponse } from "@/lib/models/formResponse";
 import FormConnection from "@/lib/models/formConnection";
 import Candidate, { ICandidate } from "@/lib/models/candidate";
@@ -312,6 +313,43 @@ export const updateFormMappings = async (formId: string, fieldMappings: object) 
   }
 };
 
+export const updateFormSettings = async (
+  formId: string,
+  settings: { canCreateUsers?: boolean }
+) => {
+  await dbConnect();
+  try {
+    const recruitmentDetails = await getCurrentRecruitmentDetails();
+    if (!recruitmentDetails.currentRecruitment) {
+      console.error("Could not retrieve current recruitment details.");
+      return { status: 500, message: "Could not determine current recruitment" };
+    }
+    const currentRecruitmentId = recruitmentDetails.currentRecruitment;
+
+    if (typeof settings?.canCreateUsers !== "boolean") {
+      return { status: 400, message: "No valid settings provided" };
+    }
+
+    const updatedForm = await Form.findOneAndUpdate(
+      { _id: formId, recruitmentProcessId: currentRecruitmentId },
+      { $set: { canCreateUsers: settings.canCreateUsers } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedForm) {
+      return {
+        status: 404,
+        message: "Form not found or does not belong to current recruitment process"
+      };
+    }
+
+    return { status: 200, message: "Form settings updated successfully", data: updatedForm };
+  } catch (error) {
+    console.error("Error updating form settings:", error);
+    return { status: 500, message: "Error updating form settings" };
+  }
+};
+
 export const initFormConnection = async () => {
   await dbConnect();
   try {
@@ -433,6 +471,8 @@ export const validateFormConnection = async (
   canCreateUsers?: boolean
 ) => {
   await dbConnect();
+  // Retires the legacy globally-unique formIdentifier index if it's still around.
+  await ensureFormIndexes();
   try {
     const connection = await FormConnection.findOne({ key });
 
@@ -450,10 +490,15 @@ export const validateFormConnection = async (
     }
     const recruitmentProcessId = globalConfig.currentRecruitment;
 
+    // Store the canonical slug so lookups elsewhere stay predictable.
+    const normalizedIdentifier = formIdentifier ? finalizeFormIdentifier(formIdentifier) : "";
+
     let form;
-    if (formIdentifier) {
+    if (normalizedIdentifier) {
+      // Scoped to the current recruitment, so the same identifier used in an
+      // earlier period is left untouched instead of blocking this one.
       form = await Form.findOneAndUpdate(
-        { formIdentifier, recruitmentProcessId }, // Add recruitmentProcessId to query
+        { formIdentifier: normalizedIdentifier, recruitmentProcessId },
         {
           provider: connection.provider,
           structure: connection.formData,
@@ -469,8 +514,7 @@ export const validateFormConnection = async (
         structure: connection.formData,
         appsScriptId: connection.appsScriptId,
         canCreateUsers: canCreateUsers,
-        recruitmentProcessId: recruitmentProcessId,
-        formIdentifier: formIdentifier || undefined // Store if provided, otherwise undefined
+        recruitmentProcessId: recruitmentProcessId
       });
     }
 
@@ -478,6 +522,13 @@ export const validateFormConnection = async (
 
     return { status: 200, message: "Validation successful", data: { formId: form._id } };
   } catch (error) {
+    if ((error as { code?: number }).code === 11000) {
+      console.error("Duplicate form identifier for the current recruitment:", error);
+      return {
+        status: 409,
+        message: "Ya existe un formulario con ese identificador en este proceso de reclutamiento"
+      };
+    }
     console.error("Error validating form:", error);
     return { status: 500, message: "Internal server error" };
   }

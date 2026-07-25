@@ -46,6 +46,12 @@ export const StyledButton = styled(Button)<{
     position: relative;
     overflow: hidden;
     pointer-events: ${({ $canClick }) => ($canClick ? "auto" : "none")};
+    /* Keep a long press from turning into text selection or the native
+       context menu, which would cancel the hold before it completes. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
     transition:
         background-color 0.2s ease-in-out,
         border-radius 0.2s ease-in-out;
@@ -191,21 +197,17 @@ export const IconButton: React.FC<IconButtonProps> = ({
   children
 }) => {
   const [loading, setLoading] = useState(isLoading);
-  const [isHolding, setIsHolding] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
-  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Tracks whether the current press already fired the action, so releasing
+  // afterwards doesn't nag with the "hold to confirm" tooltip.
+  const holdCompletedRef = useRef(false);
   const { disableAll, setDisableAll } = useButtonContext();
 
   const endHold = useCallback(() => {
-    setIsHolding(false);
     setHoldProgress(0);
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
@@ -231,61 +233,47 @@ export const IconButton: React.FC<IconButtonProps> = ({
   const startHold = useCallback(() => {
     if (disabled || loading || disableAll || !needsConfirmation) return;
 
-    setIsHolding(true);
+    holdCompletedRef.current = false;
     setHoldProgress(0);
 
+    // A single timer owns both the progress bar and firing the action. Running a
+    // separate setTimeout alongside it used to race this interval: the timeout
+    // almost always won (setInterval drifts late), cancelled the interval, and
+    // then bailed out on a stale `isHolding` closure — so the hold silently did
+    // nothing.
     const startTime = Date.now();
     progressIntervalRef.current = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
-      const progress = Math.min((elapsedTime / confirmationDuration) * 100, 100);
-      setHoldProgress(progress);
+      setHoldProgress(Math.min((elapsedTime / confirmationDuration) * 100, 100));
 
-      if (progress === 100) {
-        clearInterval(progressIntervalRef.current!);
-        if (holdTimerRef.current) {
-          clearTimeout(holdTimerRef.current);
-          holdTimerRef.current = null;
-        }
-        executeClick();
+      if (elapsedTime >= confirmationDuration) {
+        holdCompletedRef.current = true;
+        executeClick(); // clears this interval via endHold()
       }
-    }, 50);
-
-    holdTimerRef.current = setTimeout(() => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-      if (isHolding) {
-        executeClick();
-      }
-    }, confirmationDuration);
-  }, [
-    disabled,
-    loading,
-    disableAll,
-    needsConfirmation,
-    confirmationDuration,
-    isHolding,
-    executeClick
-  ]);
+    }, 25);
+  }, [disabled, loading, disableAll, needsConfirmation, confirmationDuration, executeClick]);
 
   const handlePress = () => {
     if (!needsConfirmation) {
       executeClick();
-    } else {
-      setShowTooltip(true);
-      if (tooltipTimeoutRef.current) {
-        clearTimeout(tooltipTimeoutRef.current);
-      }
-      tooltipTimeoutRef.current = setTimeout(() => {
-        setShowTooltip(false);
-      }, 1000);
+      return;
     }
+    // The press completed the hold, so the action already ran.
+    if (holdCompletedRef.current) {
+      holdCompletedRef.current = false;
+      return;
+    }
+    setShowTooltip(true);
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+    }
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setShowTooltip(false);
+    }, 1000);
   };
 
   useEffect(() => {
     return () => {
-      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
       if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
       if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
     };

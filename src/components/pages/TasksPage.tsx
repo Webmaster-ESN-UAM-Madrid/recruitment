@@ -346,7 +346,9 @@ const TasksPage: React.FC = () => {
 
   const interviewFormIds = new Set(
     forms
-      .filter((f) => f.formIdentifier?.startsWith("entrevista"))
+      // Case-insensitive so identifiers saved before they were normalised
+      // (e.g. "Entrevista1") are still recognised as interview forms.
+      .filter((f) => f.formIdentifier?.toLowerCase().startsWith("entrevista"))
       .map((f) => (f._id as string).toString())
   );
   const candidatesWithInterviewResponse = new Set(
