@@ -7,7 +7,8 @@ import { checkAdminAccess } from "@/lib/utils/authUtils";
 const adminEmails = [
   "vicepresident@esnuam.org",
   "hector.tablero@esnuam.org",
-  "mario.viton@esnuam.org"
+  "mario.viton@esnuam.org",
+  "web.master@esnuam.org"
 ];
 
 export async function GET() {
