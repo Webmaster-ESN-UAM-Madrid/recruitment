@@ -6,7 +6,8 @@ import { getCandidateById } from "@/lib/controllers/candidateController";
 const adminEmails = [
   "vicepresident@esnuam.org",
   "hector.tablero@esnuam.org",
-  "mario.viton@esnuam.org"
+  "mario.viton@esnuam.org",
+  "web.master@esnuam.org"
 ];
 
 export async function getRecruiterEmailsFromDB(): Promise<string[]> {
