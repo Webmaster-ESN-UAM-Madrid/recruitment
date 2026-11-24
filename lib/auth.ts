@@ -1,6 +1,7 @@
 import type { AuthOptions, User as NextAuthUser, Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { config } from "@/lib/config";
 import dbConnect from "@/lib/mongodb";
 import User from "@/lib/models/user";
@@ -8,6 +9,20 @@ import Config from "@/lib/models/config";
 import Candidate from "@/lib/models/candidate";
 
 const ESN_DOMAIN = "@esnuam.org";
+
+// Dev-only credentials login. It is never registered in production, and even if
+// ENABLE_DEV_LOGIN leaks into a production environment it is ignored here.
+const isProduction = process.env.NODE_ENV === "production";
+const devLoginRequested = process.env.ENABLE_DEV_LOGIN === "true";
+const devLoginEnabled = !isProduction && devLoginRequested;
+const devLoginEmail = (process.env.DEV_LOGIN_EMAIL || "web.master@esnuam.org")
+  .trim()
+  .toLowerCase();
+const devLoginName = process.env.DEV_LOGIN_NAME || "Local Dev User";
+
+if (isProduction && devLoginRequested) {
+  console.warn("ENABLE_DEV_LOGIN=true is ignored because NODE_ENV=production.");
+}
 
 const normalizeEmail = (email?: string | null) => email?.trim().toLowerCase() ?? "";
 
@@ -29,21 +44,61 @@ const findActiveCandidateForEmail = async (email: string) => {
   }).select("email active recruitmentId");
 };
 
-export const authOptions: AuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: config.google.clientID!,
-      clientSecret: config.google.clientSecret!,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-          // hd: "esnuam.org"
+const providers: AuthOptions["providers"] = [
+  GoogleProvider({
+    clientId: config.google.clientID!,
+    clientSecret: config.google.clientSecret!,
+    authorization: {
+      params: {
+        prompt: "consent",
+        access_type: "offline",
+        response_type: "code"
+        // hd: "esnuam.org"
+      }
+    }
+  })
+];
+
+if (devLoginEnabled) {
+  providers.push(
+    CredentialsProvider({
+      id: "dev-credentials",
+      name: "Local dev login",
+      credentials: {
+        email: { label: "Email", type: "text" }
+      },
+      async authorize(credentials, req) {
+        if (process.env.NODE_ENV === "production" || process.env.ENABLE_DEV_LOGIN !== "true") {
+          return null;
         }
+
+        // Extra guard: only allow the dev login when the request is served from
+        // localhost, even if the dev server is reachable from the network.
+        const host = (req?.headers?.host || "").toString().toLowerCase();
+        const hostname = host.split(":")[0];
+        const localHostnames = ["localhost", "127.0.0.1", "[::1]", "::1"];
+        if (!localHostnames.includes(hostname)) {
+          console.warn(`Dev login blocked for non-local host "${host}".`);
+          return null;
+        }
+
+        const requestedEmail =
+          typeof credentials?.email === "string" && credentials.email.trim().length > 0
+            ? credentials.email
+            : devLoginEmail;
+
+        return {
+          id: `dev-${requestedEmail}`,
+          name: devLoginName,
+          email: normalizeEmail(requestedEmail)
+        };
       }
     })
-  ],
+  );
+}
+
+export const authOptions: AuthOptions = {
+  providers,
   callbacks: {
     async signIn({ user }: { user: NextAuthUser }) {
       await dbConnect();
