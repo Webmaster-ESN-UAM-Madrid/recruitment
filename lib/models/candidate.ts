@@ -1,6 +1,8 @@
 import { Schema, model, models, Document } from "mongoose";
+import type { CandidateEstado } from "@/lib/constants/candidate";
 
 export type EventAttendance = boolean | null;
+export type { CandidateEstado };
 
 export interface ICandidate extends Document {
   _id: string;
@@ -14,6 +16,8 @@ export interface ICandidate extends Document {
   active: boolean;
   appliedAt: Date;
   tutor?: string;
+  tanda?: number | null;
+  estado?: CandidateEstado | null;
   interests: Schema.Types.ObjectId[];
   events: {
     "Welcome Meeting": EventAttendance;
@@ -53,6 +57,20 @@ const candidateSchema = new Schema({
   active: { type: Boolean, default: true },
   appliedAt: { type: Date, default: Date.now },
   tutor: { type: String },
+  tanda: {
+    type: Number,
+    default: null,
+    validate: {
+      validator: (value: number | null | undefined) =>
+        value === null || value === undefined || Number.isInteger(value),
+      message: "Tanda must be an integer"
+    }
+  },
+  estado: {
+    type: String,
+    enum: ["yes", "no", "maybe"],
+    default: null
+  },
   interests: [{ type: Schema.Types.ObjectId, ref: "Committee" }],
   events: {
     "Welcome Meeting": { type: Boolean, default: false },

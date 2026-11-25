@@ -7,6 +7,7 @@ import { JSX } from "react/jsx-runtime";
 import FeedbackForCandidate from "../FeedbackForCandidate";
 import Rating from "@mui/material/Rating";
 import ActivityCalendar from "../calendar/ActivityCalendar";
+import { ESTADO_COLORS, getEstadoLabel } from "@/lib/constants/candidate";
 
 const ItemContainer = styled.div<{ $isOverflowing: boolean }>`
   padding: 0 5px;
@@ -90,6 +91,8 @@ interface Candidate {
   photoUrl?: string;
   active: boolean;
   alternateEmails?: string[];
+  tanda?: number | null;
+  estado?: "yes" | "no" | "maybe" | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -325,6 +328,23 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
     } else {
       displayValue = candidate.email;
     }
+  } else if (columnKey === "tanda") {
+    displayValue =
+      candidate.tanda !== null && candidate.tanda !== undefined ? String(candidate.tanda) : "";
+  } else if (columnKey === "estado") {
+    const estadoLabel = getEstadoLabel(candidate.estado);
+    displayValue = estadoLabel ? (
+      <span
+        style={{
+          color: candidate.estado ? ESTADO_COLORS[candidate.estado] : undefined,
+          fontWeight: 600
+        }}
+      >
+        {estadoLabel}
+      </span>
+    ) : (
+      ""
+    );
   } else if (columnKey === "interests") {
     if (candidate?.interests && candidate.interests.length > 0 && availableCommittees.length > 0) {
       const interestsWithDetails = candidate.interests

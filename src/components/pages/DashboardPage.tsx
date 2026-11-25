@@ -143,6 +143,9 @@ interface Candidate {
   active: boolean;
   rejectedReason?: string;
   recruitmentPhase?: string;
+  tutor?: string;
+  tanda?: number | null;
+  estado?: "yes" | "no" | "maybe" | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -451,6 +454,8 @@ const DashboardPage: React.FC = () => {
       { key: "feedback", header: "Feedback", fixed: false, width: "130px" },
       { key: "notes", header: "Notas", fixed: false, width: "130px" },
       { key: "tutor", header: "Tutor", fixed: false, width: "1fr" },
+      { key: "tanda", header: "Tanda", fixed: false, width: "100px" },
+      { key: "estado", header: "Estado", fixed: false, width: "120px" },
       { key: "interests", header: "Intereses", fixed: false, width: "1fr" },
       { key: "activities", header: "Actividades", fixed: false, width: "140px" },
       ...formStructure.flatMap((section) => {

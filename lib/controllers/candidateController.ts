@@ -40,7 +40,10 @@ export const updateCandidate = async (
 ): Promise<ICandidate | null> => {
   await dbConnect();
   try {
-    const candidate = await Candidate.findByIdAndUpdate(id, updates, { new: true });
+    const candidate = await Candidate.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true
+    });
     return candidate;
   } catch (error) {
     console.error(`Error updating candidate ${id}:`, error);

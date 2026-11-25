@@ -27,6 +27,12 @@ import Modal from "../modals/Modal";
 import { InfoButton } from "../buttons/InfoButton";
 import { AcceptButton } from "@/src/components/buttons/AcceptButton";
 import { IInterview } from "@/lib/models/interview";
+import {
+  ESTADO_COLORS,
+  ESTADO_OPTIONS,
+  getEstadoLabel,
+  type CandidateEstado
+} from "@/lib/constants/candidate";
 import LoadingSpinner from "../loaders/LoadingSpinner";
 
 // Import tag icons
@@ -55,6 +61,8 @@ interface Candidate {
   email: string;
   alternateEmails: string[];
   tutor: string;
+  tanda?: number | null;
+  estado?: CandidateEstado | null;
   interests: string[];
   photoUrl?: string;
   active: boolean;
@@ -599,6 +607,25 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
     }
   };
 
+  const handleTandaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (isTutor || !candidate) return;
+    const raw = e.target.value;
+    if (raw === "") {
+      setCandidate({ ...candidate, tanda: null });
+      return;
+    }
+    const parsed = Number(raw);
+    if (!Number.isNaN(parsed)) {
+      setCandidate({ ...candidate, tanda: parsed });
+    }
+  };
+
+  const handleEstadoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (isTutor || !candidate) return;
+    const value = e.target.value;
+    setCandidate({ ...candidate, estado: value ? (value as CandidateEstado) : null });
+  };
+
   const handleEmailChange = (index: number, value: string) => {
     if (isTutor) return;
     if (candidate) {
@@ -706,10 +733,21 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
         }
       }
 
+      if (
+        candidate.tanda !== null &&
+        candidate.tanda !== undefined &&
+        !Number.isInteger(candidate.tanda)
+      ) {
+        addToast("La tanda debe ser un número entero", "error");
+        return;
+      }
+
       const updatedCandidate = {
         ...candidate,
         email: sanitizedMainEmail,
         tutor: candidate.tutor,
+        tanda: candidate.tanda ?? null,
+        estado: candidate.estado ?? null,
         alternateEmails: cleanedAlternateEmails,
         interests: candidateInterests.map((i) => i._id),
         rejectedReason: candidate.rejectedReason || undefined,
@@ -866,6 +904,24 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
             <LabelGroup>
               <Label>Padrino:</Label> {candidate.tutor || "Ninguno"}
             </LabelGroup>
+            {!isTutor && (
+              <>
+                <LabelGroup>
+                  <Label>Tanda:</Label> {candidate.tanda ?? "Sin asignar"}
+                </LabelGroup>
+                <LabelGroup>
+                  <Label>Estado:</Label>{" "}
+                  <span
+                    style={{
+                      color: candidate.estado ? ESTADO_COLORS[candidate.estado] : undefined,
+                      fontWeight: 600
+                    }}
+                  >
+                    {getEstadoLabel(candidate.estado) || "Sin definir"}
+                  </span>
+                </LabelGroup>
+              </>
+            )}
 
             <ToggleGroup>
               <Label style={{ marginBottom: 0, userSelect: "none" }}>Activo:</Label>
@@ -934,6 +990,36 @@ export default function ProfilePage({ isTutor }: { isTutor?: boolean }) {
           disabled={!isEditing}
         />
       </TwoColumn>
+
+      {!isTutor && (
+        <TwoColumn>
+          <TextField
+            label="Tanda"
+            type="number"
+            value={candidate.tanda ?? ""}
+            onChange={handleTandaChange}
+            disabled={!isEditing}
+            fullWidth
+            inputProps={{ step: 1 }}
+          />
+          <TextField
+            select
+            label="Estado"
+            value={candidate.estado ?? ""}
+            onChange={handleEstadoChange}
+            disabled={!isEditing}
+            fullWidth
+            SelectProps={{ native: true }}
+          >
+            <option value="">Sin definir</option>
+            {ESTADO_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </TextField>
+        </TwoColumn>
+      )}
 
       {/* Tags Section */}
       <Section>

@@ -25,7 +25,13 @@ export async function GET(req: NextRequest, context: any) {
   if (!candidate) {
     return NextResponse.json({ message: "Candidate not found" }, { status: 404 });
   }
-  return NextResponse.json(candidate);
+
+  const candidateData = candidate.toObject() as Record<string, unknown>;
+  if (isTutor) {
+    delete candidateData.estado;
+    delete candidateData.tanda;
+  }
+  return NextResponse.json(candidateData);
 }
 
 export async function PUT(req: NextRequest, context: any) {
