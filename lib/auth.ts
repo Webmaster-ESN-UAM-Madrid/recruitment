@@ -161,6 +161,7 @@ export const authOptions: AuthOptions = {
       if (session.user && token.email) {
         await dbConnect();
         const normalizedEmail = normalizeEmail(token.email);
+        session.user.email = normalizedEmail;
         const user = await User.findOne({ email: normalizedEmail });
 
         if (user) {

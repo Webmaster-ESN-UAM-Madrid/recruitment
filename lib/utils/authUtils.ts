@@ -24,12 +24,14 @@ export async function getRecruiterEmailsFromDB(): Promise<string[]> {
   }
 }
 
+const normalizeEmail = (email?: string | null) => email?.trim().toLowerCase() ?? "";
+
 export function checkAdminAccess(email: string | null | undefined): boolean {
   if (!email) {
     return false;
   }
 
-  return adminEmails.includes(email);
+  return adminEmails.includes(normalizeEmail(email));
 }
 
 export async function checkRecruiterAccess(email: string | null | undefined): Promise<boolean> {
@@ -37,14 +39,18 @@ export async function checkRecruiterAccess(email: string | null | undefined): Pr
     return false;
   }
 
+  const normalizedEmail = normalizeEmail(email);
+
   // Check if the user is an admin
-  if (adminEmails.includes(email)) {
+  if (adminEmails.includes(normalizedEmail)) {
     return true;
   }
 
   // Check if the user is a recruiter from the database
   const recruiterEmails = await getRecruiterEmailsFromDB();
-  return recruiterEmails.includes(email);
+  return recruiterEmails.some(
+    (recruiterEmail) => normalizeEmail(recruiterEmail) === normalizedEmail
+  );
 }
 
 // Check if a session user has tutor access to a candidate
